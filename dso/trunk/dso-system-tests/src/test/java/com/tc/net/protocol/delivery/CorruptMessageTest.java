@@ -134,15 +134,20 @@ public class CorruptMessageTest extends BaseDSOTestCase {
       }
     });
 
-    // Waiting till the buggy client connection is closed by the server
-    final TCConnection conn =
-        server.getDSOServer().getCommunicationsManager().getConnectionManager().getAllConnections()[0];
-    WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
-      @Override
-      public Boolean call() throws Exception {
-        return conn.isClosed();
-      }
-    });
+    // Waiting till the buggy client connection is closed by the server. It may already be closed.
+    final TCConnection allNonClosedConnections[] = server.getDSOServer().getCommunicationsManager()
+        .getConnectionManager()
+        .getAllConnections();
+
+    if (allNonClosedConnections.length > 0) {
+      final TCConnection conn = allNonClosedConnections[0];
+      WaitUtil.waitUntilCallableReturnsTrue(new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+          return conn.isClosed();
+        }
+      });
+    }
   }
 
   protected TCServer startupServer(final int tsaPort, final int jmxPort) {
