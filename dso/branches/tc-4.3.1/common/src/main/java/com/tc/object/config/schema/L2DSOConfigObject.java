@@ -29,11 +29,13 @@ import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.exception.TCRuntimeException;
 import com.tc.logging.CustomerLogging;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.text.Banner;
 import com.tc.util.Assert;
+import com.tc.util.Conversion;
 import com.terracottatech.config.Auth;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.DataStorage;
@@ -250,7 +252,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       if (server.isSetOffheap()) {
         server.getDataStorage().setSize(server.getOffheap().getMaxDataSize());
       } else {
-        CustomerLogging.getConsoleLogger().warn(Banner.makeBanner("Max data size not specified. Using a default of " + DEFAULT_DATA_STORAGE_SIZE, "WARNING"));
+        CustomerLogging.getConsoleLogger().warn(Banner.makeBanner("DataStorage offheap size not specified. Using a default of " + DEFAULT_DATA_STORAGE_SIZE, "WARNING"));
         server.getDataStorage().setSize(DEFAULT_DATA_STORAGE_SIZE);
       }
     }
@@ -267,6 +269,18 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     if (!server.getDataStorage().isSetOffheap()) {
       server.getDataStorage().addNewOffheap();
       server.getDataStorage().getOffheap().setSize(server.getDataStorage().getSize());
+    }
+
+    verifyOffheapSize(server.getDataStorage().getOffheap().getSize());
+  }
+
+  private static void verifyOffheapSize(final String offheapSize) {
+    try {
+      if (Conversion.memorySizeAsLongBytes(offheapSize) < Conversion.memorySizeAsLongBytes(DEFAULT_DATA_STORAGE_SIZE)) {
+        CustomerLogging.getConsoleLogger().warn(Banner.makeBanner("DataStorage offheap size is configured below recommended/supported amounts. Please consult documentation.", "WARNING"));
+      }
+    } catch (Conversion.MetricsFormatException mfe) {
+      throw new TCRuntimeException("Problem converting offheap size: ", mfe);
     }
   }
 
