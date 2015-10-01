@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,7 +11,7 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.object.config.schema;
@@ -268,7 +268,10 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     if (!server.getDataStorage().isSetOffheap()) {
       server.getDataStorage().addNewOffheap();
-      server.getDataStorage().getOffheap().setSize(server.getDataStorage().getSize());
+    }
+
+    if (server.getDataStorage().getOffheap().getSize() == null) {
+      server.getDataStorage().getOffheap().setSize(DEFAULT_DATA_STORAGE_SIZE);
     }
 
     verifyOffheapSize(server.getDataStorage().getOffheap().getSize());
