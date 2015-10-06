@@ -268,6 +268,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     if (!server.getDataStorage().isSetOffheap()) {
       server.getDataStorage().addNewOffheap();
+      server.getDataStorage().getOffheap().setSize(server.getDataStorage().getSize());
     }
 
     if (server.getDataStorage().getOffheap().getSize() == null) {
