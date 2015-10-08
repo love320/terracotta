@@ -52,10 +52,10 @@ fi
 
 for JAVA_COMMAND in \
 "${JAVA_HOME}/bin/java -d64 -server -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -server -XX:MaxDirectMemorySize=2147483647" \
+"${JAVA_HOME}/bin/java -server -XX:MaxDirectMemorySize=9223372036854775807" \
 "${JAVA_HOME}/bin/java -d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -client -XX:MaxDirectMemorySize=2147483647" \
-"${JAVA_HOME}/bin/java"
+"${JAVA_HOME}/bin/java -client -XX:MaxDirectMemorySize=9223372036854775807" \
+"${JAVA_HOME}/bin/java -XX:MaxDirectMemorySize=9223372036854775807"
 do
   ${JAVA_COMMAND} -version > /dev/null 2>&1
   if test "$?" = "0" ; then break; fi
