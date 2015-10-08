@@ -33,7 +33,7 @@ The Initial Developer of the Covered Software is
   <packaging>pom</packaging>
 
   <scm>
-    <developerConnection>scm:svn:https://svn.terracotta.org/repo/internal/enterprise/trunk</developerConnection>
+    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/dso/branches/tc-4.3.1</developerConnection>
   </scm>
   
   <properties>
