@@ -224,11 +224,6 @@ The Initial Developer of the Covered Software is
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty.orbit</groupId>
-        <artifactId>javax.servlet</artifactId>
-        <version>${javax.servlet.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.eclipse.jetty.orbit</groupId>
         <artifactId>javax.security.auth.message</artifactId>
         <version>1.0.0.v201108011116</version>
       </dependency>
@@ -302,21 +297,6 @@ The Initial Developer of the Covered Software is
         <groupId>hsqldb</groupId>
         <artifactId>hsqldb</artifactId>
         <version>1.7.2.2</version>
-      </dependency>
-      <dependency>
-        <groupId>com.fasterxml.jackson.core</groupId>
-        <artifactId>jackson-databind</artifactId>
-        <version>2.3.3</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.core</groupId>
-        <artifactId>jersey-client</artifactId>
-        <version>2.6</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jersey.media</groupId>
-        <artifactId>jersey-media-json-jackson</artifactId>
-        <version>2.6</version>
       </dependency>
 
       <!-- Glassfish substitutes -->
