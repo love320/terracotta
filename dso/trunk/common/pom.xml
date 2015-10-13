@@ -116,6 +116,10 @@ The Initial Developer of the Covered Software is
       <artifactId>slf4j-api</artifactId>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>gf-3122</groupId>
+      <artifactId>gf.javax.servlet-api</artifactId>
+    </dependency>
 
     <!-- tests dependencies -->
     <dependency>
@@ -135,40 +139,4 @@ The Initial Developer of the Covered Software is
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <profiles>
-    <profile>
-      <id>sag-deps</id>
-      <activation>
-        <property>
-          <name>sag-deps</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>gf-3122</groupId>
-          <artifactId>gf.javax.servlet-api</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-
-    <profile>
-      <id>community-deps</id>
-      <activation>
-        <property>
-          <name>sag-deps</name>
-          <value>false</value>
-        </property>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <dependencies>
-        <dependency>
-          <groupId>org.eclipse.jetty.orbit</groupId>
-          <artifactId>javax.servlet</artifactId>
-        </dependency>
-      </dependencies>
-    </profile>
-  </profiles>
-
 </project>
