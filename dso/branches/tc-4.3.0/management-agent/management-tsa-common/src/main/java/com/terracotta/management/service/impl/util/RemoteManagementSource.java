@@ -3,6 +3,11 @@
  */
 package com.terracotta.management.service.impl.util;
 
+import com.terracotta.management.security.IACredentials;
+import com.terracotta.management.security.SSLContextFactory;
+import com.terracotta.management.security.SecurityContextService;
+import com.terracotta.management.service.TimeoutService;
+import com.terracotta.management.web.utils.TSAConfig;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientProperties;
 import org.glassfish.jersey.client.filter.EncodingFilter;
@@ -18,12 +23,20 @@ import org.terracotta.management.resource.Representable;
 import org.terracotta.management.resource.SubGenericType;
 import org.terracotta.management.resource.exceptions.ExceptionUtils;
 
-import com.terracotta.management.security.IACredentials;
-import com.terracotta.management.security.SSLContextFactory;
-import com.terracotta.management.security.SecurityContextService;
-import com.terracotta.management.service.TimeoutService;
-import com.terracotta.management.web.utils.TSAConfig;
-
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.AsyncInvoker;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.InvocationCallback;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
 import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -39,31 +52,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLSession;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.AsyncInvoker;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.InvocationCallback;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
 
 /**
  * @author Ludovic Orban
@@ -80,7 +79,7 @@ public class RemoteManagementSource {
   private final TimeoutService timeoutService;
   private final SecurityContextService securityContextService;
   private final Client client;
-  private final Map<RemoteTSAEventListener, Collection<Future<EventInput>>> eventListenerFutures = Collections.synchronizedMap(new IdentityHashMap<RemoteTSAEventListener, Collection<Future<EventInput>>>());
+  private final ConcurrentMap<RemoteTSAEventListener, Collection<Future<EventInput>>> eventListenerFutures = new ConcurrentHashMap<RemoteTSAEventListener, Collection<Future<EventInput>>>();
 
   public RemoteManagementSource(LocalManagementSource localManagementSource, TimeoutService timeoutService, SecurityContextService securityContextService, SSLContextFactory sslContextFactory) {
     this.localManagementSource = localManagementSource;
@@ -342,9 +341,12 @@ public class RemoteManagementSource {
 
         @Override
         public void failed(Throwable throwable) {
+          LOG.debug("There are still {} registered event listeners", eventListenerFutures.size());
+
           if (throwable instanceof WebApplicationException) {
             WebApplicationException wae = (WebApplicationException)throwable;
             if (wae.getResponse().getStatus() == 401) {
+              LOG.debug("IA error, not restarting SSE client to other node");
               // IA error -> disconnect
               listener.onError(throwable);
               clearAndCancelFutures(listener);
@@ -352,7 +354,14 @@ public class RemoteManagementSource {
             }
           }
 
+          if (!eventListenerFutures.containsKey(listener)) {
+            // listener removed, don't reconnect
+            LOG.debug("Event listener got unregistered, not restarting SSE client to other node");
+            return;
+          }
+
           if (throwable instanceof InterruptedException) {
+            LOG.debug("Event listener got interrupted, clearing up and calling onError");
             listener.onError(throwable);
             clearAndCancelFutures(listener);
             return;
@@ -361,14 +370,19 @@ public class RemoteManagementSource {
           try {
             Thread.sleep(eventReadFailureRetryDelayInMs());
           } catch (InterruptedException ie) {
+            LOG.debug("Delay got interrupted, clearing up and calling onError");
             listener.onError(throwable);
             clearAndCancelFutures(listener);
             return;
           }
 
           // restart the request
+          LOG.debug("Event listener still registered, restarting SSE client to other node");
           Future<EventInput> newFuture = async.get(this);
-          addFuture(listener, newFuture);
+          if (!addFutureIfListenerPresent(listener, newFuture)) {
+            LOG.debug("Event listener racily unregistered, immediately cancel the future");
+            newFuture.cancel(true);
+          }
           clearDoneFutures(listener);
         }
       });
@@ -386,11 +400,24 @@ public class RemoteManagementSource {
     Collection<Future<EventInput>> futureList = eventListenerFutures.get(listener);
     if (futureList == null) {
       futureList = new ArrayList<Future<EventInput>>();
-      eventListenerFutures.put(listener, futureList);
+      Collection<Future<EventInput>> existing = eventListenerFutures.putIfAbsent(listener, futureList);
+      if (existing != null) {
+        futureList = existing;
+      }
     }
     synchronized (futureList) {
       futureList.add(f);
     }
+  }
+
+  private boolean addFutureIfListenerPresent(RemoteTSAEventListener listener, Future<EventInput> f) {
+    Collection<Future<EventInput>> futureList = eventListenerFutures.get(listener);
+    if (futureList != null) {
+      synchronized (futureList) {
+        futureList.add(f);
+      }
+    }
+    return futureList != null;
   }
 
   private void clearDoneFutures(RemoteTSAEventListener listener) {
