@@ -49,7 +49,7 @@ The Initial Developer of the Covered Software is
     <slf4j.version>1.7.7</slf4j.version>
     <search.version>1.5.0</search.version>
     <shiro.version>1.2.3</shiro.version>
-    <management-core-version>2.0.13</management-core-version>
+    <management-core-version>2.0.14</management-core-version>
     <session-management.version>${project.version}</session-management.version>
     <tc-messaging.version>1.0.0</tc-messaging.version>
     <terracotta-license.version>1.1.4</terracotta-license.version>
