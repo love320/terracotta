@@ -170,9 +170,8 @@ public class ClientDetectionTestApp extends AbstractErrorCatchingTransparentApp 
   public void handleNotification(Notification notification, Object handback) {
     if ("dso.client.attached".equalsIgnoreCase(notification.getType())) {
       // extract channel id
-      String source = notification.getSource().toString();
-      int index = source.lastIndexOf('=');
-      String channelId = source.substring(index + 1);
+      ObjectName source = (ObjectName) notification.getSource();
+      String channelId = source.getKeyProperty("channelID");
 
       System.out.println(">>>>> notification of channelId: " + channelId);
       Assert.assertFalse("duplicate clients notification found", channelIdSet.contains(channelId));
