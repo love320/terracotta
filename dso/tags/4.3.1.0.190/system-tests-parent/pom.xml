@@ -19,7 +19,7 @@
   <properties>
     <group>system</group>
     <tcmaven.version>2.1.0</tcmaven.version>
-    <terracotta.core.version>4.3.1.0.106</terracotta.core.version>
+    <terracotta.core.version>4.3.1.0.190</terracotta.core.version>
     <tc.core.groupId>org.terracotta</tc.core.groupId>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <tc.management.war.groupId>org.terracotta</tc.management.war.groupId>
