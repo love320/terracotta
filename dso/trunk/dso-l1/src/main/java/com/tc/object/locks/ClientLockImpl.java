@@ -1,7 +1,7 @@
-/*
+/* 
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
+ * License. You may obtain a copy of the License at 
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,7 +11,7 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is
+ * The Initial Developer of the Covered Software is 
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.object.locks;
@@ -1083,7 +1083,7 @@ class ClientLockImpl extends SynchronizedSinglyLinkedList<LockStateNode> impleme
         }
 
         if (!node.canDelegate()) {
-          node.park(timeout);
+          node.park();
           try {
             AbortedOperationUtil.throwExceptionIfAborted(abortableOperationManager);
           } catch (AbortedOperationException e) {
