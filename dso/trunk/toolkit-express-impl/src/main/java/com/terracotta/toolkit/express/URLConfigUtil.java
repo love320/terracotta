@@ -57,7 +57,7 @@ public class URLConfigUtil {
       }
 
       if (source != null) {
-        rv = rv + (rv == "" ? "" : ", ") + source;
+        rv = rv + (rv == "" ? "" : ",") + source;
       }
     }
     return rv;

@@ -37,4 +37,15 @@ public class URLConfigUtilTest extends TestCase {
       // Expected
     }
   }
+
+  public void testTranslateSystemProperties() throws Exception {
+    String[] systemProperties = { "host1=localhost:80", "host2=localhost:81" };
+
+    for(int i = 0; i < systemProperties.length; i++) {
+      String[] tokens = systemProperties[i].split("=");
+      System.setProperty(tokens[0], tokens[1]);
+    }
+
+    assertEquals("user1@localhost:80,user2@localhost:81", URLConfigUtil.translateSystemProperties("user1@${host1},user2@${host2}"));
+  }
 }
