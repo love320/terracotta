@@ -97,11 +97,15 @@ public class ClientTransactionBatchWriter implements ClientTransactionBatch {
 
   @Override
   public synchronized TxnBatchID getTransactionBatchID() {
-    try {
-      while (holders > 0) {
+    boolean interrupted = false;
+    while (holders > 0) {
+      try {
         this.wait();
+      } catch (InterruptedException ie) {
+        interrupted = true;
       }
-    } catch (InterruptedException ie) {
+    }
+    if (interrupted) {
       Thread.currentThread().interrupt();
     }
     return this.batchID;
