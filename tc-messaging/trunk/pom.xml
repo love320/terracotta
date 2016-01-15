@@ -16,9 +16,13 @@
   <artifactId>tc-messaging</artifactId>
   <packaging>jar</packaging>
   <name>Terracotta Messaging</name>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.0.1</version>
 
   <properties>
+  
+    <metadata.build.jenkins.url>http://jenkins.terracotta.eur.ad.sag:8080/job/tc-messaging_trunk_releaser/6/</metadata.build.jenkins.url>
+    <metadata.build.maven.active.profiles>terracotta-repositories,release,tc-publish,fullmode</metadata.build.maven.active.profiles>
+    <metadata.svn.revision/>
   </properties>
 
   <dependencies>
@@ -49,8 +53,8 @@
   </dependencies>
   
   <scm>
-    <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging/trunk</connection>
-    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/tc-messaging/trunk</developerConnection>
+    <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging/tags/release-1.0.1</connection>
+    <developerConnection>scm:svn:https://svn.terracotta.org/repo/tc/tc-messaging/tags/release-1.0.1</developerConnection>
   </scm>
   
   <distributionManagement>
