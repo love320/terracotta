@@ -87,6 +87,7 @@ import com.tc.net.NIOWorkarounds;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.BufferManagerFactoryProvider;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.groups.GroupException;
 import com.tc.net.groups.GroupManager;
@@ -372,20 +373,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private final TaskRunner                       taskRunner;
 
-  // used by a test
-  public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
-                                 final ConnectionPolicy connectionPolicy, final TCServerInfoMBean tcServerInfoMBean,
-                                 final ObjectStatsRecorder objectStatsRecorder) {
-    this(configSetupManager, threadGroup, connectionPolicy, new NullSink(), tcServerInfoMBean, objectStatsRecorder,
-         new L2State(), new SEDA(threadGroup), null, null);
-
-  }
+  protected final BufferManagerFactoryProvider bufferManagerFactoryProvider; 
 
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final Sink httpSink,
                                  final TCServerInfoMBean tcServerInfoMBean,
                                  final ObjectStatsRecorder objectStatsRecorder, final L2State l2State, final SEDA seda,
-                                 final TCServer server, final TCSecurityManager securityManager) {
+                                 final TCServer server, final TCSecurityManager securityManager,
+                                 final BufferManagerFactoryProvider bufferManagerFactoryProvider) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
     // Even in tests, we probably don't want different thread group configurations
@@ -396,6 +391,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
       Assert.assertNotNull("Security is turned on, but TCSecurityManager", this.tcSecurityManager);
       consoleLogger.info("Security enabled, turning on SSL");
     }
+    this.bufferManagerFactoryProvider = bufferManagerFactoryProvider;
 
     this.configSetupManager = configSetupManager;
     this.haConfig = new HaConfigImpl(this.configSetupManager);
@@ -413,7 +409,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   protected DSOServerBuilder createServerBuilder(final HaConfig config, final TCLogger tcLogger, final TCServer server,
                                                  L2DSOConfig l2dsoConfig) {
     Assert.assertEquals(config.isActiveActive(), false);
-    return new StandardDSOServerBuilder(config, tcLogger, tcSecurityManager, l2dsoConfig);
+    return new StandardDSOServerBuilder(config, tcLogger, tcSecurityManager, l2dsoConfig, bufferManagerFactoryProvider);
   }
 
   protected DSOServerBuilder getServerBuilder() {
@@ -1096,7 +1092,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                this.thisServerNodeID,
                                                                new TransportHandshakeErrorNullHandler(),
                                                                getMessageTypeClassMappings(), Collections.EMPTY_MAP,
-                                                               tcSecurityManager);
+                                                               tcSecurityManager, bufferManagerFactoryProvider);
   }
 
   /**

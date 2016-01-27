@@ -61,6 +61,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   private final ListenerEvents          listenerEvents;
   private final SocketParams            socketParams;
   private final TCSecurityManager       securityManager;
+  private final BufferManagerFactoryProvider bufferManagerFactoryProvider;
 
   public TCConnectionManagerImpl() {
     this("ConnectionMgr", 0, new HealthCheckerConfigImpl("DefaultConfigForActiveConnections"), null);
@@ -68,6 +69,11 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
 
   public TCConnectionManagerImpl(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig,
                                  TCSecurityManager securityManager) {
+    this(name, workerCommCount, healthCheckerConfig, securityManager, null);
+  }
+  public TCConnectionManagerImpl(String name, int workerCommCount, HealthCheckerConfig healthCheckerConfig,
+                                 TCSecurityManager securityManager, BufferManagerFactoryProvider factoryProvider) {
+    this.bufferManagerFactoryProvider = factoryProvider;
     this.securityManager = securityManager;
     this.connEvents = new ConnectionEvents();
     this.listenerEvents = new ListenerEvents();
@@ -78,7 +84,8 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
   }
 
   protected TCConnection createConnectionImpl(TCProtocolAdaptor adaptor, TCConnectionEventListener listener) {
-    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams, securityManager);
+    return new TCConnectionImpl(listener, adaptor, this, comm.nioServiceThreadForNewConnection(), socketParams,
+                                securityManager, bufferManagerFactoryProvider);
   }
 
   protected TCListener createListenerImpl(TCSocketAddress addr, ProtocolAdaptorFactory factory, int backlog,
@@ -102,7 +109,7 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
 
     CoreNIOServices commThread = comm.nioServiceThreadForNewListener();
 
-    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager);
+    TCListenerImpl rv = new TCListenerImpl(ssc, factory, getConnectionListener(), this, commThread, securityManager, bufferManagerFactoryProvider);
 
     commThread.registerListener(rv, ssc);
 

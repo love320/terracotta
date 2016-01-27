@@ -38,6 +38,7 @@ import com.tc.net.MaxConnectionsExceededException;
 import com.tc.net.NodeID;
 import com.tc.net.ServerID;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.BufferManagerFactoryProvider;
 import com.tc.net.core.ConnectionAddressProvider;
 import com.tc.net.core.ConnectionInfo;
 import com.tc.net.core.SecurityInfo;
@@ -150,18 +151,21 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
   private Stage                                             handshakeMessageStage;
   private Stage                                             discoveryStage;
   private TCProperties                                      l2Properties;
+  private final BufferManagerFactoryProvider                bufferManagerFactoryProvider;
 
   /*
    * Setup a communication manager which can establish channel from either sides.
    */
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, StageManager stageManager,
-                            ServerID thisNodeID, Sink httpSink, NodesStore nodesStore, TCSecurityManager securityManager) {
-    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, httpSink, nodesStore, securityManager);
+                            ServerID thisNodeID, Sink httpSink, NodesStore nodesStore, TCSecurityManager securityManager,
+                            BufferManagerFactoryProvider bufferManagerFactoryProvider) {
+    this(configSetupManager, new NullConnectionPolicy(), stageManager, thisNodeID, httpSink, nodesStore,
+        securityManager, bufferManagerFactoryProvider);
   }
 
   public TCGroupManagerImpl(L2ConfigurationSetupManager configSetupManager, ConnectionPolicy connectionPolicy,
                             StageManager stageManager, ServerID thisNodeID, Sink httpSink, NodesStore nodesStore,
-                            TCSecurityManager securityManager) {
+                            TCSecurityManager securityManager, BufferManagerFactoryProvider bufferManagerFactoryProvider) {
     this.connectionPolicy = connectionPolicy;
     this.stageManager = stageManager;
     this.thisNodeID = thisNodeID;
@@ -170,6 +174,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     this.l2ReconnectConfig = new L2ReconnectConfigImpl();
     this.isUseOOOLayer = l2ReconnectConfig.getReconnectEnabled();
     this.version = getVersion();
+    this.bufferManagerFactoryProvider = bufferManagerFactoryProvider;
 
     initializeWeights(weightGeneratorFactory);
 
@@ -225,6 +230,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
     logger.info("Creating server nodeID: " + thisNodeID);
     initializeWeights(weightGeneratorFactory);
     init(new TCSocketAddress(TCSocketAddress.WILDCARD_ADDR, groupPort));
+    this.bufferManagerFactoryProvider = null;
   }
 
   protected void initializeWeights(WeightGeneratorFactory factory) {
@@ -269,7 +275,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                               .getPropertiesFor("healthcheck.l2"), "TCGroupManager"),
                                                           thisNodeID, new TransportHandshakeErrorHandlerForGroupComm(),
                                                           messageTypeClassMapping, messageTypeFactoryMapping,
-        securityManager);
+                                                          securityManager, bufferManagerFactoryProvider);
 
     groupListener = communicationsManager.createListener(new NullSessionManager(), socketAddress, true,
                                                          new DefaultConnectionIdFactory(), httpSink);
