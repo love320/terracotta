@@ -71,7 +71,7 @@ public class L2Management extends TerracottaManagement {
   private final ObjectManagementMonitor       objectManagementBean;
   protected final int                         jmxPort;
   protected final InetAddress                 bindAddress;
-  private final Sink                          remoteEventsSink;
+  protected final Sink                          remoteEventsSink;
   protected final boolean                     listenerEnabled;
 
   static {
@@ -135,15 +135,17 @@ public class L2Management extends TerracottaManagement {
     // off to a thread pool. The whole point of doing is that the JMX runtime likes to use Thread.interrupt() which we
     // don't want happening in our code. Pushing the requests into our own threads provides isolation from these
     // interrupts (see DEV-1955)
-    SynchroMessageConnectionServer synchroMessageConnectionServer = new TCSynchroMessageConnectionServer(
-                                                                                                         remoteEventsSink,
-                                                                                                         msgConnectionServer,
-                                                                                                         env);
+    SynchroMessageConnectionServer synchroMessageConnectionServer = getSynchroMessageConnectionServer(msgConnectionServer, env);
     env.put(DefaultConfig.SYNCHRO_MESSAGE_CONNECTION_SERVER, synchroMessageConnectionServer);
 
     jmxConnectorServer = new GenericConnectorServer(env, mBeanServer);
     jmxConnectorServer.start();
     CustomerLogging.getConsoleLogger().info("JMX Server started. Available at URL[" + url + "]");
+  }
+  
+  protected SynchroMessageConnectionServer getSynchroMessageConnectionServer(MessageConnectionServer msgConnectionServer,
+                                                                             Map env) throws IOException {
+    return new TCSynchroMessageConnectionServer(remoteEventsSink, msgConnectionServer, env);
   }
 
   public synchronized void stop() throws IOException, InstanceNotFoundException, MBeanRegistrationException {
@@ -189,7 +191,7 @@ public class L2Management extends TerracottaManagement {
 
   public static class TCSynchroMessageConnectionServer extends SynchroMessageConnectionServerImpl {
 
-    private final Sink remoteEventsSink;
+    protected final Sink remoteEventsSink;
 
     public TCSynchroMessageConnectionServer(Sink remoteEventsSink, MessageConnectionServer msServer, Map env) {
       super(msServer, env);
@@ -202,7 +204,7 @@ public class L2Management extends TerracottaManagement {
     }
   }
 
-  private static class ServerSynchroMessageConnectionWrapper implements ServerSynchroMessageConnection {
+  protected static class ServerSynchroMessageConnectionWrapper implements ServerSynchroMessageConnection {
 
     private final ServerSynchroMessageConnection conn;
     private final Sink                           queue;
@@ -210,6 +212,10 @@ public class L2Management extends TerracottaManagement {
     public ServerSynchroMessageConnectionWrapper(Sink queue, ServerSynchroMessageConnection conn) {
       this.queue = queue;
       this.conn = conn;
+    }
+    
+    public ServerSynchroMessageConnection getServerSynchroMessageConnection() {
+      return conn;
     }
 
     @Override

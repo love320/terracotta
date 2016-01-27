@@ -16,6 +16,7 @@
  */
 package com.tc.net.core;
 
+import com.tc.exception.TCConnectionException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.TCSocketAddress;
@@ -60,10 +61,11 @@ final class TCListenerImpl implements TCListener {
   private final ProtocolAdaptorFactory    factory;
   private final CoreNIOServices           commNIOServiceThread;
   private final TCSecurityManager         securityManager;
+  private final BufferManagerFactoryProvider bufferManagerFactoryProvider;
 
   TCListenerImpl(ServerSocketChannel ssc, ProtocolAdaptorFactory factory, TCConnectionEventListener listener,
                  TCConnectionManagerImpl managerJDK14, CoreNIOServices commNIOServiceThread,
-                 TCSecurityManager securityManager) {
+                 TCSecurityManager securityManager, BufferManagerFactoryProvider factoryProvider) {
     this.securityManager = securityManager;
     this.addr = ssc.socket().getInetAddress();
     this.port = ssc.socket().getLocalPort();
@@ -74,6 +76,7 @@ final class TCListenerImpl implements TCListener {
     this.listener = listener;
     this.parent = managerJDK14;
     this.commNIOServiceThread = commNIOServiceThread;
+    this.bufferManagerFactoryProvider = factoryProvider;
   }
 
   protected void stopImpl(Runnable callback) {
@@ -83,11 +86,15 @@ final class TCListenerImpl implements TCListener {
   TCConnectionImpl createConnection(SocketChannel ch, CoreNIOServices nioServiceThread, SocketParams socketParams)
       throws IOException {
     TCProtocolAdaptor adaptor = getProtocolAdaptorFactory().getInstance();
-    TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams,
-                                               securityManager);
-    rv.finishConnect();
-    parent.newConnection(rv);
-    return rv;
+    try {
+      TCConnectionImpl rv = new TCConnectionImpl(listener, adaptor, ch, parent, nioServiceThread, socketParams,
+          securityManager, bufferManagerFactoryProvider);
+      rv.finishConnect();
+      parent.newConnection(rv);
+      return rv;
+    } catch (TCConnectionException tcce) {
+      throw new IOException("Unable to establish the TC connection with " + ch, tcce);
+    }
   }
 
   @Override

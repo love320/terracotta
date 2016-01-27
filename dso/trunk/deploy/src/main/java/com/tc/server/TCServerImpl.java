@@ -26,6 +26,7 @@ import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.MappedLoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
@@ -74,6 +75,8 @@ import com.tc.management.beans.TCServerInfo;
 import com.tc.net.GroupID;
 import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
+import com.tc.net.core.BufferManagerFactoryProvider;
+import com.tc.net.core.BufferManagerFactoryProviderImpl;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
@@ -152,7 +155,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   protected DistributedObjectServer         dsoServer;
   private Server                            httpServer;
-  private ContextHandlerCollection          contextHandlerCollection;
+  protected ContextHandlerCollection        contextHandlerCollection;
   private TerracottaConnector               terracottaConnector;
 
   private final Object                      stateLock                                    = new Object();
@@ -637,8 +640,9 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                   TCServerInfo serverInfo,
                                                                   ObjectStatsRecorder objectStatsRecorder,
                                                                   L2State l2State, TCServerImpl serverImpl) {
+    BufferManagerFactoryProvider bufferManagerFactoryProvider = new BufferManagerFactoryProviderImpl(this.securityManager);
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
-                                       objectStatsRecorder, l2State, this, this, securityManager);
+                                       objectStatsRecorder, l2State, this, this, securityManager, bufferManagerFactoryProvider);
   }
 
   private void bindManagementHttpPort(final CommonL2Config commonL2Config)
@@ -683,6 +687,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     this.httpServer.addConnector(tcConnector);
 
     this.contextHandlerCollection = new ContextHandlerCollection();
+    Handler rootHandler = getRootHandler();
 
     ServletContextHandler context = new ServletContextHandler(null, "/", ServletContextHandler.NO_SESSIONS
                                                                          | ServletContextHandler.SECURITY);
@@ -759,7 +764,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     context.setConnectorNames(new String[] { CONNECTOR_NAME_TERRACOTTA });
     contextHandlerCollection.addHandler(context);
 
-    this.httpServer.setHandler(contextHandlerCollection);
+    this.httpServer.setHandler(rootHandler);
     this.httpServer.setSessionIdManager(new TcHashSessionIdManager());
 
     try {
@@ -768,6 +773,10 @@ public class TCServerImpl extends SEDA implements TCServer {
       consoleLogger.warn("Couldn't start HTTP server", e);
       throw e;
     }
+  }
+  
+  protected Handler getRootHandler() {
+    return this.contextHandlerCollection;
   }
 
   private void addManagementWebApp(File warTempDir, CommonL2Config commonL2Config) throws Exception {

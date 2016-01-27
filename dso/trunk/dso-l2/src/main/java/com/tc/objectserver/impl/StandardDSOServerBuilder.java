@@ -46,6 +46,7 @@ import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.management.beans.object.ServerDBBackupMBean;
 import com.tc.net.GroupID;
 import com.tc.net.ServerID;
+import com.tc.net.core.BufferManagerFactoryProvider;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.groups.GroupManager;
 import com.tc.net.groups.StripeIDStateManager;
@@ -122,9 +123,11 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
   protected final TCSecurityManager securityManager;
   protected final TCLogger          logger;
   protected final DataStorageConfig offHeapConfig;
+  protected final BufferManagerFactoryProvider bufferManagerFactoryProvider;
 
   public StandardDSOServerBuilder(final HaConfig haConfig, final TCLogger logger,
-                                  final TCSecurityManager securityManager, L2DSOConfig l2Config) {
+                                  final TCSecurityManager securityManager, L2DSOConfig l2Config,
+                                  BufferManagerFactoryProvider bufferManagerFactoryProvider) {
     this.logger = logger;
     this.securityManager = securityManager;
     this.logger.info("Standard TSA Server created");
@@ -137,6 +140,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
     } else {
       offHeapConfig = new DataStorageConfig(false, "64m", true);
     }
+    this.bufferManagerFactoryProvider = bufferManagerFactoryProvider;
   }
 
   @Override
@@ -145,7 +149,7 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final Sink httpSink, final StripeIDStateManager stripeStateManager,
                                              final ServerGlobalTransactionManager gtxm) {
     return new TCGroupManagerImpl(configManager, stageManager, serverNodeID, httpSink, this.haConfig.getNodesStore(),
-                                  securityManager);
+                                  securityManager, bufferManagerFactoryProvider);
   }
 
   @Override

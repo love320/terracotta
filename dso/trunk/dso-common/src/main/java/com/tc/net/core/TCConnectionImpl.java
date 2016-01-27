@@ -128,13 +128,21 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   // for creating unconnected client connections
   TCConnectionImpl(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor,
                    final TCConnectionManagerImpl managerJDK14, final CoreNIOServices nioServiceThread,
-                   final SocketParams socketParams, final TCSecurityManager securityManager) {
-    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams, securityManager);
+                   final SocketParams socketParams, final TCSecurityManager securityManager,
+                   BufferManagerFactoryProvider bufferManagerFactoryProvider) {
+    this(listener, adaptor, null, managerJDK14, nioServiceThread, socketParams, securityManager, bufferManagerFactoryProvider);
   }
 
   TCConnectionImpl(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor, final SocketChannel ch,
                    final TCConnectionManagerImpl parent, final CoreNIOServices nioServiceThread,
                    final SocketParams socketParams, final TCSecurityManager securityManager) {
+    this(listener, adaptor, ch, parent, nioServiceThread, socketParams, securityManager, null);
+  }
+
+  TCConnectionImpl(final TCConnectionEventListener listener, final TCProtocolAdaptor adaptor, final SocketChannel ch,
+                   final TCConnectionManagerImpl parent, final CoreNIOServices nioServiceThread,
+                   final SocketParams socketParams, final TCSecurityManager securityManager,
+                   BufferManagerFactoryProvider bufferManagerFactoryProvider) {
 
     Assert.assertNotNull(parent);
     Assert.assertNotNull(adaptor);
@@ -148,11 +156,10 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
     this.channel = ch;
 
-    if (securityManager != null) {
-      this.bufferManagerFactory = securityManager.getBufferManagerFactory();
-    } else {
-      this.bufferManagerFactory = new ClearTextBufferManagerFactory();
+    if(bufferManagerFactoryProvider == null) {
+      bufferManagerFactoryProvider = new BufferManagerFactoryProviderImpl(securityManager);
     }
+    this.bufferManagerFactory = bufferManagerFactoryProvider.getBufferManagerFactory();
 
     if (ch != null) {
       socketParams.applySocketParams(ch.socket());
