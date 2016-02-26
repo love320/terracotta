@@ -194,11 +194,12 @@ public class RemoteManagementSource {
   }
 
   static final AtomicBoolean NOTIFICATION_LOGGED = new AtomicBoolean(false);
+
   static void cleanup(Client client, String markerProperty) {
     try {
       Field listenersField = client.getClass().getDeclaredField("listeners");
       listenersField.setAccessible(true);
-      LinkedBlockingDeque<?> lbdq = (LinkedBlockingDeque<?>)listenersField.get(client);
+      LinkedBlockingDeque<?> lbdq = (LinkedBlockingDeque<?>) listenersField.get(client);
 
       // Oh joy, the LinkedBlockingDeque's iterator is buggy in JDK 6 and can
       // make the next() method run into an infinite loop while holding forever
@@ -207,16 +208,25 @@ public class RemoteManagementSource {
       // Hence, the iteration of toArray() instead.
       Object[] listeners = lbdq.toArray();
       for (Object listener : listeners) {
-        Field confRuntimeField = listener.getClass().getDeclaredField("val$crt");
-        confRuntimeField.setAccessible(true);
-        Object clientRuntime = confRuntimeField.get(listener);
-        Method getConfigMethod = clientRuntime.getClass().getMethod("getConfig");
-        getConfigMethod.setAccessible(true);
-        ClientConfig clientConfig = (ClientConfig)getConfigMethod.invoke(clientRuntime);
+        try {
+          Field confRuntimeField = listener.getClass().getDeclaredField("val$crt");
+          confRuntimeField.setAccessible(true);
+          Object clientRuntime = confRuntimeField.get(listener);
+          Method getConfigMethod = clientRuntime.getClass().getMethod("getConfig");
+          getConfigMethod.setAccessible(true);
+          ClientConfig clientConfig = (ClientConfig) getConfigMethod.invoke(clientRuntime);
 
-        AtomicBoolean cleanme = (AtomicBoolean)clientConfig.getProperty(markerProperty);
-        if (cleanme != null && cleanme.get()) {
-          lbdq.remove(listener);
+          AtomicBoolean cleanme = (AtomicBoolean) clientConfig.getProperty(markerProperty);
+          // it is possible that the property was not set yet; for example if a new client request came in,
+          // and we clean up a listener on the same client at the same time
+          if (cleanme != null && cleanme.get()) {
+            lbdq.remove(listener);
+          }
+        } catch (Exception e) {
+          if (NOTIFICATION_LOGGED.compareAndSet(false, true)) {
+            LOG.error("Unable to cleanup Jersey 2.6 Client listeners, you may run into a memory leak!", e);
+            LOG.debug("Here is the number of listeners on this client : " + lbdq.size());
+          }
         }
       }
     } catch (Exception e) {
