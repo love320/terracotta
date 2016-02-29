@@ -21,7 +21,7 @@ The Initial Developer of the Covered Software is
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-root</artifactId>
-    <version>4.3.2-SNAPSHOT</version>
+    <version>4.3.3-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -41,7 +41,7 @@ The Initial Developer of the Covered Software is
   <properties>
     <group>system</group>
     <tcmaven.version>2.1.0</tcmaven.version>
-    <terracotta.core.version>4.3.2-SNAPSHOT</terracotta.core.version>
+    <terracotta.core.version>4.3.3-SNAPSHOT</terracotta.core.version>
     <tc.core.groupId>org.terracotta</tc.core.groupId>
     <tc.core.artifactId>terracotta</tc.core.artifactId>
     <tc.management.war.groupId>org.terracotta</tc.management.war.groupId>
