@@ -654,7 +654,9 @@ public class TCServerImpl extends SEDA implements TCServer {
       sslContextFactory.setSslContext(securityManager.getSslContext());
 
       // TAB-5271
-      sslContextFactory.setExcludeProtocols(getVulnerableProtocols());
+      sslContextFactory.addExcludeProtocols(getVulnerableProtocols());
+      // TAB-6658
+      sslContextFactory.addExcludeCipherSuites((getVulnerableCipherSuites()));
       SslSelectChannelConnector scc = new SslSelectChannelConnector(sslContextFactory);
       scc.setPort(commonL2Config.managementPort().getIntValue());
       scc.setHost(commonL2Config.managementPort().getBind());
@@ -1107,5 +1109,12 @@ public class TCServerImpl extends SEDA implements TCServer {
     HashSet<String> protocolSet = new HashSet<String>();
     protocolSet.addAll(Arrays.asList(csProtocols.split(",")));
     return protocolSet.toArray(new String[protocolSet.size()]);
+  }
+
+  private String[] getVulnerableCipherSuites() {
+    String exCiphers = TCPropertiesImpl.getProperties().getProperty(TCPropertiesConsts.DISABLED_CIPHER_SUITES);
+    HashSet<String> cipherSet = new HashSet<String>();
+    cipherSet.addAll(Arrays.asList(exCiphers.split(",")));
+    return cipherSet.toArray(new String[cipherSet.size()]);
   }
 }
