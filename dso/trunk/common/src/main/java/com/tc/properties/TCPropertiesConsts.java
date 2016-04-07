@@ -917,8 +917,16 @@ public interface TCPropertiesConsts {
   /*********************************************************************************************************************
    * <code>
    * Section :  Secure Communication protocol for TCServer
-   * disabled.secure.protocols - List of comma separated protocols which needs to be disabled from comunication usage.
+   * disabled.secure.protocols - List of comma separated protocols which need to be disabled from communication usage.
    * </code>
    ********************************************************************************************************************/
   public static final String DISABLED_SECURE_PROTOCOLS                                      = "disabled.secure.protocols";
+
+  /*********************************************************************************************************************
+   * <code>
+   * Section :  Secure Communication ciphers for TCServer
+   * disabled.cipher.suites - List of comma separated ciphers which need to be excluded from communication usage.
+   * </code>
+   ********************************************************************************************************************/
+  public static final String DISABLED_CIPHER_SUITES                                         = "disabled.cipher.suites";
 }
