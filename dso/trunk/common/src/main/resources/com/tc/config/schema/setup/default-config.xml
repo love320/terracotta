@@ -17,22 +17,10 @@ The Initial Developer of the Covered Software is
 -->
 
 <tc:tc-config xmlns:tc="http://www.terracotta.org/config">
-    <servers secure="true">
+    <servers>
         <server>
             <data>%(user.home)/terracotta/server-data</data>
             <logs>%(user.home)/terracotta/server-logs</logs>
-          <security>
-            <ssl>
-              <certificate>jks:l2@/Users/rism/code/tc-enterprise/trunk/toolkit-ee-system-tests/target/temp/SecuredL2ToolkitTest/security-dir//keyStore.jks
-              </certificate>
-            </ssl>
-            <keychain>
-              <url>file:///Users/rism/code/tc-enterprise/trunk/toolkit-ee-system-tests/target/temp/SecuredL2ToolkitTest/security-dir//keyChain.key</url>
-            </keychain>
-            <auth>
-              <url>file:///Users/rism/code/tc-enterprise/trunk/toolkit-ee-system-tests/target/temp/SecuredL2ToolkitTest/security-dir//authentication.ini</url>
-            </auth>
-          </security>
         </server>
     </servers>
 
