@@ -182,7 +182,7 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public void notifyTransportDisconnected(final MessageTransport transport, final boolean forcedDisconnect) {
     this.channelSessionID = this.sessionProvider.nextSessionID(getRemoteNodeID());
-    logger.info("ClientMessageChannel moves to " + this.channelSessionID + " for remote node " + getRemoteNodeID());
+    logger.info("ClientMessageChannel moves to next session for remote node " + getRemoteNodeID());
     super.notifyTransportDisconnected(transport, forcedDisconnect);
   }
 
