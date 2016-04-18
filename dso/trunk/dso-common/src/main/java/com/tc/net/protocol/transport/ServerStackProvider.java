@@ -359,8 +359,7 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
           return;
         } else {
           if ((principal = securityManager.authenticate(connectionId.getUsername(), connectionId.getPassword())) == null) {
-            logger.fatal("Authentication failed for user " + connectionId.getUsername()
-                         + " with pw (" + connectionId.getPassword().length + "): " + new String(connectionId.getPassword()));
+            logger.fatal("Authentication failed");
             this.isHandshakeError = true;
             return;
           }
