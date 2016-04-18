@@ -157,8 +157,7 @@ public class ClientHandshakeManagerImpl implements ClientHandshakeManager {
       if (isPaused) {
         pauseCallbacks(remoteNode, getDisconnectedCount());
         this.sessionManager.newSession(remoteNode);
-        this.logger.info("ClientHandshakeManager moves to " + this.sessionManager.getSessionID(remoteNode)
-                         + " for remote node " + remoteNode);
+        this.logger.info("ClientHandshakeManager moves to new session for remote node " + remoteNode);
       }
     } finally {
       lock.unlock();
