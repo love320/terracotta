@@ -20,6 +20,7 @@ import com.tc.config.schema.Config;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.DataStorage;
 import com.terracottatech.config.DataStorageOffheap;
+import com.terracottatech.config.FailoverPriority;
 import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Restartable;
 import com.terracottatech.config.Security;
@@ -60,4 +61,6 @@ public interface L2DSOConfig extends Config {
   boolean isJmxEnabled();
 
   void setJmxEnabled(boolean b);
+
+  FailoverPriority.Enum getFailoverPriority();
 }

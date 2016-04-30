@@ -40,6 +40,7 @@ import com.terracottatech.config.Auth;
 import com.terracottatech.config.BindPort;
 import com.terracottatech.config.DataStorage;
 import com.terracottatech.config.DataStorageOffheap;
+import com.terracottatech.config.FailoverPriority;
 import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.Keychain;
 import com.terracottatech.config.MirrorGroup;
@@ -80,9 +81,10 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   private final Restartable       restartable;
   private final DataStorage       dataStorage;
   private volatile boolean        jmxEnabled;
+  private final FailoverPriority.Enum failoverPriority;
 
   public L2DSOConfigObject(ConfigContext context, GarbageCollection gc, int clientReconnectWindow,
-                           Restartable restartable) {
+                           Restartable restartable, FailoverPriority.Enum failoverPriority) {
     super(context);
 
     this.context.ensureRepositoryProvides(Server.class);
@@ -90,6 +92,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
     this.garbageCollection = gc;
     this.clientReconnectWindow = clientReconnectWindow;
     this.restartable = restartable;
+    this.failoverPriority = failoverPriority;
 
     this.bind = server.getBind();
     this.host = server.getHost();
@@ -117,6 +120,11 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   @Override
   public void setJmxEnabled(boolean b) {
     this.jmxEnabled = b;
+  }
+
+  @Override
+  public FailoverPriority.Enum getFailoverPriority() {
+    return this.failoverPriority;
   }
 
   @Override
@@ -216,6 +224,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     initializeClientReconnectWindow(servers, defaultValueProvider);
     initializeRestartable(servers, defaultValueProvider);
+    initializeFailoverPriority(servers, defaultValueProvider);
     initializeGarbageCollection(servers, defaultValueProvider);
 
     for (int i = 0; i < servers.sizeOfMirrorGroupArray(); i++) {
@@ -507,6 +516,15 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     Restartable restartable = servers.getRestartable();
     Assert.assertNotNull(restartable);
+  }
+
+  private static void initializeFailoverPriority(Servers servers, DefaultValueProvider defaultValueProvider) 
+      throws XmlException {
+    if (!servers.isSetFailoverPriority()) {
+      String defaultVal = 
+          ((XmlString)defaultValueProvider.defaultFor(servers.schemaType(), "failover-priority")).getStringValue();
+      servers.setFailoverPriority(FailoverPriority.Enum.forString(defaultVal));
+    }
   }
 
   private static int getDefaultReconnectWindow(Servers servers, DefaultValueProvider defaultValueProvider)

@@ -29,6 +29,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.ext.LexicalHandler;
 
 import com.tc.exception.ImplementMe;
+import com.terracottatech.config.FailoverPriority;
 import com.terracottatech.config.GarbageCollection;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.NonNegativeInt;
@@ -408,6 +409,36 @@ public class MockServers implements Servers {
   @Override
   public void unsetRestartable() {
     throw new ImplementMe();
+  }
+
+  @Override
+  public FailoverPriority.Enum getFailoverPriority() {
+    return null;
+  }
+
+  @Override
+  public FailoverPriority xgetFailoverPriority() {
+    return null;
+  }
+
+  @Override
+  public boolean isSetFailoverPriority() {
+    return false;
+  }
+
+  @Override
+  public void setFailoverPriority(final FailoverPriority.Enum failoverPriority) {
+
+  }
+
+  @Override
+  public void xsetFailoverPriority(final FailoverPriority failoverPriority) {
+
+  }
+
+  @Override
+  public void unsetFailoverPriority() {
+
   }
 
   @Override

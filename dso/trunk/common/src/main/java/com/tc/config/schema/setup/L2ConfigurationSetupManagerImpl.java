@@ -54,6 +54,8 @@ import com.tc.properties.TCPropertiesImpl;
 import com.tc.server.ServerConnectionValidator;
 import com.tc.util.Assert;
 import com.terracottatech.config.Client;
+import com.terracottatech.config.FailoverPriority;
+import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Security;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -184,6 +186,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     // do this after servers and groups have been processed
     validateGroups();
     validateSecurityConfiguration();
+    validateFailoverPriorityConfiguration();
   }
 
   @Override
@@ -364,7 +367,8 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
           .directoryConfigurationLoadedFrom()), secure);
       this.dsoL2Config = new L2DSOConfigObject(createContext(this.beanRepository, configurationCreator()
           .directoryConfigurationLoadedFrom()), serversBean.getGarbageCollection(),
-                                               serversBean.getClientReconnectWindow(), serversBean.getRestartable());
+                                               serversBean.getClientReconnectWindow(), serversBean.getRestartable(),
+                                               serversBean.getFailoverPriority());
     }
 
     public CommonL2Config commonL2Config() {
@@ -541,6 +545,21 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                                                                                                       "Security is enabled but server "
                                                                                                                           + thisL2Identifier
                                                                                                                           + " has no configured SSL certificate."); }
+  }
+
+  private void validateFailoverPriorityConfiguration()  throws ConfigurationSetupException {
+    Servers servers = (Servers) serversBeanRepository().bean();
+
+    FailoverPriority.Enum failoverPriority = servers.getFailoverPriority();
+    if(failoverPriority == FailoverPriority.CONSISTENCY) {
+      MirrorGroup[] mirrorGroups = servers.getMirrorGroupArray();
+      for (MirrorGroup mirrorGroup: mirrorGroups) {
+        if(mirrorGroup.sizeOfServerArray() > 2) {
+          throw new ConfigurationSetupException(mirrorGroup.getGroupName() + " contains more than two servers " +
+                                                "which is a violation of the CONSISTENCY failover priority requirement");
+        }
+      }
+    }
   }
 
   @Override

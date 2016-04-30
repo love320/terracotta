@@ -24,6 +24,7 @@ import com.tc.logging.TCLogging;
 import com.tc.object.config.schema.L2DSOConfigObject;
 import com.tc.server.ServerConnectionValidator;
 import com.terracottatech.config.BindPort;
+import com.terracottatech.config.FailoverPriority;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -61,9 +62,31 @@ public class TopologyVerifier {
     // check if group names consist of the same members as the older ones
     topologyStatus = checkGroupInfo();
     if (topologyStatus != TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE) { return topologyStatus; }
+    
+    topologyStatus = checkIfFailoverPriorityRequirementViolated();
+    if (topologyStatus != TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE) { return topologyStatus; }
 
     // Check if removed members are still alive
     return checkIfServersAlive();
+  }
+
+  private TopologyReloadStatus checkIfFailoverPriorityRequirementViolated() {
+    if(oldServersBean.getFailoverPriority() != newServersBean.getFailoverPriority()) {
+      logger.warn("Failover priority settings can't be dynamically changed");
+      return TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE;
+    }
+
+    TopologyReloadStatus status = TopologyReloadStatus.TOPOLOGY_CHANGE_ACCEPTABLE;
+    if(newServersBean.getFailoverPriority() == FailoverPriority.CONSISTENCY) {
+      for (MirrorGroup mirrorGroup : newServersBean.getMirrorGroupArray()) {
+        if(mirrorGroup.sizeOfServerArray() > 2) {
+          logger.warn(mirrorGroup.getGroupName() + " violates the CONSISTENCY failover priority requirement of " +
+                      "less than or equal to two servers in a mirror group");
+          status = TopologyReloadStatus.TOPOLOGY_CHANGE_UNACCEPTABLE;
+        }
+      }
+    }
+    return status;
   }
 
   private TopologyReloadStatus checkIfServersAlive() {
