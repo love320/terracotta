@@ -31,7 +31,8 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
   private boolean                        restartable = false;
 
   public L2SConfigBuilder() {
-    super(1, new String[] { "groups", "update-check", "garbage-collection", "client-reconnect-window", "restartable" });
+    super(1, new String[] { "groups", "update-check", "garbage-collection", "client-reconnect-window", "restartable", 
+                            "failover-priority" });
   }
 
   public void setGroups(GroupConfigBuilder[] groups) {
@@ -80,6 +81,10 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     restartable = data;
   }
 
+  public void setFailoverPriority(String priority) {
+    setProperty("failover-priority",  priority);
+  }
+
   public void setReconnectWindowForPrevConnectedClients(int secs) {
     setProperty("client-reconnect-window", secs);
   }
@@ -111,6 +116,10 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     }
 
     out += getRestartable();
+
+    if (isSet("failover-priority")) {
+      out += element("failover-priority");
+    }
 
     if (isSet("client-reconnect-window")) {
       out += element("client-reconnect-window");

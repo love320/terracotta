@@ -34,6 +34,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.tc.util.runtime.Os;
 import com.terracottatech.config.Client;
+import com.terracottatech.config.FailoverPriority;
 import com.terracottatech.config.MirrorGroup;
 import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
@@ -387,6 +388,7 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Server server = servers.getMirrorGroupArray(0).getServerArray(0);
     Assert.assertFalse(server.isSetOffheap());
     Assert.assertFalse(servers.getRestartable().getEnabled());
+    Assert.assertEquals(FailoverPriority.AVAILABILITY, servers.getFailoverPriority());
   }
 
   public void testDefaultOffHeap() throws IOException, ConfigurationSetupException {
@@ -593,6 +595,36 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertTrue(servers.isSetUpdateCheck());
     Assert.assertEquals(false, servers.getUpdateCheck().getEnabled());
     Assert.assertEquals(14, servers.getUpdateCheck().getPeriodDays());
+  }
+
+  public void testFailoverPriorityDefault() throws IOException, ConfigurationSetupException {
+    this.tcConfig = getTempFile("sbp-config.xml");
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" +
+                    "<servers> <failover-priority/> </servers>" +
+                    "</tc:tc-config>";
+
+    writeConfigFile(config);
+
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
+
+    Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
+
+    Assert.assertEquals(FailoverPriority.AVAILABILITY, servers.getFailoverPriority());
+  }
+
+  public void testFailoverPriority() throws IOException, ConfigurationSetupException {
+    this.tcConfig = getTempFile("sbp-config.xml");
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" +
+                    "<servers> <failover-priority>CONSISTENCY</failover-priority> </servers>" +
+                    "</tc:tc-config>";
+
+    writeConfigFile(config);
+
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
+
+    Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
+
+    Assert.assertEquals(FailoverPriority.CONSISTENCY, servers.getFailoverPriority());
   }
 
   public void testClientNotInitialized() throws Exception {
