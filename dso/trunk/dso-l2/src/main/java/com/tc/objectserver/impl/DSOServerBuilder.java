@@ -31,6 +31,7 @@ import com.tc.l2.objectserver.L2ObjectStateManager;
 import com.tc.l2.objectserver.L2PassiveSyncStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
+import com.tc.l2.state.sbp.SBPResolver;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.management.L2Management;
@@ -164,7 +165,8 @@ public interface DSOServerBuilder extends TCDumper, PostInit {
                                       ServerTransactionFactory serverTransactionFactory,
                                       DGCSequenceProvider dgcSequenceProvider,
                                       SequenceGenerator indexSequenceGenerator, ObjectIDSequence objectIDSequence,
-                                      final DataStorage datastore, int electionTimeInSecs, NodesStore nodesStore);
+                                      final DataStorage datastore, int electionTimeInSecs, NodesStore nodesStore,
+                                      SBPResolver sbpResolver);
 
   L2Management createL2Management(boolean listenerEnabled, TCServerInfoMBean tcServerInfoMBean,
                                   L2ConfigurationSetupManager configSetupManager,

@@ -56,6 +56,7 @@ import com.tc.l2.objectserver.L2PassiveSyncStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
 import com.tc.l2.state.StateSyncManagerImpl;
+import com.tc.l2.state.sbp.SBPResolver;
 import com.tc.lang.TCThreadGroup;
 import com.tc.logging.CallbackOnExitHandler;
 import com.tc.logging.CallbackOnExitState;
@@ -374,13 +375,15 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private final TaskRunner                       taskRunner;
 
   protected final BufferManagerFactoryProvider bufferManagerFactoryProvider; 
+  private final SBPResolver sbpResolver;
 
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final Sink httpSink,
                                  final TCServerInfoMBean tcServerInfoMBean,
                                  final ObjectStatsRecorder objectStatsRecorder, final L2State l2State, final SEDA seda,
                                  final TCServer server, final TCSecurityManager securityManager,
-                                 final BufferManagerFactoryProvider bufferManagerFactoryProvider) {
+                                 final BufferManagerFactoryProvider bufferManagerFactoryProvider,
+                                 final SBPResolver sbpResolver) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
     // Even in tests, we probably don't want different thread group configurations
@@ -404,6 +407,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.seda = seda;
     this.serverBuilder = createServerBuilder(this.haConfig, logger, server, configSetupManager.dsoL2Config());
     this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(this.threadGroup);
+    this.sbpResolver = sbpResolver;
   }
 
   protected DSOServerBuilder createServerBuilder(final HaConfig config, final TCLogger tcLogger, final TCServer server,
@@ -449,6 +453,19 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
     this.thisServerNodeID = makeServerNodeID(this.configSetupManager.dsoL2Config());
     ThisServerNodeId.setThisServerNodeId(thisServerNodeID);
+    if(this.configSetupManager.isDesignatedActive()) {
+      if(sbpResolver.isEnabled()) {
+        ThisServerNodeId.setDesignatedActive(this.configSetupManager.isDesignatedActive());
+      } else {
+        logger.warn("Server role designation is ignored when failover-intervention is not enabled in the config.");
+      }
+    } else {
+      // If there is only one server in the group, make it the designated active
+      if(this.configSetupManager.getActiveServerGroupForThisL2().getMembers().length == 1) {
+        ThisServerNodeId.setDesignatedActive(true);
+      }
+    }
+    
 
     TerracottaOperatorEventLogging.setNodeNameProvider(new ServerNameProvider(this.configSetupManager.dsoL2Config()
         .serverName()));
@@ -993,7 +1010,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                                   objectIDSequence, l2DSOConfig.getDataStorage(),
                                                                   configSetupManager.getActiveServerGroupForThisL2()
                                                                       .getElectionTimeInSecs(), haConfig
-                                                                      .getNodesStore());
+                                                                      .getNodesStore(), this.sbpResolver);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2State);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.indexHACoordinator);
     this.l2Coordinator.getStateManager().registerForStateChangeEvents(this.l2Coordinator);

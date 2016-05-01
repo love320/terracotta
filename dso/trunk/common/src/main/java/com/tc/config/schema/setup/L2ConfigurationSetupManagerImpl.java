@@ -96,6 +96,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private final L2ConfigData                myConfigData;
   private final ConfigTCProperties          configTCProperties;
   private final Set<InetAddress>            localInetAddresses;
+  private final boolean                     designatedActive;
 
   private volatile ActiveServerGroupsConfig activeServerGroupsConfig;
   private volatile SecurityConfig           securityConfig;
@@ -110,20 +111,21 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                          boolean setupLogging)
       throws ConfigurationSetupException {
     this(null, configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator,
-         illegalConfigChangeHandler, setupLogging);
+         illegalConfigChangeHandler, setupLogging, false);
   }
 
   public L2ConfigurationSetupManagerImpl(String[] args, ConfigurationCreator configurationCreator,
                                          String thisL2Identifier, DefaultValueProvider defaultValueProvider,
                                          XmlObjectComparator xmlObjectComparator,
                                          IllegalConfigurationChangeHandler illegalConfigChangeHandler,
-                                         boolean setupLogging)
+                                         boolean setupLogging, boolean designatedActive)
       throws ConfigurationSetupException {
     super(args, configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
     Assert.assertNotNull(defaultValueProvider);
     Assert.assertNotNull(xmlObjectComparator);
 
+    this.designatedActive = designatedActive;
     this.l2ConfigData = new HashMap<String, L2ConfigData>();
 
     this.localInetAddresses = getAllLocalInetAddresses();
@@ -221,6 +223,11 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   @Override
   public boolean isSecure() {
     return secure;
+  }
+
+  @Override
+  public boolean isDesignatedActive() {
+    return this.designatedActive;
   }
 
   @Override

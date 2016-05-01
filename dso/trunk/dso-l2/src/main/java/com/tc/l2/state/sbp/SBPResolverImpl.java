@@ -14,17 +14,30 @@
  * The Initial Developer of the Covered Software is 
  *      Terracotta, Inc., a Software AG company
  */
-package com.tc.management.beans.object;
+package com.tc.l2.state.sbp;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FailOverAction;
-import com.tc.config.schema.setup.TopologyReloadStatus;
-import com.tc.management.TerracottaMBean;
+import com.tc.util.State;
 
-public interface EnterpriseTCServerMbean extends TerracottaMBean {
-  TopologyReloadStatus reloadConfiguration() throws ConfigurationSetupException;
+public class SBPResolverImpl implements SBPResolver {
 
-  void performFailOverAction(FailOverAction action);
+  @Override
+  public boolean isEnabled() {
+    return false;
+  }
 
-  boolean isWaitingForFailOverAction();
+  @Override
+  public boolean resolveTiedElection(final State state) {
+    return true;
+  }
+
+  @Override
+  public boolean isWaitingForFailOverAction() {
+    return false;
+  }
+
+  @Override
+  public void performFailOverAction(final FailOverAction failOverAction) {
+    //no-op
+  }
 }

@@ -136,6 +136,13 @@ public class TerracottaOperatorEventFactory {
                                                .getMirrorServerDisconnectMessage(), new Object[] { serverName }), "");
   }
 
+  public static TerracottaOperatorEvent createPassiveWaitingForPromotionEvent(String nodeId) {
+    return new TerracottaOperatorEventImpl(EventLevel.CRITICAL, EventSubsystem.CLUSTER_TOPOLOGY,
+        EventType.NODE_WAITING_FOR_PROMOTION,
+        MessageFormat.format(TerracottaOperatorEventResources
+            .getPassiveWaitingForPromotionMessage(), new Object[] { nodeId }), "");
+  }
+
   /**
    * zap events
    */

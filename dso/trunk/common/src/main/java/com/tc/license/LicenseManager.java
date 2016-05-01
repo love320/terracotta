@@ -17,6 +17,7 @@
 package com.tc.license;
 
 import static org.terracotta.license.LicenseConstants.CAPABILITY_AUTHENTICATION;
+import static org.terracotta.license.LicenseConstants.CAPABILITY_FAILOVER_TUNING;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SEARCH;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SECURITY;
 import static org.terracotta.license.LicenseConstants.CAPABILITY_SERVER_STRIPING;
@@ -173,5 +174,9 @@ public class LicenseManager {
 
   public static void verifySecurityCapability() {
     verifyCapability(CAPABILITY_SECURITY);
+  }
+
+  public static void verifyFailoverTuningCapability() {
+    verifyCapability(CAPABILITY_FAILOVER_TUNING);
   }
 }

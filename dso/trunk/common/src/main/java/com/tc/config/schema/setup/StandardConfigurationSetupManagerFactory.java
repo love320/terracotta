@@ -55,6 +55,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
   private final String            defaultL2Identifier;
   private final ConfigurationSpec configurationSpec;
   private final PwProvider        pwProvider;
+  private final boolean           designatedActive; 
 
   public static enum ConfigMode {
     L2, CUSTOM_L1, EXPRESS_L1
@@ -130,9 +131,14 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
                                                        .getProperty(ConfigurationSetupManagerFactory.SERVER_CONFIG_FILE_PROPERTY_NAME),
                                                    configMode, new File(cwdAsString));
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
+    this.designatedActive = isDesignatedActive(commandLine);
     this.pwProvider = pwProvider;
   }
 
+  private static boolean isDesignatedActive(CommandLine commandLine) {
+    return commandLine.hasOption('a');
+  }
+      
   private String getDefaultL2Identifier(final CommandLine commandLine) {
     String l2NameOnCommandLine = StringUtils.trimToNull(commandLine.getOptionValue('n'));
     String specifiedL2Identifier = StringUtils.trimToNull(l2NameOnCommandLine != null ? l2NameOnCommandLine : System
@@ -186,6 +192,12 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
       l2NameOption.setRequired(false);
       l2NameOption.setArgName("l2-name");
       options.addOption(l2NameOption);
+
+      Option roleOption = new Option("a", "active", false, "whether this L2 should become ACTIVE on startup; defaults to false");
+      roleOption.setRequired(false);
+      roleOption.setType(Boolean.class);
+      roleOption.setArgName("l2-role");
+      options.addOption(roleOption);
     } else {
       configFileOption.setRequired(true);
       options.addOption(configFileOption);
@@ -234,7 +246,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory, this.pwProvider);
 
     return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, this.defaultValueProvider,
-                                               this.xmlObjectComparator, this.illegalChangeHandler, setupLogging);
+                                               this.xmlObjectComparator, this.illegalChangeHandler, setupLogging, designatedActive);
   }
 
   public String[] getArguments() {

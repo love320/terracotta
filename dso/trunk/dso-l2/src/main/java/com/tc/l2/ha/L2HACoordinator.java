@@ -64,6 +64,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerConfigImpl;
 import com.tc.l2.state.StateManagerImpl;
 import com.tc.l2.state.StateSyncManager;
+import com.tc.l2.state.sbp.SBPResolver;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.GroupID;
@@ -117,6 +118,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   private final CopyOnWriteArrayList<PassiveServerListener> passiveListeners = new CopyOnWriteArrayList<PassiveServerListener>();
   private final L2PassiveSyncStateManager                   l2PassiveSyncStateManager;
   private final L2ObjectStateManager                        l2ObjectStateManager;
+  private final SBPResolver                                 sbpResolver;
 
   // private final ClusterStatePersistor clusterStatePersistor;
 
@@ -134,7 +136,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
                          final ServerTransactionFactory serverTransactionFactory,
                          DGCSequenceProvider dgcSequenceProvider, SequenceGenerator indexSequenceGenerator,
                          final ObjectIDSequence objectIDSequence, final DataStorage dataStorage, int electionTimInSecs,
-                         final NodesStore nodesStore) {
+                         final NodesStore nodesStore, final SBPResolver sbpResolver) {
     this.consoleLogger = consoleLogger;
     this.server = server;
     this.groupManager = groupCommsManager;
@@ -143,6 +145,7 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
     this.l2PassiveSyncStateManager = l2PassiveSyncStateManager;
     this.indexSequenceGenerator = indexSequenceGenerator;
     this.l2ObjectStateManager = l2ObjectStateManager;
+    this.sbpResolver = sbpResolver;
     // this.clusterStatePersistor = clusterStatePersistor;
 
     init(stageManager, clusterStatePersistor, l2ObjectStateManager, l2IndexStateManager, objectManager,
@@ -174,7 +177,8 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
 
     this.stateManager = new StateManagerImpl(this.consoleLogger, this.groupManager, stateChangeSink,
                                              new StateManagerConfigImpl(electionTimeInSecs),
-                                             createWeightGeneratorFactoryForStateManager(gtxm), statePersistor);
+                                             createWeightGeneratorFactoryForStateManager(gtxm), statePersistor, 
+                                             sbpResolver);
     this.sequenceGenerator = new SequenceGenerator(this);
 
     final L2HAZapNodeRequestProcessor zapProcessor = new L2HAZapNodeRequestProcessor(this.consoleLogger,
@@ -390,6 +394,27 @@ public class L2HACoordinator implements L2Coordinator, GroupEventsListener, Sequ
   public void nodeLeft(final NodeID nodeID) {
     warn(nodeID + " left the cluster");
     if (this.stateManager.isActiveCoordinator()) {
+      if(sbpResolver.isEnabled()) {
+        /*
+         Forcing an active to take part in an election when sbp is enabled. But with the current tie-breaker 
+         the active will always win the tie breaking attempt and return immediately skipping an actual election.
+         The intent is to make the active participate in election before continuing as active. The assumption
+         is that an active that loses the active status on tie-breaking will not reach back here. The following
+         assertion ensures that.
+
+         This has the additional advantage that in the future when we add new pluggable tie-breaker implementations 
+         for 2-node mirror groups, we can take different actions in the rare cases that the active actually loses 
+         the election.
+
+         NOTE: The current election algorithm may not handle active re-participating in an election in > 2 node cases 
+         as the voting system is not fool proof, so for now the active tries to enter into election if and only if SBP 
+         is enabled and SBP is enabled only for 2-node mirror groups. 
+         */
+        this.stateManager.startElection();
+        if(stateManager.getCurrentState() != StateManager.ACTIVE_COORDINATOR) {
+          throw new AssertionError("Active node should have won the election");
+        }
+      }
       this.rObjectManager.clear(nodeID);
       this.rClusterStateMgr.fireNodeLeftEvent(nodeID);
       firePassiveEvent(nodeID, false);

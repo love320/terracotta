@@ -21,6 +21,8 @@ import com.tc.net.ServerID;
 public class ThisServerNodeId {
 
   private static volatile ServerID thisServerNodeId = new ServerID();
+  
+  private static volatile boolean designatedActive = false;
 
   public static ServerID getThisServerNodeId() {
     return thisServerNodeId;
@@ -30,4 +32,11 @@ public class ThisServerNodeId {
     thisServerNodeId = id;
   }
 
+  public static boolean isDesignatedActive() {
+    return designatedActive;
+  }
+
+  public static void setDesignatedActive(boolean active) {
+    designatedActive = active;
+  }
 }

@@ -23,6 +23,7 @@ import com.tc.l2.context.StateChangedEvent;
 import com.tc.l2.ha.L2HAZapNodeRequestProcessor;
 import com.tc.l2.ha.WeightGeneratorFactory;
 import com.tc.l2.msg.L2StateMessage;
+import com.tc.l2.state.sbp.SBPResolver;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.TSAManagementEventPayload;
@@ -54,6 +55,7 @@ public class StateManagerImpl implements StateManager {
   private final CopyOnWriteArrayList<StateChangeListener> listeners           = new CopyOnWriteArrayList<StateChangeListener>();
   private final Object                 electionLock        = new Object();
   private final ClusterStatePersistor  clusterStatePersistor;
+  private final SBPResolver            sbpResolver;
 
   private NodeID                       activeNode          = ServerID.NULL_ID;
   private volatile State               state               = START_STATE;
@@ -62,13 +64,14 @@ public class StateManagerImpl implements StateManager {
 
   public StateManagerImpl(TCLogger consoleLogger, GroupManager groupManager, Sink stateChangeSink,
                           StateManagerConfig stateManagerConfig, WeightGeneratorFactory weightFactory,
-                          final ClusterStatePersistor clusterStatePersistor) {
+                          final ClusterStatePersistor clusterStatePersistor, SBPResolver sbpResolver) {
     this.consoleLogger = consoleLogger;
     this.groupManager = groupManager;
     this.stateChangeSink = stateChangeSink;
     this.weightsFactory = weightFactory;
     this.electionMgr = new ElectionManagerImpl(groupManager, stateManagerConfig);
     this.clusterStatePersistor = clusterStatePersistor;
+    this.sbpResolver = sbpResolver;
   }
 
   @Override
@@ -87,25 +90,39 @@ public class StateManagerImpl implements StateManager {
       if (electionInProgress) return;
       electionInProgress = true;
     }
-    try {
-      State initial = clusterStatePersistor.getInitialState();
-      // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
-      // the election and wait for a zap.
-      if (initial != null && !initial.equals(ACTIVE_COORDINATOR)) {
-        info("Skipping election and waiting for the active to zap since this this L2 did not go down as active.");
-      } else if (state == START_STATE || state == PASSIVE_STANDBY) {
-        runElection();
-      } else {
-        info("Ignoring Election request since not in right state");
-      }
-    } finally {
-      synchronized (electionLock) {
-        electionInProgress = false;
+    
+    if(state == ACTIVE_COORDINATOR && sbpResolver.isEnabled()) {
+      runElection();
+    } else {
+      try {
+        State initial = clusterStatePersistor.getInitialState();
+        // Went down as either PASSIVE_STANDBY or UNITIALIZED, either way we need to wait for the active to zap, just skip
+        // the election and wait for a zap.
+        if (initial != null && !initial.equals(ACTIVE_COORDINATOR)) {
+          info("Skipping election and waiting for the active to zap since this this L2 did not go down as active.");
+        } else if (state == START_STATE || state == PASSIVE_STANDBY) {
+          runElection();
+        } else {
+          info("Ignoring Election request since not in right state");
+        }
+      } finally {
+        synchronized (electionLock) {
+          electionInProgress = false;
+        }
       }
     }
   }
 
   private void runElection() {
+    if(sbpResolver.isEnabled() && state == ACTIVE_COORDINATOR) {
+      if(sbpResolver.resolveTiedElection(state)) {
+        logger.info("Won the tie-breaking in " + ACTIVE_COORDINATOR + " state. So skipping further election.");
+        return;
+      } else {
+        throw new AssertionError(ACTIVE_COORDINATOR + " losing tie breaking is not supported.");
+      }
+    }
+    
     NodeID myNodeID = getLocalNodeID();
     NodeID winner = ServerID.NULL_ID;
     int count = 0;
@@ -119,21 +136,32 @@ public class StateManagerImpl implements StateManager {
       debugInfo("Running election - isNew: " + isNew);
       winner = electionMgr.runElection(myNodeID, isNew, weightsFactory);
       if (winner == myNodeID) {
-        debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
-        moveToActiveState();
+        if(sbpResolver.isEnabled()) {
+          if(sbpResolver.resolveTiedElection(state)) {
+            logger.info(myNodeID + " won the election. Moving to active state.");
+            moveToActiveState();
+          } else {
+            logger.info(myNodeID + " lost the election. Waiting for the active to come up");
+            waitUntilActiveNodeIDNotNull();
+          }
+        } else {
+          debugInfo("Won Election, moving to active state. myNodeID/winner=" + myNodeID);
+          moveToActiveState();
+        }
       } else {
-        electionMgr.reset(null);
         // Election is lost, but we wait for the active node to declare itself as winner. If this doesn't happen in a
         // finite time we restart the election. This is to prevent some weird cases where two nodes might end up
         // thinking the other one is the winner.
         // @see MNK-518
         debugInfo("Lost election, waiting for winner to declare as active, winner=" + winner);
-        waitUntilActiveNodeIDNotNull(electionMgr.getElectionTime());
+        waitUntilActiveNodeIDNotNull();
       }
     }
   }
-
-  private synchronized void waitUntilActiveNodeIDNotNull(long timeout) {
+  
+  private synchronized void waitUntilActiveNodeIDNotNull() {
+    electionMgr.reset(null);
+    long timeout = electionMgr.getElectionTime();
     while (activeNode.isNull() && timeout > 0) {
       long start = System.currentTimeMillis();
       try {

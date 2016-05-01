@@ -37,6 +37,7 @@ import com.tc.l2.objectserver.L2PassiveSyncStateManagerImpl;
 import com.tc.l2.objectserver.NullL2IndexStateManager;
 import com.tc.l2.objectserver.ServerTransactionFactory;
 import com.tc.l2.state.StateSyncManager;
+import com.tc.l2.state.sbp.SBPResolver;
 import com.tc.logging.DumpHandlerStore;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
@@ -291,13 +292,14 @@ public class StandardDSOServerBuilder implements DSOServerBuilder {
                                              final DGCSequenceProvider dgcSequenceProvider,
                                              final SequenceGenerator indexSequenceGenerator,
                                              final ObjectIDSequence objectIDSequence, final DataStorage datastore,
-                                             int electionTimeInSecs, final NodesStore nodesStore) {
+                                             int electionTimeInSecs, final NodesStore nodesStore,
+                                             final SBPResolver sbpResolver) {
     return new L2HACoordinator(consoleLogger, server, stageManager, groupCommsManager, clusterStatePersistor,
                                objectManager, indexHACoordinator, l2PassiveSyncStateManager, l2ObjectStateManager,
                                l2IndexStateManager, transactionManager, gtxm, weightGeneratorFactory,
                                configurationSetupManager, recycler, haConfig.getThisGroupID(), stripeStateManager,
                                serverTransactionFactory, dgcSequenceProvider, indexSequenceGenerator, objectIDSequence,
-                               datastore, electionTimeInSecs, nodesStore);
+                               datastore, electionTimeInSecs, nodesStore, sbpResolver);
   }
 
   @Override
