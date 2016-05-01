@@ -71,6 +71,9 @@ public class ServerStatResourceServiceImplV2 {
       String state = null;
       if(currentServer != null) {
         role = (currentServer.getAttributes().get("State").equals("ACTIVE-COORDINATOR") ? "ACTIVE" : "PASSIVE");
+        if(localManagementSource.isWaitingForFailOverAction()) {
+          role = "WAITING-FOR-PROMOTION";
+        }
         state = (String) currentServer.getAttributes().get("State");
       }
       String managementPort = currentServer.getAttributes().get("ManagementPort").toString();

@@ -171,7 +171,7 @@ public class CorruptMessageTest extends BaseDSOTestCase {
                                      TCServerInfoMBean tcServerInfoMBean, ObjectStatsRecorder objectStatsRecorder,
                                      L2State l2State, SEDA seda, TCServer server, TCSecurityManager securityManager) {
       super(configSetupManager, threadGroup, connectionPolicy, httpSink,
-          tcServerInfoMBean, objectStatsRecorder, l2State, seda, server, securityManager, null);
+          tcServerInfoMBean, objectStatsRecorder, l2State, seda, server, securityManager, null, null);
     }
 
     @Override

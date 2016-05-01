@@ -63,6 +63,7 @@ done
 
 #rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
 #users may change it accordingly
+args="$@"
 start=true
 while "$start"
 do
@@ -72,12 +73,22 @@ ${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
    -Dsun.rmi.dgc.server.gcInterval=31536000000\
    ${JAVA_OPTS} \
    -cp "${TC_INSTALL_DIR}/server/lib/tc.jar" \
-   com.tc.server.TCServerMain "$@"
+   com.tc.server.TCServerMain $args
  exitValue=$?
  start=false;
 
  if test "$exitValue" = "11"; then
    start=true;
+   mod_args=''
+   # The --active flag needs to be removed from the startup options when a server gets auto-restarted.
+   # When a server node is auto-restarted, the intention is to make it join the cluster as a passive.
+   # So in that case it doesn't make sense to start the server with the active flag.
+   for var in $args; do
+     if [ '--active' != "$var" ] && [ '-a' != "$var" ]; then
+       mod_args="$mod_args $var";
+     fi
+   done
+   args="$mod_args"
    echo "start-tc-server: Restarting the server..."
  else
    exit $exitValue

@@ -64,12 +64,27 @@ set OPTS=%OPTS% -Dcom.sun.management.jmxremote
 set OPTS=%OPTS% -Dsun.rmi.dgc.server.gcInterval=31536000000
 set OPTS=%OPTS% -Dtc.install-root=%TC_INSTALL_DIR%
 
+setlocal EnableDelayedExpansion
+
+set ARGS=%*
 set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 :START_TCSERVER
-%JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain %*
+%JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain !ARGS!
 if %ERRORLEVEL% EQU 11 (
-	ECHO start-tc-server: Restarting the server...
-	GOTO START_TCSERVER
+  set MOD_ARGS=
+  rem The --active flag needs to be removed from the startup options when a server gets auto-restarted.
+  rem When a server node is auto-restarted, the intention is to make it join the cluster as a passive.
+  rem So in that case it doesn't make sense to start the server with the active flag.
+  for %%I in (%ARGS%) do (
+    if --active NEQ %%I if -a NEQ %%I (
+      if "" EQU "!MOD_ARGS!" (
+        set MOD_ARGS=%%I
+      ) else (
+        set MOD_ARGS=!MOD_ARGS! %%I
+      )
+    )
+  )
+  set ARGS=!MOD_ARGS!
+  ECHO start-tc-server: Restarting the server...
+  GOTO START_TCSERVER
 )
-exit /b %ERRORLEVEL%
-endlocal

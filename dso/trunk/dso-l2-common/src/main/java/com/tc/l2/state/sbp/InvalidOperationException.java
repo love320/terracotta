@@ -14,17 +14,21 @@
  * The Initial Developer of the Covered Software is 
  *      Terracotta, Inc., a Software AG company
  */
-package com.tc.management.beans.object;
+package com.tc.l2.state.sbp;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.FailOverAction;
-import com.tc.config.schema.setup.TopologyReloadStatus;
-import com.tc.management.TerracottaMBean;
+public class InvalidOperationException extends RuntimeException {
+  public InvalidOperationException() {
+  }
 
-public interface EnterpriseTCServerMbean extends TerracottaMBean {
-  TopologyReloadStatus reloadConfiguration() throws ConfigurationSetupException;
+  public InvalidOperationException(final String message) {
+    super(message);
+  }
 
-  void performFailOverAction(FailOverAction action);
+  public InvalidOperationException(final String message, final Throwable cause) {
+    super(message, cause);
+  }
 
-  boolean isWaitingForFailOverAction();
+  public InvalidOperationException(final Throwable cause) {
+    super(cause);
+  }
 }

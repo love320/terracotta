@@ -84,6 +84,10 @@ class TerracottaOperatorEventResources {
     return instance.resources.getString("mirror.server.disconnect");
   }
 
+  static String getPassiveWaitingForPromotionMessage() {
+    return instance.resources.getString("mirror.server.waiting.promotion");
+  }
+
   /**
    * Zap Messagse
    */

@@ -437,7 +437,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
     StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config, WeightGeneratorFactory
-        .createDefaultFactory(), new TestClusterStatePersistor());
+        .createDefaultFactory(), new TestClusterStatePersistor(), null);
     messageStage[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStage[localIndex].getSink());
     messageStage[localIndex].start();

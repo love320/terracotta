@@ -53,7 +53,7 @@ public class StateManagerTest extends TCTestCase {
     weightGeneratorFactory = spy(new WeightGeneratorFactory());
     clusterStatePersistor = new TestClusterStatePersistor();
     stateManager = new StateManagerImpl(TCLogging.getLogger(getClass()), groupManager,
-        stateChangeSink, stateManagerConfig, weightGeneratorFactory, clusterStatePersistor);
+        stateChangeSink, stateManagerConfig, weightGeneratorFactory, clusterStatePersistor, null);
   }
 
   public void testSkipElectionWhenRecoveredPassive() throws Exception {
@@ -62,7 +62,7 @@ public class StateManagerTest extends TCTestCase {
     new TestClusterStatePersistor(clusterStateMap).setCurrentL2State(StateManager.PASSIVE_STANDBY);
     clusterStatePersistor = new TestClusterStatePersistor(clusterStateMap);
     stateManager = new StateManagerImpl(TCLogging.getLogger(getClass()), groupManager,
-        stateChangeSink, stateManagerConfig, weightGeneratorFactory, clusterStatePersistor);
+        stateChangeSink, stateManagerConfig, weightGeneratorFactory, clusterStatePersistor, null);
     stateManager.startElection();
     verifyElectionDidNotStart();
   }
@@ -72,7 +72,7 @@ public class StateManagerTest extends TCTestCase {
     new TestClusterStatePersistor(clusterStateMap).setCurrentL2State(StateManager.PASSIVE_UNINITIALIZED);
     clusterStatePersistor = new TestClusterStatePersistor(clusterStateMap);
     stateManager = new StateManagerImpl(TCLogging.getLogger(getClass()), groupManager,
-        stateChangeSink, stateManagerConfig, weightGeneratorFactory, clusterStatePersistor);
+        stateChangeSink, stateManagerConfig, weightGeneratorFactory, clusterStatePersistor, null);
     stateManager.startElection();
     verifyElectionDidNotStart();
   }

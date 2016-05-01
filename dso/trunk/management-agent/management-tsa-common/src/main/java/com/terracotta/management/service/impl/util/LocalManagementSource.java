@@ -21,6 +21,7 @@ import org.terracotta.license.LicenseConstants;
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.config.schema.setup.FailOverAction;
 import com.tc.config.schema.setup.TopologyReloadStatus;
 import com.tc.license.LicenseManager;
 import com.tc.license.ProductID;
@@ -496,6 +497,17 @@ public class LocalManagementSource {
     } catch (ConfigurationSetupException e) {
       throw new ManagementSourceException(e);
     }
+  }
+
+  public void performFailOverAction(final FailOverAction action) {
+    if (enterpriseTCServerMbean == null) {
+      throw new NotSupportedFeatureException("Performing fail-over action is only possible with the Enterprise product.");
+    }
+    enterpriseTCServerMbean.performFailOverAction(action);
+  }
+  
+  public boolean isWaitingForFailOverAction() {
+    return enterpriseTCServerMbean.isWaitingForFailOverAction();
   }
 
   /**

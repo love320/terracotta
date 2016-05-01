@@ -64,4 +64,11 @@ public interface L2ConfigurationSetupManager {
       throws ConfigurationSetupException;
 
   boolean isSecure();
+
+  /**
+   * To avoid split brain scenarios during startup of multiple nodes, one of the nodes must be explicitly
+   * designated as the active so that the nodes that are not designated do not even attempt to become the
+   * active(which could cause a split brain if there is a network partition between the nodes)
+   */
+  boolean isDesignatedActive();
 }

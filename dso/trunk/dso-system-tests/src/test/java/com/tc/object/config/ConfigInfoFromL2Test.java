@@ -306,6 +306,11 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     }
 
     @Override
+    public boolean isDesignatedActive() {
+      return this.l2Config.isDesignatedActive();
+    }
+
+    @Override
     public UpdateCheckConfig updateCheckConfig() {
       return this.l2Config.updateCheckConfig();
     }

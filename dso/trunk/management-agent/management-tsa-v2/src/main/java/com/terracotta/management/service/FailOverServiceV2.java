@@ -14,17 +14,25 @@
  * The Initial Developer of the Covered Software is 
  *      Terracotta, Inc., a Software AG company
  */
-package com.tc.management.beans.object;
+package com.terracotta.management.service;
 
-import com.tc.config.schema.setup.ConfigurationSetupException;
-import com.tc.config.schema.setup.FailOverAction;
-import com.tc.config.schema.setup.TopologyReloadStatus;
-import com.tc.management.TerracottaMBean;
+/**
+ * An interface for service implementations providing facilities for performing fail-over actions on a TSA node.
+ */
+public interface FailOverServiceV2 {
 
-public interface EnterpriseTCServerMbean extends TerracottaMBean {
-  TopologyReloadStatus reloadConfiguration() throws ConfigurationSetupException;
+  /**
+   * Perform the PROMOTE fail-over action that promotes a server that is waiting for promotion
+   */
+  void promote();
 
-  void performFailOverAction(FailOverAction action);
+  /**
+   * Perform the RESTART fail-over action that restarts a server that is waiting for promotion
+   */
+  void restart();
 
-  boolean isWaitingForFailOverAction();
+  /**
+   * Perform the FAILFAST fail-over action that shuts down a server that is waiting for promotion
+   */
+  void failFast();
 }

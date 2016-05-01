@@ -58,9 +58,12 @@ import com.tc.config.schema.messaging.http.GroupIDMapServlet;
 import com.tc.config.schema.messaging.http.GroupInfoServlet;
 import com.tc.config.schema.messaging.http.ManagementNotListeningOnThatPortServlet;
 import com.tc.config.schema.setup.ConfigurationSetupException;
+import com.tc.config.schema.setup.FailOverAction;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.exception.TCRuntimeException;
 import com.tc.l2.state.StateManager;
+import com.tc.l2.state.sbp.SBPResolver;
+import com.tc.l2.state.sbp.SBPResolverImpl;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
@@ -165,6 +168,7 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
   protected final TCSecurityManager         securityManager;
+  protected SBPResolver                     sbpResolver;
 
   /**
    * This should only be used for tests.
@@ -641,8 +645,10 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                   ObjectStatsRecorder objectStatsRecorder,
                                                                   L2State l2State, TCServerImpl serverImpl) {
     BufferManagerFactoryProvider bufferManagerFactoryProvider = new BufferManagerFactoryProviderImpl(this.securityManager);
+    this.sbpResolver = new SBPResolverImpl();
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
-                                       objectStatsRecorder, l2State, this, this, securityManager, bufferManagerFactoryProvider);
+                                       objectStatsRecorder, l2State, this, this, securityManager,
+                                       bufferManagerFactoryProvider, this.sbpResolver);
   }
 
   private void bindManagementHttpPort(final CommonL2Config commonL2Config)
@@ -1032,6 +1038,16 @@ public class TCServerImpl extends SEDA implements TCServer {
   @Override
   public String getResourceState() {
     return dsoServer.getResourceManager().getState().name();
+  }
+
+  @Override
+  public boolean isWaitingForFailOverAction() {
+    return this.sbpResolver.isWaitingForFailOverAction();
+  }
+
+  @Override
+  public void performFailOverAction(FailOverAction action) {
+    this.sbpResolver.performFailOverAction(action);
   }
 
   @Override
