@@ -84,6 +84,18 @@ public class ClassUtils {
   }
 
   /**
+   * Validates the class name of the class being invoked to ensure it is an internal class
+   * and throws a {@link RuntimeException} if the validation fails
+   *
+   * @param className class name to be validated
+   */
+  public static void validatePackageOfInvokedClass(String className) {
+    if (!className.startsWith("com.tc.")) {
+      throw new RuntimeException("Invalid class invocation : " + className);
+    }
+  }
+
+  /**
    * Holder for a class name and field name which together fully identify a field
    * @see ClassUtils#parseFullyQualifiedFieldName(String)
    */
