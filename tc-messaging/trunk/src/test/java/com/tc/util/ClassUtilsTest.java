@@ -111,4 +111,18 @@ public class ClassUtilsTest {
 
   }
 
+  @Test
+  public void testValidateInvokedClassName() {
+    ClassUtils.validatePackageOfInvokedClass("com.tc.l2.msg.GCResultMessage");
+    ClassUtils.validatePackageOfInvokedClass("com.tc.l2.msg.ClusterStateMessage");
+
+    try {
+      ClassUtils.validatePackageOfInvokedClass("ran.dom.classname");
+      fail("Should have thrown");
+    } catch (Exception e) {
+//      expected
+    }
+
+  }
+
 }

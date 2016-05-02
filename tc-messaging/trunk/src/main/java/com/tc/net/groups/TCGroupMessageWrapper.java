@@ -13,6 +13,7 @@ import com.tc.net.protocol.tcm.TCMessageHeader;
 import com.tc.net.protocol.tcm.TCMessageType;
 import com.tc.object.msg.DSOMessageBase;
 import com.tc.object.session.SessionID;
+import com.tc.util.ClassUtils;
 
 import java.io.IOException;
 
@@ -53,7 +54,13 @@ public class TCGroupMessageWrapper extends DSOMessageBase {
       case GROUP_MESSAGE_ID:
         TCByteBufferInputStream in = getInputStream();
         try {
-          this.message = (GroupMessage) Class.forName(in.readString()).newInstance();
+          String className = in.readString();
+          ClassUtils.validatePackageOfInvokedClass(className);
+          Class clazz = Class.forName(className, false, getClass().getClassLoader());
+          if(!GroupMessage.class.isAssignableFrom(clazz)) {
+            throw new RuntimeException("Invalid class invocation : " + className);
+          }
+          this.message = (GroupMessage) clazz.newInstance();
         } catch (InstantiationException e) {
           throw new RuntimeException(e);
         } catch (IllegalAccessException e) {

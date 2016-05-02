@@ -4,6 +4,7 @@
 package com.tc.object.dna.impl;
 
 import com.tc.object.loaders.ClassProvider;
+import com.tc.util.ClassUtils;
 
 public class SerializerDNAEncodingImpl extends BaseDNAEncodingImpl {
 
@@ -35,6 +36,7 @@ public class SerializerDNAEncodingImpl extends BaseDNAEncodingImpl {
     @Override
     public Class getClassFor(final String className) {
       try {
+        ClassUtils.validatePackageOfInvokedClass(className);
         return Class.forName(className);
       } catch (final ClassNotFoundException e) {
         throw new AssertionError(e);
