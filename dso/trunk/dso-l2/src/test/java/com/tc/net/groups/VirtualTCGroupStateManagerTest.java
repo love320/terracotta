@@ -32,6 +32,7 @@ import com.tc.l2.msg.L2StateMessage;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.StateManagerConfig;
 import com.tc.l2.state.StateManagerImpl;
+import com.tc.l2.state.sbp.SBPResolverImpl;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.TestThrowableHandler;
 import com.tc.logging.TCLogger;
@@ -437,7 +438,7 @@ public class VirtualTCGroupStateManagerTest extends TCTestCase {
     MyStateManagerConfig config = new MyStateManagerConfig();
     config.electionTime = 5;
     StateManager mgr = new StateManagerImpl(logger, gm, sinks[localIndex], config, WeightGeneratorFactory
-        .createDefaultFactory(), new TestClusterStatePersistor(), null);
+        .createDefaultFactory(), new TestClusterStatePersistor(), new SBPResolverImpl());
     messageStage[localIndex] = new L2StateMessageStage(mgr);
     gm.routeMessages(L2StateMessage.class, messageStage[localIndex].getSink());
     messageStage[localIndex].start();
