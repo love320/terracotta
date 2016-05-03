@@ -61,7 +61,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
   }
 
   protected ServerIdentifierWeightGenerator allocate() {
-    return new ServerIdentifierWeightGenerator("XXX", 0);
+    return new ServerIdentifierWeightGenerator("something.invalid", 0);
   }
 
   public void testZapNodeProcessorWeightGeneratorFactory() {
