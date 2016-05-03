@@ -44,7 +44,7 @@ public class ZapNodeProcessorWeightGeneratorFactoryTest extends TCTestCase {
 
   public void testServerIdentifierWeightGenerator() {
     try {
-      new ServerIdentifierWeightGenerator("XXX", 0);
+      new ServerIdentifierWeightGenerator("something.invalid", 0);
       Assert.fail("Illegal hostname shall throw exception");
     } catch (TCRuntimeException e) {
       // expected
