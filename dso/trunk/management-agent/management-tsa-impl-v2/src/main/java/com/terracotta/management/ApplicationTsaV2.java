@@ -39,6 +39,7 @@ import com.terracotta.management.l1bridge.RemoteServiceStubGeneratorV2;
 import com.terracotta.management.resource.services.BackupResourceServiceImplV2;
 import com.terracotta.management.resource.services.ConfigurationResourceServiceImplV2;
 import com.terracotta.management.resource.services.DiagnosticsResourceServiceImplV2;
+import com.terracotta.management.resource.services.FailOverResourceServiceImplV2;
 import com.terracotta.management.resource.services.JmxResourceServiceImplV2;
 import com.terracotta.management.resource.services.LicenseResourceServiceImplV2;
 import com.terracotta.management.resource.services.LocalShutdownResourceServiceImplV2;
@@ -109,6 +110,7 @@ public class ApplicationTsaV2 extends DefaultApplicationV2 implements Applicatio
 
     s.add(LocalShutdownResourceServiceImplV2.class);
     s.add(ServerStatResourceServiceImplV2.class);
+    s.add(FailOverResourceServiceImplV2.class);
 
     s.add(CacheStatisticSamplesResourceServiceImplV2.class);
     s.add(CachesResourceServiceImplV2.class);
