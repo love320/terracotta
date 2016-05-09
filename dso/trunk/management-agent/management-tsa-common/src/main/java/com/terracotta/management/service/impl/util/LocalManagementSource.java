@@ -507,6 +507,9 @@ public class LocalManagementSource {
   }
   
   public boolean isWaitingForFailOverAction() {
+    if (enterpriseTCServerMbean == null) {
+      return false;
+    }
     return enterpriseTCServerMbean.isWaitingForFailOverAction();
   }
 
