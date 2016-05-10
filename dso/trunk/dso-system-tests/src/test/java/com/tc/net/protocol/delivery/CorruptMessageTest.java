@@ -28,6 +28,7 @@ import com.tc.config.schema.setup.L1ConfigurationSetupManager;
 import com.tc.config.schema.setup.L2ConfigurationSetupManager;
 import com.tc.config.schema.setup.TestConfigurationSetupManagerFactory;
 import com.tc.exception.TCRuntimeException;
+import com.tc.l2.state.sbp.SBPResolverImpl;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.TCThreadGroup;
 import com.tc.lang.ThrowableHandlerImpl;
@@ -171,7 +172,7 @@ public class CorruptMessageTest extends BaseDSOTestCase {
                                      TCServerInfoMBean tcServerInfoMBean, ObjectStatsRecorder objectStatsRecorder,
                                      L2State l2State, SEDA seda, TCServer server, TCSecurityManager securityManager) {
       super(configSetupManager, threadGroup, connectionPolicy, httpSink,
-          tcServerInfoMBean, objectStatsRecorder, l2State, seda, server, securityManager, null, null);
+          tcServerInfoMBean, objectStatsRecorder, l2State, seda, server, securityManager, null, new SBPResolverImpl());
     }
 
     @Override
