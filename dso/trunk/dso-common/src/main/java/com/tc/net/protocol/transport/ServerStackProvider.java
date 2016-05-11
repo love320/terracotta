@@ -208,7 +208,9 @@ public class ServerStackProvider implements NetworkStackProvider, MessageTranspo
 
   @Override
   public void notifyTransportClosedOnStart(MessageTransport transport) {
-    this.connectionPolicy.clientDisconnected(transport.getConnectionId());
+    if (!transport.getConnectionId().isJvmIDNull()) {
+      this.connectionPolicy.clientDisconnected(transport.getConnectionId());
+    }
   }
 
   /*********************************************************************************************************************
