@@ -76,6 +76,13 @@ public class TransportEventMonitor implements MessageTransportListener {
     }
   }
 
+//  this is a no-op as this method is required for a specific case of a connection that is 
+//  disconnected at start status itself and so does not fit the pattern here
+  @Override
+  public void notifyTransportClosedOnStart(MessageTransport transport) {
+    // no-op
+  }
+
   public boolean waitForConnect(long timeout) throws InterruptedException {
     return this.connectedEvents.poll(timeout, TimeUnit.MILLISECONDS) != null;
   }
