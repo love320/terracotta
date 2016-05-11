@@ -88,6 +88,11 @@ public class OOOConnectionWatcher implements RestoreConnectionCallback, MessageT
     oooLayer.notifyTransportReconnectionRejected(transport);
   }
 
+  @Override
+  public void notifyTransportClosedOnStart(MessageTransport transport) {
+    //  no-op
+  }
+
   private static void log(MessageTransport transport, String msg) {
     if (debug) DebugUtil.trace("OOOConnectionWatcher-CLIENT-" + transport.getConnectionId() + " -> " + msg);
   }

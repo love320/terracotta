@@ -244,6 +244,11 @@ abstract class AbstractMessageChannel implements MessageChannel, MessageChannelI
   }
 
   @Override
+  public void notifyTransportClosedOnStart(MessageTransport transport) {
+    //  no-op
+  }
+
+  @Override
   public TCSocketAddress getLocalAddress() {
     NetworkLayer sendLyr = this.sendLayer;
     if (sendLyr != null) {
