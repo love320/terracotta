@@ -34,7 +34,8 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     CONNECTED,
     CONNECT_ATTEMPT,
     CLOSED,
-    RECONNECTION_REJECTED
+    RECONNECTION_REJECTED,
+    CLOSED_ON_START
   }
 
   protected ConnectionIdLogger       logger;
@@ -105,6 +106,10 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
     fireTransportEvent(TransportEvent.RECONNECTION_REJECTED);
   }
 
+  protected final void fireTransportClosedOnStartEvent() {
+    fireTransportEvent(TransportEvent.CLOSED_ON_START);
+  }
+
   private void fireTransportEvent(TransportEvent type) {
     for (Iterator i = listeners.iterator(); i.hasNext();) {
       MessageTransportListener listener = (MessageTransportListener) i.next();
@@ -126,6 +131,9 @@ public abstract class AbstractMessageTransport implements MessageTransport, Conn
           break;
         case RECONNECTION_REJECTED:
           listener.notifyTransportReconnectionRejected(this);
+          break;
+        case CLOSED_ON_START:
+          listener.notifyTransportClosedOnStart(this);
           break;
       }
     }
