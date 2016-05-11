@@ -135,6 +135,11 @@ public class ConnectionHealthCheckerImpl implements ConnectionHealthChecker {
     // NOP
   }
 
+  @Override
+  public void notifyTransportClosedOnStart(MessageTransport transport) {
+    //  no-op
+  }
+
   static class HealthCheckerMonitorThreadEngine implements Runnable {
     private final ConcurrentMap<ConnectionID, MessageTransport> connectionMap =
         new ConcurrentHashMap<ConnectionID, MessageTransport>();

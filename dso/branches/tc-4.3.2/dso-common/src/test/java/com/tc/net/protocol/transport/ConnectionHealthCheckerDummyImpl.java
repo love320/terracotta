@@ -61,4 +61,9 @@ public class ConnectionHealthCheckerDummyImpl implements ConnectionHealthChecker
     // NOP
   }
 
+  @Override
+  public void notifyTransportClosedOnStart(MessageTransport transport) {
+    //  no-op
+  }
+
 }

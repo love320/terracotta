@@ -295,6 +295,9 @@ abstract class MessageTransportBase extends AbstractMessageTransport implements 
           if (status.isDisconnected()) forcedDisconnect = true;
           status.reset();
         } else {
+          if (status.isStart()) {
+            fireTransportClosedOnStartEvent();
+          }
           status.reset();
           getLogger().warn("closing down connection - " + event);
           return;

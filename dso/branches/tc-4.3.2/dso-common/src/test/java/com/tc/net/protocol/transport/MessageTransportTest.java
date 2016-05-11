@@ -267,6 +267,11 @@ public class MessageTransportTest extends TCTestCase {
     public void notifyTransportReconnectionRejected(MessageTransport transport) {
       //
     }
+
+    @Override
+    public void notifyTransportClosedOnStart(MessageTransport transport) {
+      //  no-op
+    }
   }
 
   private void createServerTransport() throws Exception {

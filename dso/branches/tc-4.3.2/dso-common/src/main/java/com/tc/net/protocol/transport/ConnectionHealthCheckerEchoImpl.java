@@ -62,4 +62,9 @@ public class ConnectionHealthCheckerEchoImpl implements ConnectionHealthChecker 
     // NOP
   }
 
+  @Override
+  public void notifyTransportClosedOnStart(MessageTransport transport) {
+    //  no-op
+  }
+
 }

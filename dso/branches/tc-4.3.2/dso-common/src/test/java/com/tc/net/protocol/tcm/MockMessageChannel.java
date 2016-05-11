@@ -196,6 +196,11 @@ public class MockMessageChannel implements MessageChannelInternal {
     throw new ImplementMe();
   }
 
+  @Override
+  public void notifyTransportClosedOnStart(MessageTransport transport) {
+    throw new ImplementMe();
+  }
+
   public long getLastClosedCallTimestamp() {
     return lastClosedCallTimestamp;
   }

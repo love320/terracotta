@@ -198,6 +198,11 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
+  public void notifyTransportClosedOnStart(MessageTransport transport) {
+    //  no-op
+  }
+
+  @Override
   public ChannelIDProvider getChannelIDProvider() {
     return this.channelIdProvider;
   }

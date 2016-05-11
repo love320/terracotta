@@ -189,6 +189,11 @@ public class ServerStackProviderTest extends TCTestCase {
       public void notifyTransportDisconnected(MessageTransport transport, boolean forcedDisconnect) {
         //
       }
+
+      @Override
+      public void notifyTransportClosedOnStart(MessageTransport transport) {
+        //    no-op
+      }
     };
   }
 
