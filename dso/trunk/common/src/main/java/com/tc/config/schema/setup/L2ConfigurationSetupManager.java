@@ -20,7 +20,6 @@ import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.SecurityConfig;
-import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.object.config.schema.L2DSOConfig;
 import com.tc.operatorevent.TerracottaOperatorEventLogger;
 import com.tc.server.ServerConnectionValidator;
@@ -36,8 +35,6 @@ public interface L2ConfigurationSetupManager {
   CommonL2Config commonl2Config();
 
   L2DSOConfig dsoL2Config();
-
-  UpdateCheckConfig updateCheckConfig();
 
   ActiveServerGroupsConfig activeServerGroupsConfig();
 

@@ -16,9 +16,6 @@
  */
 package com.tc.config.schema.setup;
 
-import org.apache.xmlbeans.XmlBoolean;
-import org.apache.xmlbeans.XmlException;
-import org.apache.xmlbeans.XmlInteger;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
 
@@ -33,8 +30,6 @@ import com.tc.config.schema.ConfigTCPropertiesFromObject;
 import com.tc.config.schema.IllegalConfigurationChangeHandler;
 import com.tc.config.schema.SecurityConfig;
 import com.tc.config.schema.SecurityConfigObject;
-import com.tc.config.schema.UpdateCheckConfig;
-import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.repository.ChildBeanFetcher;
 import com.tc.config.schema.repository.ChildBeanRepository;
@@ -61,7 +56,6 @@ import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument;
 import com.terracottatech.config.TcProperties;
-import com.terracottatech.config.UpdateCheck;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -91,7 +85,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private static final TCLogger             logger = TCLogging.getLogger(L2ConfigurationSetupManagerImpl.class);
 
   private final Map<String, L2ConfigData>   l2ConfigData;
-  private final UpdateCheckConfig           updateCheckConfig;
   private final String                      thisL2Identifier;
   private final L2ConfigData                myConfigData;
   private final ConfigTCProperties          configTCProperties;
@@ -134,13 +127,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     runConfigurationCreator(false);
     this.configTCProperties = new ConfigTCPropertiesFromObject((TcProperties) tcPropertiesRepository().bean());
     overwriteTcPropertiesFromConfig();
-
-    // do this after runConfigurationCreator method call, after serversBeanRepository is set
-    try {
-      this.updateCheckConfig = getUpdateCheckConfig();
-    } catch (XmlException e2) {
-      throw new ConfigurationSetupException(e2);
-    }
 
     this.activeServerGroupsConfig = new ActiveServerGroupsConfigObject(
                                                                        createContext(serversBeanRepository(),
@@ -314,39 +300,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
         groupNames.add(grpName);
       }
     }
-  }
-
-  private UpdateCheckConfig getUpdateCheckConfig() throws XmlException {
-    final UpdateCheck defaultUpdateCheck = getDefaultUpdateCheck();
-
-    ChildBeanRepository beanRepository = new ChildBeanRepository(serversBeanRepository(), UpdateCheck.class,
-                                                                 new ChildBeanFetcher() {
-                                                                   @Override
-                                                                   public XmlObject getChild(XmlObject parent) {
-                                                                     UpdateCheck updateCheck = ((Servers) parent)
-                                                                         .getUpdateCheck();
-
-                                                                     if (updateCheck == null) {
-                                                                       updateCheck = defaultUpdateCheck;
-                                                                       ((Servers) parent).setUpdateCheck(updateCheck);
-                                                                     }
-                                                                     return updateCheck;
-                                                                   }
-                                                                 });
-
-    return new UpdateCheckConfigObject(createContext(beanRepository, configurationCreator()
-        .directoryConfigurationLoadedFrom()));
-  }
-
-  private UpdateCheck getDefaultUpdateCheck() throws XmlException {
-    final int defaultPeriodDays = ((XmlInteger) defaultValueProvider.defaultFor(serversBeanRepository()
-        .rootBeanSchemaType(), "update-check/period-days")).getBigIntegerValue().intValue();
-    final boolean defaultEnabled = ((XmlBoolean) defaultValueProvider.defaultFor(serversBeanRepository()
-        .rootBeanSchemaType(), "update-check/enabled")).getBooleanValue();
-    UpdateCheck uc = UpdateCheck.Factory.newInstance();
-    uc.setEnabled(defaultEnabled);
-    uc.setPeriodDays(defaultPeriodDays);
-    return uc;
   }
 
   // called by configObjects that need to create their own context
@@ -587,11 +540,6 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   @Override
   public L2DSOConfig dsoL2Config() {
     return this.myConfigData.dsoL2Config();
-  }
-
-  @Override
-  public UpdateCheckConfig updateCheckConfig() {
-    return updateCheckConfig;
   }
 
   @Override

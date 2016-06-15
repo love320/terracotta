@@ -570,10 +570,6 @@ public class TCServerImpl extends SEDA implements TCServer {
         }
       }
 
-      if (updateCheckEnabled()) {
-        UpdateCheckAction.start(updateCheckPeriodDays(), getMaxDataSize());
-      }
-
       // this is the last thing to do
       File warTempDir = new File(commonL2Config.dataPath(), "jetty");
       prepareJettyWarTempDir(warTempDir);
@@ -606,15 +602,6 @@ public class TCServerImpl extends SEDA implements TCServer {
       throw new TCRuntimeException("Problem converting max data size: ", e);
     }
     return maxOffheap;
-  }
-
-  private boolean updateCheckEnabled() {
-    boolean enable = Boolean.getBoolean("com.tc.enableUpdateCheck");
-    return enable && this.configurationSetupManager.updateCheckConfig().getUpdateCheck().getEnabled();
-  }
-
-  private int updateCheckPeriodDays() {
-    return this.configurationSetupManager.updateCheckConfig().getUpdateCheck().getPeriodDays();
   }
 
   protected void startServer() throws Exception {

@@ -23,7 +23,6 @@ import com.tc.config.schema.ActiveServerGroupConfig;
 import com.tc.config.schema.ActiveServerGroupsConfig;
 import com.tc.config.schema.CommonL2Config;
 import com.tc.config.schema.SecurityConfig;
-import com.tc.config.schema.UpdateCheckConfig;
 import com.tc.config.schema.dynamic.ConfigItem;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.L1ConfigurationSetupManager;
@@ -308,11 +307,6 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     @Override
     public boolean isDesignatedActive() {
       return this.l2Config.isDesignatedActive();
-    }
-
-    @Override
-    public UpdateCheckConfig updateCheckConfig() {
-      return this.l2Config.updateCheckConfig();
     }
 
   }

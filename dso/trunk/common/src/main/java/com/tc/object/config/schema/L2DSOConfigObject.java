@@ -24,7 +24,6 @@ import org.apache.xmlbeans.XmlString;
 
 import com.tc.config.schema.ActiveServerGroupsConfigObject;
 import com.tc.config.schema.BaseConfigObject;
-import com.tc.config.schema.UpdateCheckConfigObject;
 import com.tc.config.schema.context.ConfigContext;
 import com.tc.config.schema.defaults.DefaultValueProvider;
 import com.tc.config.schema.dynamic.ParameterSubstituter;
@@ -252,7 +251,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       }
     }
 
-    UpdateCheckConfigObject.initializeUpdateCheck(servers, defaultValueProvider);
   }
 
   private static void initializeDatastore(final Server server, final DefaultValueProvider defaultValueProvider) throws XmlException {
