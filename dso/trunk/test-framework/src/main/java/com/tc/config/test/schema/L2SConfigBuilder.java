@@ -26,12 +26,11 @@ import java.util.List;
 public class L2SConfigBuilder extends BaseConfigBuilder {
 
   private GroupConfigBuilder[]           groups;
-  private UpdateCheckConfigBuilder       updateCheck;
   private GarbageCollectionConfigBuilder gc;
   private boolean                        restartable = false;
 
   public L2SConfigBuilder() {
-    super(1, new String[] { "groups", "update-check", "garbage-collection", "client-reconnect-window", "restartable", 
+    super(1, new String[] { "groups", "garbage-collection", "client-reconnect-window", "restartable", 
                             "failover-priority" });
   }
 
@@ -66,11 +65,6 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     setGroups(new GroupConfigBuilder[] { group });
   }
 
-  public void setUpdateCheck(UpdateCheckConfigBuilder updateCheck) {
-    this.updateCheck = updateCheck;
-    setProperty("update-check", updateCheck);
-  }
-
   public void setGarbageCollection(GarbageCollectionConfigBuilder gc) {
     this.gc = gc;
     setProperty("garbage-collection", gc);
@@ -93,10 +87,6 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
     return groups;
   }
 
-  public UpdateCheckConfigBuilder getUpdateCheck() {
-    return updateCheck;
-  }
-
   @Override
   public String toString() {
     String out = "";
@@ -105,10 +95,6 @@ public class L2SConfigBuilder extends BaseConfigBuilder {
       for (GroupConfigBuilder group : groups) {
         out += group.toString();
       }
-    }
-
-    if (isSet("update-check")) {
-      out += updateCheck.toString();
     }
 
     if (isSet("garbage-collection")) {
