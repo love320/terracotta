@@ -16,6 +16,8 @@ import java.util.Set;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 
+import static com.tc.util.Assert.assertTrue;
+import static org.hamcrest.collection.IsArrayContainingInAnyOrder.arrayContainingInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.matchers.JUnitMatchers.hasItems;
@@ -111,10 +113,23 @@ public class RemoteRequestValidatorTest {
     } catch (ResourceRuntimeException rre) {
       e = rre;
     }
-    assertEquals("Agent IDs must be in " +
-            "'[localhost.home_1212, localhost.home_4343, localhost.home_4545, localhost.home_59822]' " +
-            "or 'embedded'.", e.getMessage());
 
+    String message = e.getMessage();
+    int leftBracketIndex = message.indexOf('[');
+    int rightBracketIndex = message.indexOf(']');
+
+    assertTrue(leftBracketIndex >= 0);
+    assertTrue(rightBracketIndex >= 0);
+
+    String before = message.substring(0, leftBracketIndex);
+    String inBrackets = message.substring(leftBracketIndex + 1, rightBracketIndex);
+    String after = message.substring(rightBracketIndex + 1);
+
+    assertEquals("Agent IDs must be in '", before);
+    assertEquals("' or 'embedded'.", after);
+
+    String[] agentIDs = inBrackets.split(", ");
+    assertThat(agentIDs, arrayContainingInAnyOrder("localhost.home_1212", "localhost.home_4343", "localhost.home_4545", "localhost.home_59822"));
   }
 
 }
