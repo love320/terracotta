@@ -47,7 +47,7 @@ public class VerboseGCHelper {
     File verboseGcDir = new File(tempDir, "server-verboseGC");
     verboseGcDir.mkdirs();
     if (!verboseGcDir.exists()) { throw new AssertionError("Failed to create verbose gc logs dir"); }
-    File verboseGcOutputFile = new File(verboseGcDir, "verboseGC-" + (serverName == null ? "" : "(" + serverName + ")")
+    File verboseGcOutputFile = new File(verboseGcDir, "verboseGC-" + (serverName == null ? "" : serverName)
                                                       + mainClassName + "-started-" + getTimestamp() + ".log");
     if (verboseGcOutputFile.exists()) { throw new AssertionError("Verbose gc file: "
                                                                  + verboseGcOutputFile.getAbsolutePath()
