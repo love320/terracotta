@@ -33,13 +33,14 @@ import com.terracottatech.config.Server;
 import com.terracottatech.config.Servers;
 import com.terracottatech.config.TcConfigDocument.TcConfig;
 import com.terracottatech.config.TcProperties;
+import com.terracottatech.config.UpdateCheck;
 
 import java.io.File;
 import java.lang.reflect.Method;
 
 public class TcConfigDefaultInitializationTest extends TCTestCase {
   private static Class[] exemptedElements = { TcProperties.class, Authentication.class, HttpAuthentication.class,
-      Offheap.class, Security.class, Restartable.class, DataStorageHybrid.class };
+      Offheap.class, Security.class, Restartable.class, DataStorageHybrid.class, UpdateCheck.class };
   private TcConfig       config;
 
   @Override
