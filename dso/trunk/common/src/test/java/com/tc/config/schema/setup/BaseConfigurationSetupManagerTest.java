@@ -388,7 +388,6 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Server server = servers.getMirrorGroupArray(0).getServerArray(0);
     Assert.assertFalse(server.isSetOffheap());
     Assert.assertFalse(servers.getRestartable().getEnabled());
-    Assert.assertEquals(FailoverPriority.AVAILABILITY, servers.getFailoverPriority());
   }
 
   public void testDefaultOffHeap() throws IOException, ConfigurationSetupException {
@@ -565,7 +564,21 @@ public class BaseConfigurationSetupManagerTest extends TCTestCase {
     Assert.assertEquals(15, mirrorGroup.getElectionTime());
   }
 
-  public void testFailoverPriorityDefault() throws IOException, ConfigurationSetupException {
+  public void testFailoverPriorityDefault1() throws IOException, ConfigurationSetupException {
+    this.tcConfig = getTempFile("sbp-config.xml");
+    String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" +
+                    "</tc:tc-config>";
+
+    writeConfigFile(config);
+
+    BaseConfigurationSetupManager configSetupMgr = initializeAndGetBaseTVSConfigSetupManager(false);
+
+    Servers servers = (Servers) configSetupMgr.serversBeanRepository().bean();
+
+    Assert.assertFalse(servers.isSetFailoverPriority());
+  }
+
+  public void testFailoverPriorityDefault2() throws IOException, ConfigurationSetupException {
     this.tcConfig = getTempFile("sbp-config.xml");
     String config = "<tc:tc-config xmlns:tc=\"http://www.terracotta.org/config\">" +
                     "<servers> <failover-priority/> </servers>" +
