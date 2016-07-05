@@ -223,7 +223,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     initializeClientReconnectWindow(servers, defaultValueProvider);
     initializeRestartable(servers, defaultValueProvider);
-    initializeFailoverPriority(servers, defaultValueProvider);
     initializeGarbageCollection(servers, defaultValueProvider);
 
     for (int i = 0; i < servers.sizeOfMirrorGroupArray(); i++) {
@@ -514,15 +513,6 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     Restartable restartable = servers.getRestartable();
     Assert.assertNotNull(restartable);
-  }
-
-  private static void initializeFailoverPriority(Servers servers, DefaultValueProvider defaultValueProvider) 
-      throws XmlException {
-    if (!servers.isSetFailoverPriority()) {
-      String defaultVal = 
-          ((XmlString)defaultValueProvider.defaultFor(servers.schemaType(), "failover-priority")).getStringValue();
-      servers.setFailoverPriority(FailoverPriority.Enum.forString(defaultVal));
-    }
   }
 
   private static int getDefaultReconnectWindow(Servers servers, DefaultValueProvider defaultValueProvider)
