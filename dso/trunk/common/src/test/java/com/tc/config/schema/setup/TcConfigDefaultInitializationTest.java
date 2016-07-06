@@ -25,6 +25,7 @@ import com.tc.test.TCTestCase;
 import com.tc.util.Assert;
 import com.terracottatech.config.Authentication;
 import com.terracottatech.config.DataStorageHybrid;
+import com.terracottatech.config.FailoverPriority;
 import com.terracottatech.config.HttpAuthentication;
 import com.terracottatech.config.Offheap;
 import com.terracottatech.config.Restartable;
@@ -40,7 +41,7 @@ import java.lang.reflect.Method;
 
 public class TcConfigDefaultInitializationTest extends TCTestCase {
   private static Class[] exemptedElements = { TcProperties.class, Authentication.class, HttpAuthentication.class,
-      Offheap.class, Security.class, Restartable.class, DataStorageHybrid.class, UpdateCheck.class };
+      Offheap.class, Security.class, Restartable.class, DataStorageHybrid.class, UpdateCheck.class, FailoverPriority.Enum.class };
   private TcConfig       config;
 
   @Override
