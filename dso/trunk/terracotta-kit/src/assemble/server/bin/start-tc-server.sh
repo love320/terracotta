@@ -47,17 +47,17 @@ fi
 
 # For Cygwin, convert paths to Windows before invoking java
 if $cygwin; then
-  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -d "$TC_INSTALL_DIR"`
+  [ -n "$TC_INSTALL_DIR" ] && TC_INSTALL_DIR=`cygpath -m "$TC_INSTALL_DIR"`
 fi
 
 for JAVA_COMMAND in \
-"${JAVA_HOME}/bin/java -d64 -server -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -server -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -client -XX:MaxDirectMemorySize=9223372036854775807" \
-"${JAVA_HOME}/bin/java -XX:MaxDirectMemorySize=9223372036854775807"
+"\"${JAVA_HOME}/bin/java\" -d64 -server -XX:MaxDirectMemorySize=9223372036854775807" \
+"\"${JAVA_HOME}/bin/java\" -server -XX:MaxDirectMemorySize=9223372036854775807" \
+"\"${JAVA_HOME}/bin/java\" -d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" \
+"\"${JAVA_HOME}/bin/java\" -client -XX:MaxDirectMemorySize=9223372036854775807" \
+"\"${JAVA_HOME}/bin/java\" -XX:MaxDirectMemorySize=9223372036854775807"
 do
-  ${JAVA_COMMAND} -version > /dev/null 2>&1
+  eval ${JAVA_COMMAND} -version > /dev/null 2>&1
   if test "$?" = "0" ; then break; fi
 done
 
@@ -67,7 +67,7 @@ args="$@"
 start=true
 while "$start"
 do
-${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
+eval ${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
    -Dcom.sun.management.jmxremote \
    -Dtc.install-root="${TC_INSTALL_DIR}" \
    -Dsun.rmi.dgc.server.gcInterval=31536000000\
