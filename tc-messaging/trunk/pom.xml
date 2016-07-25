@@ -9,7 +9,7 @@
   <parent>
     <groupId>org.terracotta.forge</groupId>
     <artifactId>forge-parent</artifactId>
-    <version>3.20</version>
+    <version>3.22</version>
   </parent>
   
   <groupId>org.terracotta</groupId>
@@ -47,6 +47,37 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>sag-deps</id>
+      <activation>
+        <property>
+          <name>sag-deps</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <pluginManagement>
+          <plugins>
+            <plugin>
+              <groupId>org.terracotta</groupId>
+              <artifactId>maven-forge-plugin</artifactId>
+              <dependencies>
+                <dependency>
+                  <groupId>com.softwareag.ibit.tools.util</groupId>
+                  <artifactId>finder</artifactId>
+                  <!-- Before bumping version - verify it still accepts exclusion files -->
+                  <version>3.0</version>
+                  <scope>compile</scope>
+                </dependency>
+              </dependencies>
+            </plugin>
+          </plugins>
+        </pluginManagement>
+      </build>
+    </profile>
+  </profiles>
   
   <scm>
     <connection>scm:svn:http://svn.terracotta.org/svn/tc/tc-messaging/trunk</connection>
