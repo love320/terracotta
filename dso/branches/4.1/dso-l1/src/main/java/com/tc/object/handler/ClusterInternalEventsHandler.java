@@ -7,6 +7,9 @@ import com.tc.async.api.AbstractEventHandler;
 import com.tc.async.api.EventContext;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
+import com.tc.object.DistributedObjectClient;
+import com.tc.object.locks.ClientServerExchangeLockContext;
+import com.tc.object.locks.ThreadID;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
 import com.tc.text.PrettyPrintable;
@@ -14,6 +17,8 @@ import com.tc.text.PrettyPrinter;
 import com.tcclient.cluster.ClusterInternalEventsContext;
 import com.tcclient.cluster.DsoClusterEventsNotifier;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
@@ -38,8 +43,16 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
                                                                        .getProperties()
                                                                        .getLong(TCPropertiesConsts.L1_CLUSTEREVENT_EXECUTOR_MAX_WAIT_SECONDS,
                                                                                60);
+
+  // TAB-7121 Post event lock scan diagnostic enablement -- UNDOCUMENTED
+  private static final String L1_CLUSTEREVENT_LOCK_SCAN_ENABLED = "l1.clusterevent.lockScan.enabled";
+  private static final boolean LOCK_SCAN_ENABLED =
+      TCPropertiesImpl.getProperties().getBoolean(L1_CLUSTEREVENT_LOCK_SCAN_ENABLED, false);
+
   private final DsoClusterEventsNotifier dsoClusterEventsNotifier;
   private final ClusterEventExecutor     clusterEventExecutor      = new ClusterEventExecutor();
+
+  private final DistributedObjectClient distributedObjectClient;
 
   private static class ClusterEventExecutor implements PrettyPrintable {
 
@@ -75,7 +88,13 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
     }
   }
 
-  public ClusterInternalEventsHandler(final DsoClusterEventsNotifier eventsNotifier) {
+  public ClusterInternalEventsHandler(DistributedObjectClient distributedObjectClient, final DsoClusterEventsNotifier eventsNotifier) {
+    /*
+     * CAUTION: The DistributedObjectClient is not fully started when the ClusterInternalEventsHandler is created ...
+     * use the distributedObjectClient with care.  In particular, the ThreadIDManager and ClientLockManager instances
+     * are **not** available from the DistributedObjectClient when this instance is created.
+     */
+    this.distributedObjectClient = distributedObjectClient;
     this.dsoClusterEventsNotifier = eventsNotifier;
   }
 
@@ -92,6 +111,15 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
         } else {
           throw new AssertionError("Unknown Context " + context);
         }
+
+        /*
+         * TAB-7121 Log the existence of any locks held in this thread ... can lead to rejoin failures.
+         * (Not all locks held after event processing are a problem -- client shutdown terminates the
+         * lock manager so locks may not be released for events processed while shutdown is pending.)
+         */
+        if (LOCK_SCAN_ENABLED) {
+          scanForThreadLocks(context);
+        }
       }
     });
 
@@ -103,6 +131,42 @@ public class ClusterInternalEventsHandler extends AbstractEventHandler {
       throw new RuntimeException(e.getCause());
     } catch (TimeoutException e) {
       logger.warn("clusterEventExecutor timedout while waiting for result context :" + context, e);
+    }
+  }
+
+  /**
+   * Scans for and logs any locks held by the current thread.
+   *
+   * @param context the {@code EventContext} used to identify current context for logging
+   */
+  private void scanForThreadLocks(EventContext context) {
+    try {
+      ThreadID threadID = distributedObjectClient.getThreadIDManager().getThreadID();
+      List<ClientServerExchangeLockContext> heldLocks = new ArrayList<ClientServerExchangeLockContext>();
+      for (ClientServerExchangeLockContext lockContext : distributedObjectClient.getLockManager().getAllLockContexts()) {
+        if (lockContext.getThreadID().equals(threadID)) {
+          heldLocks.add(lockContext);
+        }
+      }
+      if (!heldLocks.isEmpty()) {
+        boolean multipleLocks = heldLocks.size() > 1;
+        StringBuilder sb = new StringBuilder(4096);
+        sb.append("Held lock");
+        if (multipleLocks) {
+          sb.append('s');
+        }
+        sb.append(" remain");
+        if (!multipleLocks) {
+          sb.append('s');
+        }
+        sb.append(" in thread ").append(threadID).append(" after handling event ").append(context).append(':');
+        for (ClientServerExchangeLockContext heldLock : heldLocks) {
+          sb.append("\n--> ").append(heldLock);
+        }
+        logger.error(sb);
+      }
+    } catch (Exception e) {
+      logger.warn("Scan/display of held locks failed", e);
     }
   }
 
