@@ -37,7 +37,7 @@ public class CommonL2ConfigObjectTest extends ConfigObjectTestBase {
   public void setUp() throws Exception {
     TcConfig config = TcConfig.Factory.newInstance();
     super.setUp(Server.class);
-    L2DSOConfigObject.initializeServers(config, new SchemaDefaultValueProvider(), getTempDirectory());
+    L2DSOConfigObject.initializeServers(config, new SchemaDefaultValueProvider(), getTempDirectory(), false);
     setBean(config.getServers().getMirrorGroupArray(0).getServerArray(0));
     this.object = new CommonL2ConfigObject(context());
   }

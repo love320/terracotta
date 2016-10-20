@@ -528,7 +528,7 @@ public class StandardXMLFileConfigurationCreator implements ConfigurationCreator
       tcConfigDoc = ((TcConfigDocument) beanWithErrors.bean());
       this.providedTcConfigDocument = (TcConfigDocument) beanWithErrors.bean().copy();
       TcConfig config = tcConfigDoc.getTcConfig();
-      L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom);
+      L2DSOConfigObject.initializeServers(config, this.defaultValueProvider, this.directoryLoadedFrom, isClient);
       // initialize client only while parsing for client
       if (isClient) {
         L1DSOConfigObject.initializeClients(config, this.defaultValueProvider);
