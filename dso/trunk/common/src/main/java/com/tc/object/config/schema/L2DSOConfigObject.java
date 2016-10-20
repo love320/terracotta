@@ -192,7 +192,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
   }
 
   public static void initializeServers(TcConfig config, DefaultValueProvider defaultValueProvider,
-                                       File directoryLoadedFrom) throws XmlException, ConfigurationSetupException {
+                                       File directoryLoadedFrom, boolean isClient) throws XmlException, ConfigurationSetupException {
     if (!config.isSetServers()) {
       config.addNewServers();
     }
@@ -242,7 +242,7 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
         initializeDataBackupDirectory(server, defaultValueProvider, directoryLoadedFrom);
         initializeIndexDiretory(server, defaultValueProvider, directoryLoadedFrom);
         initializeSecurity(server, defaultValueProvider);
-        initializeDatastore(server, defaultValueProvider);
+        initializeDatastore(server, defaultValueProvider, isClient);
 
         if (!server.isSetJmxEnabled()) {
           server.setJmxEnabled(false);
@@ -252,13 +252,14 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
   }
 
-  private static void initializeDatastore(final Server server, final DefaultValueProvider defaultValueProvider) throws XmlException {
+  private static void initializeDatastore(final Server server, final DefaultValueProvider defaultValueProvider, final boolean isClient) throws XmlException {
     if (!server.isSetDataStorage()) {
       server.addNewDataStorage();
       if (server.isSetOffheap()) {
         server.getDataStorage().setSize(server.getOffheap().getMaxDataSize());
       } else {
-        CustomerLogging.getConsoleLogger().warn(Banner.makeBanner("DataStorage offheap size not specified. Using a default of " + DEFAULT_DATA_STORAGE_SIZE, "WARNING"));
+        String message = "DataStorage offheap size not specified. Using a default of " + DEFAULT_DATA_STORAGE_SIZE;
+        CustomerLogging.getConsoleLogger().warn(isClient ? message : Banner.makeBanner(message, "WARNING"));
         server.getDataStorage().setSize(DEFAULT_DATA_STORAGE_SIZE);
       }
     }
@@ -281,13 +282,14 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
       server.getDataStorage().getOffheap().setSize(DEFAULT_DATA_STORAGE_SIZE);
     }
 
-    verifyOffheapSize(server.getDataStorage().getOffheap().getSize());
+    verifyOffheapSize(server.getDataStorage().getOffheap().getSize(), isClient);
   }
 
-  private static void verifyOffheapSize(final String offheapSize) {
+  private static void verifyOffheapSize(final String offheapSize, final boolean isClient) {
     try {
       if (Conversion.memorySizeAsLongBytes(offheapSize) < Conversion.memorySizeAsLongBytes(DEFAULT_DATA_STORAGE_SIZE)) {
-        CustomerLogging.getConsoleLogger().warn(Banner.makeBanner("DataStorage offheap size is configured below recommended/supported amounts. Please consult documentation.", "WARNING"));
+        String message = "DataStorage offheap size is configured below recommended/supported amounts. Please consult documentation.";
+        CustomerLogging.getConsoleLogger().warn(isClient ? message : Banner.makeBanner(message, "WARNING"));
       }
     } catch (Conversion.MetricsFormatException mfe) {
       throw new TCRuntimeException("Problem converting offheap size: ", mfe);

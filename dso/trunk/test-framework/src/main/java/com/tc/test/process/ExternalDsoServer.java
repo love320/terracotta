@@ -84,7 +84,7 @@ public class ExternalDsoServer {
 
       TcConfigDocument tcConfigDocument = new Loader().parse(new FileInputStream(configFile));
       TcConfig tcConfig = tcConfigDocument.getTcConfig();
-      L2DSOConfigObject.initializeServers(tcConfig, new SchemaDefaultValueProvider(), workingDir);
+      L2DSOConfigObject.initializeServers(tcConfig, new SchemaDefaultValueProvider(), workingDir, false);
       Server[] servers = L2DSOConfigObject.getServers(tcConfig.getServers());
 
       if (serverName != null) {
