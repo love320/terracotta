@@ -335,7 +335,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     TcConfig config = TcConfig.Factory.newInstance();
     config.setServers(servers);
     L2DSOConfigObject.initializeServers(config, this.defaultValueProvider,
-                                        this.configurationCreator.directoryConfigurationLoadedFrom());
+                                        this.configurationCreator.directoryConfigurationLoadedFrom(), false);
 
     setServersBeanForL1s(config.getServers(), "From test froamework");
     isConfigDone = true;
@@ -378,7 +378,7 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
     Servers servers = (Servers) this.sampleL1Manager.serversBeanRepository().bean();
     config.setServers(servers);
     L2DSOConfigObject.initializeServers(config, this.defaultValueProvider,
-                                        this.configurationCreator.directoryConfigurationLoadedFrom());
+                                        this.configurationCreator.directoryConfigurationLoadedFrom(), false);
     setServersBeanForL1s(config.getServers(), "From Test Framework");
   }
 
