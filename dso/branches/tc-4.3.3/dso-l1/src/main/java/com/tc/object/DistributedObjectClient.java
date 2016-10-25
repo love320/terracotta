@@ -485,7 +485,7 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     final int serverPort = connectionInfo[0].getPort();
 
     clusterEventsStage = stageManager.createStage(ClientConfigurationContext.CLUSTER_EVENTS_STAGE,
-                                                  new ClusterInternalEventsHandler(dsoCluster), 1, maxSize);
+                                                  new ClusterInternalEventsHandler(this, dsoCluster), 1, maxSize);
 
     final int socketConnectTimeout = tcProperties.getInt(TCPropertiesConsts.L1_SOCKET_CONNECT_TIMEOUT);
 
@@ -1056,6 +1056,10 @@ public class DistributedObjectClient extends SEDA implements TCClient {
 
   public ClientLockManager getLockManager() {
     return this.lockManager;
+  }
+
+  public ThreadIDManager getThreadIDManager() {
+    return threadIDManager;
   }
 
   public ClientObjectManager getObjectManager() {
