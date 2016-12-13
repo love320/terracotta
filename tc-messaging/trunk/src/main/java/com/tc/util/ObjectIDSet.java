@@ -21,7 +21,13 @@ public abstract class ObjectIDSet extends AbstractSet<ObjectID> implements Sorte
   protected static final Comparator<Range> RANGE_COMPARATOR = new Comparator<Range>() {
     @Override
     public int compare(final Range o1, final Range o2) {
-      return (int) (o1.getStart() - o2.getStart());
+      if (o1.getStart() > o2.getStart()) {
+        return 1;
+      } else if (o1.getStart() < o2.getStart()) {
+        return -1;
+      } else {
+        return 0;
+      }
     }
   };
 
