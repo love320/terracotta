@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,15 +11,18 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.util;
 
+import com.tc.io.TCByteBufferInputStream;
+import com.tc.io.TCByteBufferOutputStream;
 import org.junit.Test;
 
 import com.tc.object.ObjectID;
 
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.HashSet;
@@ -40,6 +43,35 @@ public class BitSetObjectIDSetTest extends ObjectIDSetTestBase {
   @Override
   protected ObjectIDSet create(final Collection<ObjectID> copy) {
     return new BitSetObjectIDSet(copy);
+  }
+
+  @Test
+  public void testSerializeBitSetObjectIDSetDeserializeBasicObjectIDSet() throws Exception {
+    BitSetObjectIDSet origin = new BitSetObjectIDSet();
+
+    origin.add(new ObjectID(Long.MIN_VALUE));
+    origin.add(new ObjectID(Long.MAX_VALUE));
+
+    BasicObjectIDSet target = convertToBasicObjectIDSet(origin);
+
+    assertEquals(2, target.size());
+    Iterator<ObjectID> iterator = target.iterator();
+    assertTrue(iterator.hasNext());
+    ObjectID oid1 = iterator.next();
+    assertEquals(Long.MIN_VALUE, oid1.toLong());
+    assertTrue(iterator.hasNext());
+    ObjectID oid2 = iterator.next();
+    assertEquals(Long.MAX_VALUE, oid2.toLong());
+    assertFalse(iterator.hasNext());
+  }
+
+  private BasicObjectIDSet convertToBasicObjectIDSet(BitSetObjectIDSet idSet) throws IOException {
+    TCByteBufferOutputStream outputStream = new TCByteBufferOutputStream();
+    idSet.serializeTo(outputStream);
+    TCByteBufferInputStream inputStream = new TCByteBufferInputStream(outputStream.toArray());
+    BasicObjectIDSet target = new BasicObjectIDSet();
+    target.deserializeFrom(inputStream);
+    return target;
   }
 
   @Test
