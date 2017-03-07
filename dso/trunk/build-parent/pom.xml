@@ -22,7 +22,7 @@ The Initial Developer of the Covered Software is
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-root</artifactId>
-    <version>4.3.4-SNAPSHOT</version>
+    <version>4.3.5-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -56,7 +56,7 @@ The Initial Developer of the Covered Software is
     <toolkit-api.version>2.7</toolkit-api.version> 
     <toolkit-api-internal.version>1.17</toolkit-api-internal.version>
     <!-- version of ehcache embedded inside toolkit -->
-    <ehcache.version>2.10.4-SNAPSHOT</ehcache.version>
+    <ehcache.version>2.10.5-SNAPSHOT</ehcache.version>
     <tcconfig.version>9.3</tcconfig.version>
     <linked-child-process.version>1.0.8</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
