@@ -93,7 +93,7 @@ public class DSOClientMessageChannelImpl implements DSOClientMessageChannel, Loc
   @Override
   public void open(final char[] pw) throws TCTimeoutException, UnknownHostException, IOException, MaxConnectionsExceededException,
       CommStackMismatchException {
-    this.channel.open(pw);
+    this.channel.open();
   }
 
   @Override

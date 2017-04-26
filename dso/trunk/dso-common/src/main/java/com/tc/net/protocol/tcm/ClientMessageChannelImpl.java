@@ -85,22 +85,17 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   @Override
   public NetworkStackID open() throws TCTimeoutException, UnknownHostException, IOException,
       MaxConnectionsExceededException, CommStackMismatchException {
-    return open(null);
-  }
-
-  @Override
-  public NetworkStackID open(char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
-      MaxConnectionsExceededException, CommStackMismatchException {
     final ChannelStatus status = getStatus();
 
     synchronized (status) {
+      char[] pw = null;
       if (status.isOpen()) { throw new IllegalStateException("Channel already open"); }
       // initialize the connection ID, using the local JVM ID
       String username = null;
       if (securityInfo.hasCredentials()) {
         username = securityInfo.getUsername();
         Assert.assertNotNull("TCSecurityManager", pwProvider);
-        Assert.assertNotNull("Password", pw);
+        pw = getPassword();
       }
       final ConnectionID cid = new ConnectionID(JvmIDUtil.getJvmID(), (((ClientID) getLocalNodeID()).toLong()),
                                                 username, pw, getProductId());
@@ -116,20 +111,29 @@ public class ClientMessageChannelImpl extends AbstractMessageChannel implements 
   }
 
   @Override
-  public void reopen() throws Exception {
-    reset();
-    open(getPassword());
+  public NetworkStackID open(char[] pw) throws TCTimeoutException, UnknownHostException, IOException,
+      MaxConnectionsExceededException, CommStackMismatchException {
+    return open();
   }
 
-  public char[] getPassword() {
+  @Override
+  public void reopen() throws Exception {
+    reset();
+    open();
+  }
+
+  private char[] getPassword() {
     char[] password = null;
     if (securityInfo.hasCredentials()) {
       Assert.assertNotNull("TCSecurityManager should not be null", pwProvider);
       // use user-password of first server in the group
       ConnectionInfo connectionInfo = addressProvider.getIterator().next();
+      logger.info("Getting password for " + securityInfo.getUsername());
       password = pwProvider.getPasswordForTC(securityInfo.getUsername(), connectionInfo.getHostname(),
                                            connectionInfo.getPort());
       Assert.assertNotNull("password is null from securityInfo " + securityInfo, password);
+    } else {
+      logger.info("Non-secure mode, no password needed");
     }
     return password;
   }
