@@ -615,7 +615,7 @@ public class TCGroupManagerImpl implements GroupManager, ChannelManagerEventList
                                                                              addrProvider);
 
     channel.addListener(listener);
-    channel.open(password);
+    channel.open();
 
     handshake(channel);
     return;
