@@ -145,7 +145,7 @@ public class RejoinManagerImpl implements RejoinManagerInternal {
         setReopenInProgress(false);
         break;
       } catch (Throwable t) {
-        logger.warn("Error during channel open " + t);
+        logger.warn("Error during channel open ", t);
         try {
           TimeUnit.MILLISECONDS.sleep(REJOIN_SLEEP_MILLIS);
         } catch (InterruptedException e) {
