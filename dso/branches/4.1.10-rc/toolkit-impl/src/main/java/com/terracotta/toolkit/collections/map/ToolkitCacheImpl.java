@@ -777,15 +777,15 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     lock.writeLock().lock();
     try {
       if (enabledBulkLoad && !isNodeBulkLoadEnabled()) {
+        this.bulkloadCache.setNodeBulkLoadEnabled(true);
         this.activeDelegate = bulkloadCache;
         this.localDelegate = bulkloadCache;
-        this.bulkloadCache.setNodeBulkLoadEnabled(true);
       }
 
       if (!enabledBulkLoad && isNodeBulkLoadEnabled()) {
+        this.bulkloadCache.setNodeBulkLoadEnabled(false);
         this.activeDelegate = aggregateServerMap;
         this.localDelegate = aggregateServerMap;
-        this.bulkloadCache.setNodeBulkLoadEnabled(false);
       }
     } finally {
       lock.writeLock().unlock();
@@ -852,9 +852,9 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     lock.writeLock().lock();
     try {
       if (!bulkloadCache.isBuffering()) {
+        this.bulkloadCache.startBuffering();
         this.activeDelegate = bulkloadCache;
         this.localDelegate = bulkloadCache;
-        this.bulkloadCache.startBuffering();
       }
     } finally {
       lock.writeLock().unlock();
@@ -866,9 +866,9 @@ public class ToolkitCacheImpl<K, V> extends AbstractDestroyableToolkitObject imp
     lock.writeLock().lock();
     try {
       if (bulkloadCache.isBuffering()) {
+        this.bulkloadCache.stopBuffering();
         this.activeDelegate = aggregateServerMap;
         this.localDelegate = aggregateServerMap;
-        this.bulkloadCache.stopBuffering();
       }
     } finally {
       lock.writeLock().unlock();
