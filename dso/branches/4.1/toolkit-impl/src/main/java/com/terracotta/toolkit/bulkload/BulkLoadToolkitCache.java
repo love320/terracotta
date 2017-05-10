@@ -73,13 +73,6 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
     bulkLoadEnabledNodesSet.removeCurrentNode();
 
     bulkLoadShutdownHook.unregisterCache(this);
-    // wait until all txns finished
-    try {
-      platformService.waitForAllCurrentTransactionsToComplete();
-    } catch (AbortedOperationException e) {
-      throw new ToolkitAbortableOperationException(e);
-    }
-
   }
 
   private void setLocalCacheEnabled(boolean enabled) {
@@ -536,6 +529,9 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
     if (!buffering) {
       return;
     }
+
+    localBufferedMap.flush();
+
     try {
       platformService.waitForAllCurrentTransactionsToComplete();
     } catch (AbortedOperationException e) {
@@ -543,10 +539,10 @@ public class BulkLoadToolkitCache<K, V> implements ToolkitCacheImplInterface<K, 
     }
     // clear local cache
     toolkitCache.clearLocalCache();
-    // flush and stop local buffering
-    localBufferedMap.flushAndStopBuffering();
     // enable local cache
     setLocalCacheEnabled(localCacheEnabledBeforeBulkloadEnabled);
+    // stop local buffering
+    localBufferedMap.flushAndStopBuffering();
     buffering = false;
   }
 
