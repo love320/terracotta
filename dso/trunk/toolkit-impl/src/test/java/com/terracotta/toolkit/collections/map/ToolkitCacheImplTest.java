@@ -9,8 +9,6 @@ import com.tc.cluster.DsoClusterTopology;
 import com.tc.object.ObjectID;
 import com.tc.object.TCObject;
 import com.tc.object.TCObjectServerMap;
-import com.tc.object.bytecode.Manager;
-import com.tc.object.bytecode.ManagerUtil;
 import com.tc.platform.PlatformService;
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesConsts;
@@ -116,22 +114,18 @@ public class ToolkitCacheImplTest {
 
     when(platformService.getTaskRunner()).thenReturn(new ScheduledNamedTaskRunner(2));
 
-    Manager manager = mock(Manager.class);
-    when(manager.getPlatformService()).thenReturn(platformService);
-    when(platformService.isRejoinEnabled()).thenReturn(true);
-    ManagerUtil.enableSingleton(manager);
-
     TCProperties properties = TCPropertiesImpl.getProperties();
     properties.setProperty(TCPropertiesConsts.TOOLKIT_BULKLOAD_LOGGING_ENABLED, "true");
     when(platformService.getTCProperties()).thenReturn(properties);
 
     IsolatedClusteredObjectLookup<ToolkitMapImpl> lookup = mock(IsolatedClusteredObjectLookup.class);
-    ToolkitMapImpl<String, Integer> map = new ToolkitMapImpl<String, Integer>();
+    ToolkitMapImpl<String, Integer> map = new ToolkitMapImpl<String, Integer>(platformService);
     TCObject tcObject2 = mock(TCObject.class);
     when(tcObject2.getResolveLock()).thenReturn(new Object());
     when(tcObject2.getObjectID()).thenReturn(new ObjectID(2L));
     map.__tc_managed(tcObject2);
-    ToolkitSet<String> toolkitSet = new ToolkitSetImpl<String>(new DestroyableToolkitMap<String, Integer>(toolkitObjectFactory, lookup, map, "name"));
+    DestroyableToolkitMap<String, Integer> destroyableToolkitMap = new DestroyableToolkitMap<String, Integer>(toolkitObjectFactory, lookup, map, "name", platformService);
+    ToolkitSet<String> toolkitSet = new ToolkitSetImpl<String>(destroyableToolkitMap, platformService);
     when(toolkit.getSet("__tc_bulk-load-nodes-set_for_cache_name", String.class)).thenReturn(toolkitSet);
 
     toolkitCache = new ToolkitCacheImpl<Integer, String>(toolkitObjectFactory, "name", aggregateServerMap, platformService, toolkit);
