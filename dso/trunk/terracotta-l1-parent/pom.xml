@@ -100,10 +100,6 @@ The Initial Developer of the Covered Software is
       <artifactId>jmxremote_optional-tc</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.beanshell</groupId>
-      <artifactId>bsh</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.apache.xmlbeans</groupId>
       <artifactId>xmlbeans</artifactId>
       <exclusions>
