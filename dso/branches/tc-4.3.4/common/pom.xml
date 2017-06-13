@@ -85,11 +85,6 @@ The Initial Developer of the Covered Software is
     <dependency>
       <groupId>org.terracotta.license</groupId>
       <artifactId>terracotta-license</artifactId>
-    </dependency>       
-    <dependency>
-      <groupId>org.beanshell</groupId>
-      <artifactId>bsh</artifactId>
-      <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>commons-collections</groupId>
