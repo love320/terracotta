@@ -1,6 +1,7 @@
 package com.terracotta.toolkit.collections;
 
 import com.tc.exception.TCNotRunningException;
+import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
 import org.apache.log4j.AppenderSkeleton;
@@ -9,6 +10,7 @@ import org.apache.log4j.spi.LoggingEvent;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.terracotta.toolkit.ToolkitObjectType;
 import org.terracotta.toolkit.builder.ToolkitCacheConfigBuilder;
 import org.terracotta.toolkit.cache.ToolkitCacheListener;
@@ -16,6 +18,7 @@ import org.terracotta.toolkit.concurrent.locks.ToolkitLock;
 import org.terracotta.toolkit.config.Configuration;
 import org.terracotta.toolkit.internal.cache.VersionedValue;
 import org.terracotta.toolkit.rejoin.RejoinException;
+import org.terracotta.toolkit.search.ToolkitSearchQuery;
 import org.terracotta.toolkit.store.ToolkitConfigFields;
 
 import com.google.common.collect.HashMultimap;
@@ -31,12 +34,14 @@ import com.terracotta.toolkit.bulkload.BufferedOperation;
 import com.terracotta.toolkit.collections.map.AggregateServerMap;
 import com.terracotta.toolkit.collections.map.InternalToolkitMap;
 import com.terracotta.toolkit.collections.map.ServerMap;
+import com.terracotta.toolkit.collections.map.ValuesResolver;
 import com.terracotta.toolkit.collections.map.VersionedValueImpl;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStore;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreConfig;
 import com.terracotta.toolkit.collections.servermap.api.ServerMapLocalStoreFactory;
 import com.terracotta.toolkit.object.ToolkitObjectStripe;
 import com.terracotta.toolkit.object.ToolkitObjectStripeImpl;
+import com.terracotta.toolkit.search.SearchExecutor;
 import com.terracotta.toolkit.search.SearchFactory;
 import com.terracotta.toolkit.type.DistributedClusteredObjectLookup;
 import com.terracotta.toolkit.util.ImmediateTimer;
@@ -53,6 +58,7 @@ import java.util.concurrent.Callable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
@@ -265,5 +271,38 @@ public class AggregateServerMapTest {
     when(event2.getType()).thenReturn(ServerEventType.EXPIRE);
     asm.handleServerEvent(event2);
     Assert.assertSame("Cache listener threw an exception", ((LoggingEvent) list.get(0)).getMessage());
+  }
+
+  @Test
+  public void testSearchSequenceIDGenerator() throws Exception {
+    for(int i = 1; i <= 10; i++) {
+      verifySearchRequestID(i);
+    }
+  }
+
+  private void verifySearchRequestID(long expectedRequestID) {
+    final List<ServerMap> serverMapList = mockServerMaps(1);
+    ToolkitObjectStripe[] stripeObjects = createObjectStripes(configuration, serverMapList, 1);
+
+    SearchFactory searchFactoryMock = mock(SearchFactory.class);
+    SearchExecutor searchExecutorMock = mock(SearchExecutor.class);
+    when(searchFactoryMock.createSearchExecutor(anyString(),
+                                            any(ToolkitObjectType.class),
+                                            any(ValuesResolver.class),
+                                            anyBoolean(),
+                                            any(PlatformService.class))).thenReturn(searchExecutorMock);
+
+    AggregateServerMap<String, String> asm = new AggregateServerMap<String, String>(ToolkitObjectType.CACHE, searchFactoryMock,
+        mock(DistributedClusteredObjectLookup.class), "foo", stripeObjects, configuration,
+        mock(Callable.class), serverMapLocalStoreFactory, platformService, mock(ToolkitLock.class));
+
+    ToolkitSearchQuery toolkitSearchQuery = mock(ToolkitSearchQuery.class);
+    when(toolkitSearchQuery.getResultPageSize()).thenReturn(-1); //to avoid snapshots
+    asm.executeQuery(toolkitSearchQuery);
+
+    ArgumentCaptor<SearchRequestID> searchRequestIDArgumentCaptor = ArgumentCaptor.forClass(SearchRequestID.class);
+    verify(searchExecutorMock).executeQuery(ArgumentCaptor.forClass(ToolkitSearchQuery.class).capture(),
+        searchRequestIDArgumentCaptor.capture());
+    assertThat(searchRequestIDArgumentCaptor.getValue().toLong(), is(expectedRequestID));
   }
 }
