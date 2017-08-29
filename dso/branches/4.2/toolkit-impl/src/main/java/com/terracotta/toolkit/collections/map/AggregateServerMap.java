@@ -135,6 +135,8 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final static List<ToolkitObjectType>                             VALID_TYPES                        = Arrays
                                                                                                                   .asList(ToolkitObjectType.STORE,
                                                                                                                       ToolkitObjectType.CACHE);
+  //TAB-7348 - make SearchRequestIDGenerator static
+  private static final SearchRequestIDGenerator                            searchReqIdGenerator = new SearchRequestIDGenerator();
 
   private final int                                                        getAllBatchSize;
 
@@ -149,7 +151,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
   private final ServerMapLocalStoreFactory                                 serverMapLocalStoreFactory;
   private final TerracottaClusterInfo                                      clusterInfo;
   private final PlatformService                                            platformService;
-  private final SearchRequestIDGenerator                                   searchReqIdGenerator;
   private final ToolkitLock configMutationLock;
   private final Callable<ToolkitMap<String, String>>                       schemaCreator;
   private final DistributedClusteredObjectLookup<InternalToolkitMap<K, V>> lookup;
@@ -201,7 +202,6 @@ public class AggregateServerMap<K, V> implements DistributedToolkitType<Internal
         .getExistingValueOrException(config));
     localCacheStore = createLocalCacheStore();
     pinnedEntryFaultCallback = new PinnedEntryFaultCallbackImpl(this);
-    searchReqIdGenerator = new SearchRequestIDGenerator();
     this.timeSource = new SystemTimeSource();
     this.lockStrategy = getLockStrategyFromConfig(config);
     setupStripeObjects(stripeObjects);
