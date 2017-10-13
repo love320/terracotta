@@ -46,7 +46,28 @@ public class TCSocketAddressTest {
   public void testStringForm() {
     TCSocketAddress sa = new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 12345);
     String s = sa.getStringForm();
-    assertTrue(s.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+\\:12345$"));
+    assertTrue(s, s.matches("^\\d+\\.\\d+\\.\\d+\\.\\d+\\:12345$"));
+  }
+
+  @Test
+  public void testStringFormIPV6() {
+    TCSocketAddress sa = new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR_IPv6, 12345);
+    String s = sa.getStringForm();
+    assertTrue(s, s.matches("^\\[\\d+\\:\\d+\\:\\d+\\:\\d+\\:\\d+\\:\\d+\\:\\d+\\:\\d+\\]\\:12345$"));
+  }
+
+  @Test
+  public void testCanonicalStringForm() {
+    TCSocketAddress sa = new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR, 12345);
+    String s = sa.getCanonicalStringForm();
+    assertTrue(s, s.matches("^localhost\\:12345$"));
+  }
+
+  @Test
+  public void testCanonicalStringFormIPV6() {
+    TCSocketAddress sa = new TCSocketAddress(TCSocketAddress.LOOPBACK_ADDR_IPv6, 12345);
+    String s = sa.getCanonicalStringForm();
+    assertTrue(s, s.matches("^localhost\\:12345$"));
   }
 
   @Test
