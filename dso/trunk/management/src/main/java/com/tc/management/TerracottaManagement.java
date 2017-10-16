@@ -159,7 +159,7 @@ public abstract class TerracottaManagement {
   public static String buildNodeId(TCSocketAddress addr) {
     String remoteHost = addr.getAddress().getCanonicalHostName();
     int remotePort = addr.getPort();
-    return remoteHost + UNDERSCORE + remotePort;
+    return remoteHost.replace(":", ".") + UNDERSCORE + remotePort;
   }
 
   public static ObjectName addNodeInfo(ObjectName objName, final TCSocketAddress addr)

@@ -24,6 +24,7 @@ import com.tc.management.TCManagementEvent;
 import com.tc.management.TerracottaManagement;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.TCSocketAddress;
 import com.tc.object.management.ManagementRequestID;
 import com.tc.object.msg.InvokeRegisteredServiceResponseMessage;
 import com.tc.object.msg.ListRegisteredServicesResponseMessage;
@@ -80,8 +81,10 @@ public class ServerManagementHandler extends AbstractEventHandler {
           try {
             Map<String, Object> contextMap = new HashMap<String, Object>();
             ClientID clientID = (ClientID)sourceNodeID;
+            TCSocketAddress remoteAddress = response.getChannel().getRemoteAddress();
             contextMap.put(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME, Long.toString(clientID.toLong()));
-            contextMap.put(ManagementEventListener.CONTEXT_SOURCE_JMX_ID, TerracottaManagement.buildNodeId(response.getChannel().getRemoteAddress()));
+            contextMap.put(ManagementEventListener.CONTEXT_SOURCE_JMX_ID, TerracottaManagement.buildNodeId(remoteAddress));
+            contextMap.put(ManagementEventListener.CONTEXT_SOURCE_REMOTE_ADDRESS, remoteAddress.getCanonicalStringForm());
             TCManagementEvent event = (TCManagementEvent)response.getResponseHolder().getResponse(eventListener.getClassLoader());
             eventListener.onEvent(event, contextMap);
           } catch (RuntimeException re) {

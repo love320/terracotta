@@ -21,6 +21,7 @@ import com.tc.management.TerracottaManagement;
 import com.tc.management.TerracottaRemoteManagement;
 import com.tc.net.ClientID;
 import com.tc.net.NodeID;
+import com.tc.net.TCSocketAddress;
 import com.tc.net.protocol.tcm.MessageChannel;
 import com.tc.object.net.DSOChannelManagerEventListener;
 import com.tc.operatorevent.TerracottaOperatorEventFactory;
@@ -37,11 +38,13 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
     if (!channel.getProductId().isInternal()) {
       NodeID remoteNodeID = channel.getRemoteNodeID();
       ClientID clientID = (ClientID)remoteNodeID;
-      String jmxId = TerracottaManagement.buildNodeId(channel.getRemoteAddress());
+      TCSocketAddress remoteAddress = channel.getRemoteAddress();
+      String jmxId = TerracottaManagement.buildNodeId(remoteAddress);
 
       TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.L1.JOINED");
       tsaManagementEventPayload.getAttributes().put("Client.NodeID", Long.toString(clientID.toLong()));
       tsaManagementEventPayload.getAttributes().put("Client.JmxID", jmxId);
+      tsaManagementEventPayload.getAttributes().put("Client.RemoteAddress", remoteAddress.getCanonicalStringForm());
 
       TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
       operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeConnectedEvent(remoteNodeID.toString()));
@@ -56,11 +59,13 @@ public class ClientChannelOperatorEventlistener implements DSOChannelManagerEven
     if (!channel.getProductId().isInternal() && channel.getRemoteAddress() != null) {
       NodeID remoteNodeID = channel.getRemoteNodeID();
       ClientID clientID = (ClientID)remoteNodeID;
-      String jmxId = TerracottaManagement.buildNodeId(channel.getRemoteAddress());
+      TCSocketAddress remoteAddress = channel.getRemoteAddress();
+      String jmxId = TerracottaManagement.buildNodeId(remoteAddress);
 
       TSAManagementEventPayload tsaManagementEventPayload = new TSAManagementEventPayload("TSA.TOPOLOGY.L1.LEFT");
       tsaManagementEventPayload.getAttributes().put("Client.NodeID", Long.toString(clientID.toLong()));
       tsaManagementEventPayload.getAttributes().put("Client.JmxID", jmxId);
+      tsaManagementEventPayload.getAttributes().put("Client.RemoteAddress", remoteAddress.getCanonicalStringForm());
 
       TerracottaRemoteManagement.getRemoteManagementInstance().sendEvent(tsaManagementEventPayload.toManagementEvent());
       operatorEventLogger.fireOperatorEvent(TerracottaOperatorEventFactory.createNodeDisconnectedEvent(remoteNodeID.toString()));

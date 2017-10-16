@@ -41,6 +41,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -125,13 +127,15 @@ public class LocalManagementSource {
         String host = l2Info.host();
         int managementPort = l2Info.managementPort();
         boolean sslEnabled = TSAConfig.isSslEnabled();
-        String urlPrefix = (sslEnabled ? "https://" : "http://") + host + ":" + managementPort;
-        result.put(name, urlPrefix);
+        URL url = new URL(sslEnabled ? "https" : "http", host, managementPort, "");
+        result.put(name, url.toString());
       }
 
       return result;
     } catch (JMException jme) {
       throw new ManagementSourceException(jme);
+    } catch (MalformedURLException mue) {
+      throw new ManagementSourceException(mue);
     }
   }
 
