@@ -27,6 +27,7 @@ public interface ManagementEventListener {
 
   static String CONTEXT_SOURCE_NODE_NAME = "CONTEXT_SOURCE_NODE_NAME";
   static String CONTEXT_SOURCE_JMX_ID = "CONTEXT_SOURCE_JMX_ID";
+  static String CONTEXT_SOURCE_REMOTE_ADDRESS = "CONTEXT_SOURCE_REMOTE_ADDRESS";
 
   /**
    * Get the classloader from which to load classes of deserialized objects.
