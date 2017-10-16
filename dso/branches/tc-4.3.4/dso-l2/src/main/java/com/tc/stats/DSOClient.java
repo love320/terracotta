@@ -20,6 +20,7 @@ package com.tc.stats;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.management.TerracottaManagement;
 import com.tc.management.beans.L1MBeanNames;
 import com.tc.management.beans.MBeanNames;
 import com.tc.management.beans.TerracottaOperatorEventsMBean;
@@ -210,7 +211,8 @@ public class DSOClient extends AbstractTerracottaMBean implements DSOClientMBean
 
   public ObjectName getTunneledBeanName(ObjectName on) {
     try {
-      String name = on.getCanonicalName() + ",clients=Clients,node=" + getRemoteAddress().replace(':', '_');
+      String name = on.getCanonicalName() + ",clients=Clients,node="
+        + TerracottaManagement.buildNodeId(channel.getRemoteAddress());
       return new ObjectName(name);
     } catch (MalformedObjectNameException mone) {
       throw new RuntimeException("Creating ObjectName", mone);

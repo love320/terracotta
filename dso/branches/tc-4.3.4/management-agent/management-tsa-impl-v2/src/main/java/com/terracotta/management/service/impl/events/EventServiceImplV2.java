@@ -76,11 +76,12 @@ public class EventServiceImplV2 implements EventServiceV2 {
         EventEntityV2 eventEntity;
         if (payload instanceof EventEntityV2) {
           eventEntity = (EventEntityV2)payload;
-          String remoteAddress = (String) context.get(ManagementEventListener.CONTEXT_SOURCE_JMX_ID);
+          String agentId = (String) context.get(ManagementEventListener.CONTEXT_SOURCE_JMX_ID);
           String clientID = (String) context.get(ManagementEventListener.CONTEXT_SOURCE_NODE_NAME);
+          String remoteAddress = (String) context.get(ManagementEventListener.CONTEXT_SOURCE_REMOTE_ADDRESS);
           eventEntity.getRootRepresentables().put("RemoteAddress", remoteAddress);
           eventEntity.getRootRepresentables().put("ClientID", clientID);
-          eventEntity.setAgentId(remoteAddress.replace(':', '_'));
+          eventEntity.setAgentId(agentId);
         } else if (payload instanceof TSAManagementEventPayload) {
           TSAManagementEventPayload tsaManagementEventPayload = (TSAManagementEventPayload)payload;
 
