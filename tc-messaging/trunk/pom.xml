@@ -9,7 +9,7 @@
   <parent>
     <groupId>org.terracotta.forge</groupId>
     <artifactId>forge-parent</artifactId>
-    <version>3.22</version>
+    <version>3.23</version>
   </parent>
   
   <groupId>org.terracotta</groupId>
@@ -19,7 +19,6 @@
   <version>1.1.2-SNAPSHOT</version>
 
   <properties>
-    <maven.javadoc.skip>true</maven.javadoc.skip>
   </properties>
 
   <dependencies>
