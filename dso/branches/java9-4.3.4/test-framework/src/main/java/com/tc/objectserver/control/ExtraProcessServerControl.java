@@ -197,7 +197,7 @@ public class ExtraProcessServerControl extends ServerControlBase {
     addEnvVarsForWindows(jvmArgs);
     addTCPropsJvmArgsFromCurrentJvm(jvmArgs);
 
-    if (!Vm.isIBM() && !(Os.isMac() && Vm.isJDK14())) {
+    if (!Vm.isIBM()) {
       jvmArgs.add("-XX:+HeapDumpOnOutOfMemoryError");
     }
 
