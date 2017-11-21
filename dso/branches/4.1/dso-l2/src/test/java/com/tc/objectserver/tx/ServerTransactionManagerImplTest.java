@@ -27,6 +27,7 @@ import com.tc.object.tx.TxnBatchID;
 import com.tc.object.tx.TxnType;
 import com.tc.objectserver.api.ObjectInstanceMonitor;
 import com.tc.objectserver.context.TransactionLookupContext;
+import com.tc.objectserver.core.api.ManagedObject;
 import com.tc.objectserver.gtx.TestGlobalTransactionManager;
 import com.tc.objectserver.impl.ObjectInstanceMonitorImpl;
 import com.tc.objectserver.impl.TestObjectManager;
@@ -41,17 +42,25 @@ import com.tc.util.ObjectIDSet;
 import com.tc.util.SequenceID;
 import com.tc.util.concurrent.NoExceptionLinkedQueue;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MonitorInfo;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -399,6 +408,204 @@ public class ServerTransactionManagerImplTest extends TestCase {
 
     executorService.shutdown();
     executorService.awaitTermination(2, TimeUnit.MINUTES);
+  }
+
+  /**
+   * This test attempts to ensure the deadlock conditions described in TAB-7386 are resolved.
+   */
+  public void testUnpauseDuringShutdownNode() throws Exception {
+    /*
+     * This test needs to observe monitor locks to work -- get the ThreadMXBean through which
+     * that observation is done.
+     */
+    final ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+    final ClientID client1 = new ClientID(1);
+    final ClientID client2 = new ClientID(2);
+
+    /*
+     * Open a transaction for Client 1.
+     */
+    TransactionID firstTransactionId = new TransactionID(1);
+
+    final ServerTransaction client1Transaction =
+        newServerTransactionImpl(new TxnBatchID(1), firstTransactionId, new SequenceID(1), new LockID[0], client1,
+            Collections.emptyList(), null, Collections.emptyMap(), TxnType.NORMAL, new LinkedList(), 1);
+
+    final HashMap<ServerTransactionID, ServerTransaction> client1TransactionBatch =
+        new HashMap<ServerTransactionID, ServerTransaction>();
+    client1TransactionBatch.put(client1Transaction.getServerTransactionID(), client1Transaction);
+    transactionManager.incomingTransactions(client1, client1TransactionBatch);
+
+    transactionManager.transactionsRelayed(client1, client1TransactionBatch.keySet());
+    transactionManager.apply(client1Transaction, Collections.emptyMap(), new ApplyTransactionInfo(), imo);
+    transactionManager.commit(Collections.<ManagedObject>emptySet(), Collections.<String, ObjectID>emptyMap(),
+        Collections.singleton(client1Transaction.getServerTransactionID()));
+
+    /*
+     * Add Client 2 as a waiter for the client 1 transaction.
+     */
+    TransactionID secondTransactionId = new TransactionID(2);
+    ServerTransaction client2Transaction =
+        newServerTransactionImpl(new TxnBatchID(2), secondTransactionId, new SequenceID(2), new LockID[0], client2,
+            Collections.emptyList(), null, Collections.emptyMap(), TxnType.NORMAL, new LinkedList(), 1);
+
+    final HashMap<ServerTransactionID, ServerTransaction> client2TransactionBatch =
+        new HashMap<ServerTransactionID, ServerTransaction>();
+    client2TransactionBatch.put(client2Transaction.getServerTransactionID(), client2Transaction);
+    transactionManager.incomingTransactions(client2, client2TransactionBatch);
+    transactionManager.addWaitingForAcknowledgement(client2, secondTransactionId, client1);
+
+    transactionManager.transactionsRelayed(client2, client2TransactionBatch.keySet());
+    transactionManager.apply(client2Transaction, Collections.emptyMap(), new ApplyTransactionInfo(), imo);
+    transactionManager.commit(Collections.<ManagedObject>emptySet(), Collections.<String, ObjectID>emptyMap(),
+        Collections.singleton(client2Transaction.getServerTransactionID()));
+    transactionManager.broadcasted(client2Transaction.getSourceID(), client2Transaction.getTransactionID());
+
+
+    final Map<Thread, Throwable> uncaughtExceptions = Collections.synchronizedMap(new LinkedHashMap<Thread, Throwable>());
+    Thread.UncaughtExceptionHandler exceptionHandler = new Thread.UncaughtExceptionHandler() {
+      @Override
+      public void uncaughtException(Thread t, Throwable e) {
+        uncaughtExceptions.put(t, e);
+      }
+    };
+
+    /*
+     * Create and start a thread for the "third" client.  This thread must be observable
+     * by the thread created for the "first" client to leave.  Start of the third client thread
+     * is interlocked with arrival of the first client thread in the 'onCompletion' callback
+     * established below.
+     */
+    final CyclicBarrier barrier = new CyclicBarrier(2);
+    final Thread thirdClientThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        System.out.format("[%s] Awaiting barrier alignment%n", Thread.currentThread());
+        try {
+          barrier.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError("barrier interrupted");
+        } catch (BrokenBarrierException e) {
+          throw new AssertionError("barrier broken");
+        }
+
+        /*
+         * At this point, the first client thread is within the onCompletion callback (via
+         * ServerTransactionManagerImpl.shutdownNode).  We can now enter
+         * ServerTransactionManagerImpl.incomingTransactions.
+         */
+        ClientID client3 = new ClientID(3);
+        ServerTransaction client3Transaction =
+            newServerTransactionImpl(new TxnBatchID(3), new TransactionID(3), new SequenceID(3), new LockID[0], client3,
+                Collections.emptyList(), null, Collections.emptyMap(), TxnType.NORMAL, new LinkedList(), 1);
+
+        HashMap<ServerTransactionID, ServerTransaction> transactionBatch =
+            new HashMap<ServerTransactionID, ServerTransaction>();
+        transactionBatch.put(client3Transaction.getServerTransactionID(), client3Transaction);
+        System.out.format("[%s] Invoking ServerTransactionManager.incomingTransactions(client3, ...)%n", Thread.currentThread());
+        transactionManager.incomingTransactions(client3, transactionBatch);
+      }
+    }, "ServerTransactionManagerImplTest.testUnpauseDuringShutdownNode:client3");
+    thirdClientThread.setDaemon(true);
+    thirdClientThread.setUncaughtExceptionHandler(exceptionHandler);
+    thirdClientThread.start();
+
+    /*
+     * Pause transaction processing "for backup".
+     */
+    transactionManager.pauseTransactions();
+
+    /*
+     * Set a transaction completion callback that performs an unpause "timed" to
+     * occur while 'incomingTransactions' is running.
+     */
+    transactionManager.callBackOnTxnsInSystemCompletion(new TxnsInSystemCompletionListener() {
+      @Override
+      public void onCompletion() {
+        System.out.format("[%s] In callBackOnTxnsInSystemCompletion - awaiting barrier alignment%n", Thread.currentThread());
+        try {
+          barrier.await();
+        } catch (InterruptedException e) {
+          throw new AssertionError("barrier interrupted");
+        } catch (BrokenBarrierException e) {
+          throw new AssertionError("barrier broken");
+        }
+
+        /*
+         * Before the fix for TAB-7386, this 'onCompletion' callback is entered without holding
+         * the monitor lock on ServerTransactionManagerImpl; after the fix, the monitor lock is
+         * already held.  If we're holding the lock, there's no way for the client 3 thread to
+         * attain the lock so don't wait for the lock here.
+         */
+        if (!Thread.holdsLock(transactionManager)) {
+          /*
+           * Now await arrival of the client 3 thread _inside_ the
+           * ServerTransactionManagerImpl.incomingTransactions method.  This is indicated by that thread holding
+           * the monitor lock on ServerTransactionManagerImpl.
+           */
+          System.out.format("[%s] In callBackOnTxnsInSystemCompletion - awaiting ServerTransactionManagerImpl lock%n", Thread.currentThread());
+          locked:
+          while (true) {
+            ThreadInfo[] threadInfo = threadMXBean.getThreadInfo(new long[] { thirdClientThread.getId() },  true, false);
+            MonitorInfo[] lockedMonitors = threadInfo[0].getLockedMonitors();
+            for (MonitorInfo lockedMonitor : lockedMonitors) {
+              System.out.format("[%s] lockedMonitor[%s]=%s%n", Thread.currentThread(), lockedMonitor, thirdClientThread);
+              if (ServerTransactionManagerImpl.class.getName().equals(lockedMonitor.getClassName())) {
+                break locked;
+              }
+            }
+            try {
+              TimeUnit.MILLISECONDS.sleep(10L);
+            } catch (InterruptedException e) {
+              throw new AssertionError("lock poll interrupted");
+            }
+          }
+        }
+
+        System.out.format("[%s] In callBackOnTxnsInSystemCompletion - unpausing transactions%n", Thread.currentThread());
+        transactionManager.unPauseTransactions();
+      }
+    });
+
+    /*
+     * In another background thread, call shutdownNode for client 1; this ultimately reaches the
+     * barrier while holding the ServerTransactionManagerImpl.transactionAccounts lock.
+     */
+    Thread firstClientThread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        System.out.format("[%s] Invoking ServerTransactionManager.shutdownNode(client1)%n", Thread.currentThread());
+        transactionManager.broadcasted(client1Transaction.getSourceID(), client1Transaction.getTransactionID());
+        transactionManager.shutdownNode(client1);
+      }
+    }, "ServerTransactionManagerImplTest.testUnpauseDuringShutdownNode:client1");
+    firstClientThread.setDaemon(true);
+    firstClientThread.setUncaughtExceptionHandler(exceptionHandler);
+    firstClientThread.start();
+
+    TimeUnit.MILLISECONDS.timedJoin(firstClientThread, 500L);
+    TimeUnit.MILLISECONDS.timedJoin(thirdClientThread, 500L);
+
+    if (!uncaughtExceptions.isEmpty()) {
+      for (Map.Entry<Thread, Throwable> entry : uncaughtExceptions.entrySet()) {
+        System.out.format("ServerTransactionManagerImplTest.testUnpauseDuringShutdownNode failed: [%s] %s%n", entry.getKey(), entry.getValue());
+        entry.getValue().printStackTrace(System.out);
+      }
+      throw new AssertionError(uncaughtExceptions.values().iterator().next());
+    }
+
+    long[] deadlockedThreads = threadMXBean.findDeadlockedThreads();
+    if (deadlockedThreads != null) {
+      System.out.format("%nDeadlocked threads:%n");
+      ThreadInfo[] deadlockedThreadInfo = threadMXBean.getThreadInfo(deadlockedThreads, true, true);
+      for (ThreadInfo threadInfo : deadlockedThreadInfo) {
+        System.out.format("%s", threadInfo);
+      }
+      throw new AssertionError("Deadlock detected among the following threadIds: " + Arrays.toString(deadlockedThreads));
+    }
+
+    assertFalse(firstClientThread.isAlive());
+    assertFalse(thirdClientThread.isAlive());
   }
 
   public void tests() throws Exception {
