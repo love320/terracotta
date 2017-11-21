@@ -176,7 +176,8 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
    * Shutdown clients are not cleared immediately. Only on completing of all txns this is processed.
    */
   @Override
-  public void shutdownNode(final NodeID deadNodeID) {
+  public synchronized void shutdownNode(final NodeID deadNodeID) {
+    // acknowledgement can invoke backup callback which requires instance-level sync
     boolean callBackAdded = false;
     synchronized (this.transactionAccounts) {
 
@@ -185,8 +186,10 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
         deadClientTA.nodeDead(new TransactionAccount.CallBackOnComplete() {
           @Override
           public void onComplete(final NodeID dead) {
-            synchronized (ServerTransactionManagerImpl.this.transactionAccounts) {
-              ServerTransactionManagerImpl.this.transactionAccounts.remove(deadNodeID);
+            synchronized (ServerTransactionManagerImpl.this) {
+              synchronized (ServerTransactionManagerImpl.this.transactionAccounts) {
+                ServerTransactionManagerImpl.this.transactionAccounts.remove(deadNodeID);
+              }
             }
             ServerTransactionManagerImpl.this.stateManager.shutdownNode(deadNodeID);
             if (deadNodeID instanceof ClientID) {
@@ -291,7 +294,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   // This method is called when objects are sent to sync, this is done to maintain correct booking since things like DGC
   // relies on this to decide when to send the results
   @Override
-  public void objectsSynched(final NodeID to, final ServerTransactionID stid) {
+  public synchronized void objectsSynched(final NodeID to, final ServerTransactionID stid) {
     final TransactionAccount ci = getOrCreateTransactionAccount(stid.getSourceID()); // Local Node ID
     this.totalPendingTransactions.incrementAndGet();
     ci.addObjectsSyncedTo(to, stid.getClientTransactionID());
@@ -610,7 +613,7 @@ public class ServerTransactionManagerImpl implements ServerTransactionManager, S
   }
 
   @Override
-  public void callBackOnTxnsInSystemCompletion(final TxnsInSystemCompletionListener l) {
+  public synchronized void callBackOnTxnsInSystemCompletion(final TxnsInSystemCompletionListener l) {
     final TxnsInSystemCompletionListenerCallback callBack = new TxnsInSystemCompletionListenerCallback(l);
     final Set<ServerTransactionID> txnsInSystem = callBack.getTxnsInSystem();
     synchronized (this.transactionAccounts) {
