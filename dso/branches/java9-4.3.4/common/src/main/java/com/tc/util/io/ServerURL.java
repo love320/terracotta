@@ -16,8 +16,8 @@
  */
 package com.tc.util.io;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import sun.misc.BASE64Encoder;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
@@ -171,7 +171,7 @@ public class ServerURL {
           urlConnection
               .addRequestProperty("Authorization",
                                   "Basic "
-                                      + new BASE64Encoder().encode((securityInfo.getUsername() + ":" + new String(
+                                      + new Base64().encodeToString((securityInfo.getUsername() + ":" + new String(
                                                                                                                   passwordTo))
                                           .getBytes()));
         }
