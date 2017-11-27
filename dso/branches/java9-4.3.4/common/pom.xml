@@ -115,6 +115,11 @@ The Initial Developer of the Covered Software is
       <groupId>gf-3122</groupId>
       <artifactId>gf.javax.servlet-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.11</version>
+    </dependency>
 
     <!-- tests dependencies -->
     <dependency>
