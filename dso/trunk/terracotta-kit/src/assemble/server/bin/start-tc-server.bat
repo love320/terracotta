@@ -46,7 +46,7 @@ if not defined JAVA_HOME (
 
 set JAVA_HOME="%JAVA_HOME:"=%"
 
-for %%C in ("\bin\java -d64 -server -XX:MaxDirectMemorySize=9223372036854775807" "\bin\java -server -XX:MaxDirectMemorySize=9223372036854775807" "\bin\java -d64 -client  -XX:MaxDirectMemorySize=9223372036854775807" "\bin\java -client -XX:MaxDirectMemorySize=9223372036854775807" "\bin\java -XX:MaxDirectMemorySize=9223372036854775807") do (
+for %%C in ("\bin\java -d64 -server -XX:MaxDirectMemorySize=1048576g" "\bin\java -server -XX:MaxDirectMemorySize=1048576g" "\bin\java -d64 -client  -XX:MaxDirectMemorySize=1048576g" "\bin\java -client -XX:MaxDirectMemorySize=1048576g" "\bin\java -XX:MaxDirectMemorySize=1048576g") do (
   set JAVA_COMMAND=%JAVA_HOME%%%~C
   %JAVA_HOME%%%~C -version > NUL 2>&1
   if not errorlevel 1 (
