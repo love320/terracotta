@@ -46,6 +46,7 @@ public final class TestServerTransaction implements ServerTransaction {
   private final GlobalTransactionID gtid;
   public long[]                     hwm;
   public MetaDataReader[]           metaDataReaders;
+  public boolean                    resent = false;
 
   public TestServerTransaction(ServerTransactionID sid, TxnBatchID bid) {
     this(sid, bid, null);
@@ -144,7 +145,7 @@ public final class TestServerTransaction implements ServerTransaction {
 
   @Override
   public boolean isResent() {
-    return false;
+    return resent;
   }
 
   @Override
