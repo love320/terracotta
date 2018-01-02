@@ -77,13 +77,6 @@ public class MessageChannelTest extends TCTestCase {
   AtomicReference<Throwable>   error         = new AtomicReference(null);
   SequenceGenerator            sq            = new SequenceGenerator();
 
-  // Disabled until MNK-3330
-  public MessageChannelTest() {
-    if (Os.isWindows() && Vm.isJDK17()) {
-      timebombTest("2033-01-30");
-    }
-  }
-
   protected void setUp(int maxReconnectTries) throws Exception {
     setUp(maxReconnectTries, false);
   }

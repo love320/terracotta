@@ -295,26 +295,22 @@ public class TCTestCase extends TestCase {
   }
 
   public static void dumpHeap(File destDir) {
-    if (Vm.isJDK16Compliant()) {
-      try {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        String hotSpotDiagName = "com.sun.management:type=HotSpotDiagnostic";
-        ObjectName name = new ObjectName(hotSpotDiagName);
-        String operationName = "dumpHeap";
+    try {
+      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+      String hotSpotDiagName = "com.sun.management:type=HotSpotDiagnostic";
+      ObjectName name = new ObjectName(hotSpotDiagName);
+      String operationName = "dumpHeap";
 
-        File tempFile = new File(destDir, "heapDump_" + (System.currentTimeMillis()) + ".hprof");
-        String dumpFilename = tempFile.getAbsolutePath();
+      File tempFile = new File(destDir, "heapDump_" + (System.currentTimeMillis()) + ".hprof");
+      String dumpFilename = tempFile.getAbsolutePath();
 
-        Object[] params = new Object[] { dumpFilename, Boolean.TRUE };
-        String[] signature = new String[] { String.class.getName(), boolean.class.getName() };
-        mbs.invoke(name, operationName, params, signature);
+      Object[] params = new Object[] { dumpFilename, Boolean.TRUE };
+      String[] signature = new String[] { String.class.getName(), boolean.class.getName() };
+      mbs.invoke(name, operationName, params, signature);
 
-        System.out.println("dumped heap in file " + dumpFilename);
-      } catch (Exception e) {
-        System.err.println("Could not dump heap: " + e.getMessage());
-      }
-    } else {
-      System.err.println("Heap dump only available on jdk1.6+");
+      System.out.println("dumped heap in file " + dumpFilename);
+    } catch (Exception e) {
+      System.err.println("Could not dump heap: " + e.getMessage());
     }
   }
 
