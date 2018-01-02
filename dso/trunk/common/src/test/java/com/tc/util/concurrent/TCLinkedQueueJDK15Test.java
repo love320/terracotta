@@ -30,10 +30,6 @@ public class TCLinkedQueueJDK15Test extends TestCase {
 
   public void testLinkedQueue() {
     System.out.println(" --TEST CASE : testLinkedQueue");
-    if (!Vm.isJDK15Compliant()) {
-      System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
-      return;
-    }
     TCQueue linkedBlockingQueue = (new QueueFactory()).createInstance();
     Assert.assertTrue(linkedBlockingQueue instanceof TCLinkedBlockingQueue);
 
@@ -43,10 +39,6 @@ public class TCLinkedQueueJDK15Test extends TestCase {
 
   public void testLinkedQueueCapacity() {
     System.out.println(" --TEST CASE : testLinkedQueueCapacity");
-    if (!Vm.isJDK15Compliant()) {
-      System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
-      return;
-    }
     int capacity = 100;
     TCQueue linkedBlockingQueue = (new QueueFactory()).createInstance(capacity);
     Assert.assertTrue(linkedBlockingQueue instanceof TCLinkedBlockingQueue);
@@ -80,10 +72,6 @@ public class TCLinkedQueueJDK15Test extends TestCase {
 
   public void testTCQueuePutPerformance() throws Exception {
     System.out.println(" --TEST CASE : testTCQueuePutPrformance");
-    if (!Vm.isJDK15Compliant()) {
-      System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
-      return;
-    }
     TCQueue queue = (new QueueFactory()).createInstance(NUMBER_OF_TRANSACTIONS);
 
     Thread producer1 = new Producer("Producer TCLinkedBlockingQueue", queue);
@@ -130,10 +118,6 @@ public class TCLinkedQueueJDK15Test extends TestCase {
 
   public void testTCQueueMultiThreadPrformance() throws Exception {
     System.out.println(" --TEST CASE : testTCQueueMultiThreadPrformance");
-    if (!Vm.isJDK15Compliant()) {
-      System.out.println("This test is supposed to run only for JDK 1.5 and above. Exiting the test...");
-      return;
-    }
     TCQueue queue = (new QueueFactory()).createInstance(NUMBER_OF_TRANSACTIONS);
     nodeId.set(0);
 
