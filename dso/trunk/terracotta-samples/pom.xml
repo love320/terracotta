@@ -116,7 +116,7 @@ The Initial Developer of the Covered Software is
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>findbugs-maven-plugin</artifactId>
-          <version>2.5.5</version>
+          <version>3.0.3</version>
         </plugin>
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
@@ -140,8 +140,8 @@ The Initial Developer of the Covered Software is
         <artifactId>maven-compiler-plugin</artifactId>
         <version>2.3.2</version>
         <configuration>
-          <source>1.5</source>
-          <target>1.5</target>
+          <source>1.6</source>
+          <target>1.6</target>
         </configuration>
       </plugin>
 
