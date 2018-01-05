@@ -16,6 +16,10 @@
  */
 package com.tc.util.runtime;
 
+import com.tc.util.Conversion;
+
+import java.lang.reflect.Method;
+
 /**
  * Utility class for understanding the current JVM version. Access the VM
  * version information by looking at {@link #VERSION} directly or calling the
@@ -54,13 +58,23 @@ public class Vm {
   }
 
   /**
-   * Returns the value matching what is found in our startup script as we can no longer find that value with an API
-   * starting in Java 9.
+   * Attempts to determine the max direct memory usable by the JVM.
+   * If this cannot be determined, return a constant matching the startup script.
    *
-   * @return the value matching our startup script
+   * @return max direct memory usable
    */
   public static long maxDirectMemory() {
-    // Returning a constant as the code is no longer present in Java 9 and this is what we pass in startup script
-    return 9223372036854775807L;
+    try {
+      Class<?> vmClass = Class.forName("sun.misc.VM");
+      Method maxDirectMemory = vmClass.getDeclaredMethod("maxDirectMemory");
+      return (Long) maxDirectMemory.invoke(null);
+    } catch (Exception e) {
+      // Returning a constant as the code is no longer present in Java 9 and this is what we pass in startup script
+      try {
+        return Conversion.memorySizeAsLongBytes("1048576g");
+      } catch (Conversion.MetricsFormatException e1) {
+        throw new AssertionError("Unexpected failure in converting default");
+      }
+    }
   }
 }
