@@ -35,6 +35,7 @@ import java.net.URL;
 import java.security.CodeSource;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -246,6 +247,14 @@ public final class ProductInfo {
    */
   public String mavenArtifactsVersion() {
     return buildVersion;
+  }
+
+  public String versionMessage() {
+    try {
+      return bundleHelper.getString("version.message");
+    } catch (MissingResourceException e) {
+      return "";
+    }
   }
 
   /**

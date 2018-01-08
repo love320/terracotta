@@ -31,6 +31,7 @@ public class ProductInfoBundle extends ListResourceBundle {
     {"copyright", "Copyright (c) 2003-2008 Terracotta, Inc. All rights reserved."},
     {"option.verbose", "Produces more detailed information."},
     {"option.raw", "Produces raw information."},
-    {"option.help", "Shows this text."}
+    {"option.help", "Shows this text."},
+    {"version.message", ""}
   };
 }

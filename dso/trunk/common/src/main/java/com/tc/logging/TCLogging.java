@@ -559,6 +559,11 @@ public class TCLogging {
       String longPatchString = info.toLongPatchString();
       consoleLogger.info(longPatchString);
     }
+
+    String versionMessage = info.versionMessage();
+    if (!versionMessage.isEmpty()) {
+      consoleLogger.info(versionMessage);
+    }
   }
 
   private static void writePID() {
