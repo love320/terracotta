@@ -136,34 +136,56 @@ public class TerracottaToolkitFactoryService implements ToolkitFactoryService {
       if (serverPortToken.equals("")) {
         continue;
       }
-      String[] tokens = serverPortToken.split(":");
-      if (tokens.length != 2) {
-        //
-        throw new ToolkitInstantiationException(
-                                                "toolkitUrl should be of form: 'toolkit:terracotta://server:tsa-port', invalid server:port specified - '"
-                                                    + serverPortToken + "'");
+
+      String host;
+      int tsaPort;
+      if (serverPortToken.startsWith("[")) {
+        if (!serverPortToken.contains("]")) {
+          throw new IllegalArgumentException(String.format("A tc.server element contains an invalid host '%s'. "
+                  + "IPv6 address literals must be enclosed in '[' and ']' according to RFC 2732", serverPortToken));
+        }
+        int end = serverPortToken.indexOf("]");
+        host = serverPortToken.substring(1, end);
+        String remainder = serverPortToken.substring(end + 1);
+        if (!remainder.isEmpty() && remainder.charAt(0) == ':') {
+          String portString = remainder.substring(1);
+          try {
+            tsaPort = Integer.parseInt(portString);
+          } catch (NumberFormatException nfe) {
+            throw new ToolkitInstantiationException(
+                                                    "toolkitUrl should be of form: 'toolkit:terracotta://server:tsa-port', invalid server:port specified in token - '"
+                                                        + serverPortToken + "', 'port' is not a valid integer - "
+                                                        + portString);
+          }
+        } else {
+          throw new ToolkitInstantiationException(
+                                                  "toolkitUrl should be of form: 'toolkit:terracotta://[IPv6]:tsa-port', invalid server:port specified - '"
+                                                      + serverPortToken + "'");
+        }
+      } else {
+        String[] parts = serverPortToken.split(":");
+
+        if (parts.length != 2) {
+          throw new ToolkitInstantiationException(
+                                                  "toolkitUrl should be of form: 'toolkit:terracotta://server:tsa-port', invalid server:port specified - '"
+                                                      + serverPortToken + "'");
+        } else {
+          host = parts[0];
+          try {
+            tsaPort = Integer.parseInt(parts[1]);
+          } catch (NumberFormatException nfe) {
+            throw new ToolkitInstantiationException(
+                                                    "toolkitUrl should be of form: 'toolkit:terracotta://server:tsa-port', invalid server:port specified in token - '"
+                                                        + serverPortToken + "', 'port' is not a valid integer - "
+                                                        + parts[1]);
+          }
+        }
       }
-      if (!isValidInteger(tokens[1])) {
-        //
-        throw new ToolkitInstantiationException(
-                                                "toolkitUrl should be of form: 'toolkit:terracotta://server:tsa-port', invalid server:port specified in token - '"
-                                                    + serverPortToken + "', 'port' is not a valid integer - "
-                                                    + tokens[1]);
-      }
-      tcUrl.append(tokens[0] + ":");
-      tcUrl.append(tokens[1] + ",");
+      tcUrl.append(host).append(":");
+      tcUrl.append(tsaPort).append(",");
     }
     tcUrl.deleteCharAt(tcUrl.lastIndexOf(","));
     return tcUrl.toString();
-  }
-
-  private boolean isValidInteger(String value) {
-    try {
-      Integer.parseInt(value);
-    } catch (Exception e) {
-      return false;
-    }
-    return true;
   }
 
   private static Set<String> getTunnelledMBeanDomains(Properties properties) {
