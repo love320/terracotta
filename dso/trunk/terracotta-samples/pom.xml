@@ -29,7 +29,7 @@ The Initial Developer of the Covered Software is
   <name>Samples for Terracotta</name>
 
   <properties>
-    <slf4j.version>1.7.7</slf4j.version>
+    <slf4j.version>1.7.25</slf4j.version>
     <commons-lang.version>2.6</commons-lang.version>
     <guava.version>14.0.1</guava.version>
     <terracotta-nexus-staging-url>http://nexus.terracotta.eur.ad.sag/service/local/staging/deploy/maven2</terracotta-nexus-staging-url>
