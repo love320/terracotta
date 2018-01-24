@@ -16,18 +16,17 @@
  */
 package com.terracotta.toolkit.collections.servermap.api.ehcacheimpl;
 
-import java.util.ArrayList;
-import java.util.List;
 import net.sf.ehcache.Element;
 import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.terracotta.InternalEhcache;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+
 import org.junit.Test;
-import static org.junit.Assert.*;
 import org.mockito.Matchers;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,25 +37,6 @@ import static org.mockito.Mockito.when;
  */
 public class OnlineEhcacheSMLocalStoreTest {
   
-  public OnlineEhcacheSMLocalStoreTest() {
-  }
-  
-  @BeforeClass
-  public static void setUpClass() {
-  }
-  
-  @AfterClass
-  public static void tearDownClass() {
-  }
-  
-  @Before
-  public void setUp() {
-  }
-  
-  @After
-  public void tearDown() {
-  }
-
   /**
    * Test of get method, of class OnlineEhcacheSMLocalStore.
    */
@@ -67,7 +47,7 @@ public class OnlineEhcacheSMLocalStoreTest {
     Element old = new Element(key,value);
     
     InternalEhcache base = mock(InternalEhcache.class);
-    when(base.get(Matchers.any())).thenReturn(old);
+    when(base.get(Matchers.any(Object.class))).thenReturn(old);
     
     CacheConfiguration config = mock(CacheConfiguration.class);
     when(config.isOverflowToOffHeap()).thenReturn(false);
@@ -77,7 +57,7 @@ public class OnlineEhcacheSMLocalStoreTest {
     Object result = instance.get(key);
     assertEquals(old.getObjectValue(), result);
     
-    verify(base).get(Matchers.any());
+    verify(base).get(Matchers.any(Object.class));
   }
 
   /**
@@ -162,7 +142,7 @@ public class OnlineEhcacheSMLocalStoreTest {
     Element old = new Element(key,value);
     
     InternalEhcache base = mock(InternalEhcache.class);
-    when(base.get(Matchers.any())).thenReturn(old);
+    when(base.get(Matchers.any(Object.class))).thenReturn(old);
     when(base.removeElement(Matchers.eq(old))).thenReturn(true);
     
     CacheConfiguration config = mock(CacheConfiguration.class);
@@ -173,7 +153,7 @@ public class OnlineEhcacheSMLocalStoreTest {
     Object result = instance.remove(key, value);
     assertEquals(old.getObjectValue(), result);
     
-    verify(base).get(Matchers.any());
+    verify(base).get(Matchers.any(Object.class));
     verify(base).removeElement(Matchers.eq(old));
   }
 
