@@ -123,7 +123,8 @@ public class ClusterDumper {
     host = host == null ? DEFAULT_HOST : host;
     ClusterDumper dumper = new ClusterDumper(host, port, username, password);
     try {
-      System.out.println("Connecting " + host + ":" + port + "...");
+      String displayHost = host.contains(":") ? "[" + host + "]" : host;
+      System.out.println("Connecting " + displayHost + ":" + port + "...");
       if (commandLineBuilder.hasOption('d')) {
         dumper.takeClusterStateDump(server, client);
       } else {
@@ -195,13 +196,14 @@ public class ClusterDumper {
 
         try {
           String hostName = member.host();
+          String displayHostName = hostName.contains(":") ? "[" + hostName + "]" : hostName;
           int jmxPort = member.jmxPort();
-          System.out.println("Trying to take Server State Dump for " + hostName + ":" + jmxPort);
+          System.out.println("Trying to take Server State Dump for " + displayHostName + ":" + jmxPort);
           jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
           final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
           mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.DUMPER, L2DumperMBean.class, false);
           mbean.doServerDump();
-          System.out.println("Server State Dump taken for " + hostName + ":" + jmxPort);
+          System.out.println("Server State Dump taken for " + displayHostName + ":" + jmxPort);
         } catch (Exception e) {
           System.out.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
         } finally {
@@ -228,8 +230,9 @@ public class ClusterDumper {
 
         try {
           String hostName = member.host();
+          String displayHostName = hostName.contains(":") ? "[" + hostName + "]" : hostName;
           int jmxPort = member.jmxPort();
-          System.out.println("Trying to take Server Thread Dump for " + hostName + ":" + jmxPort);
+          System.out.println("Trying to take Server Thread Dump for " + displayHostName + ":" + jmxPort);
           jmxConnector = CommandLineBuilder.getJMXConnector(username, password, hostName, jmxPort);
           final MBeanServerConnection mbs = jmxConnector.getMBeanServerConnection();
           mbean = MBeanServerInvocationProxy.newMBeanProxy(mbs, L2MBeanNames.TC_SERVER_INFO, TCServerInfoMBean.class,
@@ -241,7 +244,7 @@ public class ClusterDumper {
           zout.write(decompress(zipped));
           zout.closeEntry();
 
-          System.out.println("Server Thread Dump taken for " + hostName + ":" + jmxPort);
+          System.out.println("Server Thread Dump taken for " + displayHostName + ":" + jmxPort);
         } catch (Exception e) {
           System.out.println((e.getCause() == null ? e.getMessage() : e.getCause().getMessage()));
         } finally {
@@ -340,7 +343,8 @@ public class ClusterDumper {
   }
 
   private void doClientThreadDumps(String hostName, int jmxPort, ZipOutputStream zout) {
-    System.out.println("\nTaking Client Thread Dumps \nby connecting Active Coordinator " + hostName + ":" + jmxPort);
+    String displayHostName = hostName.contains(":") ? "[" + hostName + "]" : hostName;
+    System.out.println("\nTaking Client Thread Dumps \nby connecting Active Coordinator " + displayHostName + ":" + jmxPort);
     System.out.println("=========================================\n");
     JMXConnector jmxConnector = null;
     try {
@@ -380,7 +384,8 @@ public class ClusterDumper {
   }
 
   private void doClientsStateDump(String hostName, int jmxPort) {
-    System.out.println("\nTaking Client State Dumps \nby connecting Active Coordinator " + hostName + ":" + jmxPort);
+    String displayHostName = hostName.contains(":") ? "[" + hostName + "]" : hostName;
+    System.out.println("\nTaking Client State Dumps \nby connecting Active Coordinator " + displayHostName + ":" + jmxPort);
     System.out.println("=========================================\n");
     JMXConnector jmxConnector = null;
     try {

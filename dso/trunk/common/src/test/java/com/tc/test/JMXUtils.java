@@ -31,6 +31,9 @@ import javax.rmi.ssl.SslRMIServerSocketFactory;
 
 public class JMXUtils {
   public static JMXConnector getJMXConnector(String host, int port) throws MalformedURLException, IOException {
+    if (host.contains(":")) {
+      host = "[" + host + "]";
+    }
     JMXServiceURL url = new JMXServiceURL("service:jmx:jmxmp://" + host + ":" + port);
     return JMXConnectorFactory.connect(url);
   }
@@ -44,6 +47,9 @@ public class JMXUtils {
     if (username != null && password != null) {
       String[] creds = { username, password };
       env.put("jmx.remote.credentials", creds);
+      if (host.contains(":")) {
+        host = "[" + host + "]";
+      }
       String addr = MessageFormat.format("service:jmx:rmi:///jndi/rmi://{0}:{1}/jmxrmi",
                                          new Object[] { host, port + "" });
       return JMXConnectorFactory.connect(new JMXServiceURL(addr), env);
@@ -68,8 +74,12 @@ public class JMXUtils {
     env.put("com.sun.jndi.rmi.factory.socket", csf);
     env.put("jmx.remote.credentials", new Object[] {username, password});
 
+    if (host.contains(":")) {
+      host = "[" + host + "]";
+    }
+
     try {
-      JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://"+host+":" + port + "/jndi/rmi://" + host + ":" + port + "/jmxrmi");
+      JMXServiceURL url = new JMXServiceURL("service:jmx:rmi://" + host + ":" + port + "/jndi/rmi://" + host + ":" + port + "/jmxrmi");
       return JMXConnectorFactory.connect(url, env);
     } catch (IOException e) {
       throw new RuntimeException(e);

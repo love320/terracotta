@@ -88,7 +88,8 @@ public class DumpServer {
     host = host == null ? DEFAULT_HOST : host;
 
     try {
-      System.err.println("Dumping server at " + host + ":" + port);
+      String displayHost = host.contains(":") ? "[" + host + "]" : host;
+      System.err.println("Dumping server at " + displayHost + ":" + port);
       new DumpServer(host, port, username, password).dumpServer();
     } catch (IOException ioe) {
       System.err.println("Unable to connect to host '" + host + "', port " + port

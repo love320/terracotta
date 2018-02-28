@@ -78,9 +78,9 @@ public class ManagementToolUtilTest {
   @Test
   public void testServerList() throws Exception {
     Collection<WebTarget> targets = ManagementToolUtil.getTargets(
-        cliBuilder(new String[] { "-servers", "foo:321,bar:1234"}));
+        cliBuilder(new String[] { "-servers", "foo:321,bar:1234,[::1]:42"}));
     assertThat(targets, IsCollectionContaining.<WebTarget>hasItems(
-        hostAndPort("foo", 321), hostAndPort("bar", 1234)));
+        hostAndPort("foo", 321), hostAndPort("bar", 1234), hostAndPort("[::1]", 42)));
   }
 
   private CommandLineBuilder cliBuilder(String[] args) {

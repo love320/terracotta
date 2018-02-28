@@ -159,7 +159,8 @@ public class ServerStat {
         response = target.path("/tc-management-api/v2/local/stat").request(MediaType.APPLICATION_JSON_TYPE).get();
       } catch (RuntimeException e) {
         if (getRootCause(e) instanceof ConnectException) {
-          return new ServerStat(host, port, "Connection refused to " + host + ":" + port + ". Is the TSA running?");
+          String displayHost = host.contains(":") ? "[" + host + "]" : host;
+          return new ServerStat(host, port, "Connection refused to " + displayHost + ":" + port + ". Is the TSA running?");
         } else {
           throw e;
         }

@@ -96,7 +96,8 @@ public class GCRunner {
     host = host == null ? DEFAULT_HOST : host;
 
     try {
-      consoleLogger.info("Invoking DGC on " + host + ":" + port);
+      String displayHost = host.contains(":") ? "[" + host + "]" : host;
+      consoleLogger.info("Invoking DGC on " + displayHost + ":" + port);
       new GCRunner(host, port, username, password).runGC();
     } catch (IOException ioe) {
       consoleLogger.error("Unable to connect to host '" + host + "', port " + port

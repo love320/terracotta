@@ -50,7 +50,7 @@ import junit.framework.Assert;
  */
 public class ExternalDsoServer {
   private static final String       SERVER_CONFIG_FILENAME = "server-config.xml";
-  private static final String       DEFAULT_MAX_DIRECT_MEMORY = "-XX:MaxDirectMemorySize=1g";
+  private static final String       DEFAULT_MAX_DIRECT_MEMORY = "-XX:MaxDirectMemorySize=3g";
 
   private ExtraProcessServerControl serverProc;
   private final File                serverLog;
@@ -156,7 +156,7 @@ public class ExternalDsoServer {
     logOutputStream = new FileOutputStream(serverLog);
     addDirectMemoryIfNeeded();
     jvmArgs.add("-Dcom.tc.management.war=" + guessWarLocation());
-    serverProc = new ExtraProcessServerControl(new ExtraProcessServerControl.DebugParams(),"localhost", tsaPort, jmxPort, configFile.getAbsolutePath(), false, jvmArgs);
+    serverProc = new ExtraProcessServerControl(new ExtraProcessServerControl.DebugParams(),"localhost", tsaPort, managementPort, configFile.getAbsolutePath(), false, jvmArgs);
     serverProc.setRunningDirectory(workingDir);
     serverProc.setServerName(serverName);
     serverProc.writeOutputTo(logOutputStream);
