@@ -184,7 +184,11 @@ final class TCListenerImpl implements TCListener {
 
   @Override
   public final String toString() {
-    return getClass().getName() + " " + addr.getHostAddress() + ":" + port;
+    String hostAddr = addr.getHostAddress();
+    if (hostAddr.contains(":")) {
+      hostAddr = "[" + hostAddr + "]";
+    }
+    return getClass().getName() + " " + hostAddr + ":" + port;
   }
 
   protected final void fireCloseEvent() {

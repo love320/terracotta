@@ -64,7 +64,7 @@ public class ClusterManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(ClusterManager.class);
 
-  public static final String DEFAULT_MAX_DIRECT_MEMORY_SIZE = "1G";
+  public static final String DEFAULT_MAX_DIRECT_MEMORY_SIZE = "3G";
   public static final String DEFAULT_MAX_DATA_SIZE = "512M";
 
   private final TcConfigBuilder tcConfigBuilder;

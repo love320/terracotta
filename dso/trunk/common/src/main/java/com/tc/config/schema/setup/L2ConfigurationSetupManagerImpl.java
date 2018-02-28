@@ -227,6 +227,9 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   }
 
   private void verifyPortUsed(Set<String> serverPorts, String hostname, int port) throws ConfigurationSetupException {
+    if (hostname.contains(":")) {
+      hostname = "[" + hostname +  "]";
+    }
     String hostport = hostname + ":" + port;
     if (port != 0 && !serverPorts.add(hostport)) { throw new ConfigurationSetupException(
                                                                                          "The server "

@@ -16,6 +16,7 @@
  */
 package com.tc.cli;
 
+import com.tc.net.TCSocketAddress;
 import org.apache.xmlbeans.XmlException;
 import org.glassfish.jersey.client.authentication.HttpAuthenticationFeature;
 
@@ -176,7 +177,9 @@ public abstract class ManagementToolUtil {
 
   private static String computeHost(Server serverConfig) {
     String host = serverConfig.getManagementPort() != null ? serverConfig.getManagementPort().getBind() : null;
-    if (host == null || host.equals("0.0.0.0")) host = serverConfig.getHost();
+    if (host == null || host.equals(TCSocketAddress.WILDCARD_IP) || host.equals(TCSocketAddress.WILDCARD_IPv6)) {
+      host = serverConfig.getHost();
+    }
     if (host == null) host = DEFAULT_HOST;
     return host;
   }
@@ -220,7 +223,9 @@ public abstract class ManagementToolUtil {
 
   private static String computeHost(CommonL2Config serverConfig) {
     String host = serverConfig.managementPort().getBind();
-    if (host == null || host.equals("0.0.0.0")) host = serverConfig.host();
+    if (host == null || host.equals(TCSocketAddress.WILDCARD_IP) || host.equals(TCSocketAddress.WILDCARD_IPv6)) {
+      host = serverConfig.host();
+    }
     if (host == null) host = DEFAULT_HOST;
     return host;
   }
@@ -236,11 +241,17 @@ public abstract class ManagementToolUtil {
       throws NoSuchAlgorithmException, KeyManagementException {
     Collection<WebTarget> targets = new ArrayList<WebTarget>();
     for (String hostAndPort : serversList) {
-      String[] splitHostPort = hostAndPort.split(":");
-      String host = splitHostPort[0];
+      hostAndPort = hostAndPort.trim();
+      int lastColonIndex = hostAndPort.lastIndexOf(":");
+      String hostPart = lastColonIndex != -1 ? hostAndPort.substring(0, lastColonIndex) : hostAndPort;
+      String portPart = lastColonIndex != -1 ? hostAndPort.substring(lastColonIndex + 1) : null;
+      String host = hostPart.trim();
+      if (host.startsWith("[")) {
+        host = host.substring(1, host.lastIndexOf("]"));
+      }
       int port = DEFAULT_PORT;
-      if (splitHostPort.length >= 2) {
-        port = Integer.parseInt(splitHostPort[1]);
+      if (portPart != null) {
+        port = Integer.parseInt(portPart.trim());
       }
 
       targets.add(targetFor(host, port, username, password, secured, ignoreUntrusted));
@@ -263,7 +274,7 @@ public abstract class ManagementToolUtil {
   public static WebTarget targetFor(String host, int port, String username, String password, boolean secured,
                                     boolean ignoreUntrusted) throws KeyManagementException, NoSuchAlgorithmException {
     String prefix = secured ? "https" : "http";
-    String urlAsString = prefix + "://" + host + ":" + port;
+    String urlAsString = prefix + "://" + (host.contains(":") ? ("[" + host + "]") : host) + ":" + port;
 
     if (secured) {
       initSecurityManager();
