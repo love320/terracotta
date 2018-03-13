@@ -39,13 +39,17 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.core.Is.is;
+import static org.terracotta.test.util.WaitUtil.assertThatWithin;
+
 public class TCStopBindAddressTest extends BaseDSOTestCase {
   private static final String SERVER_NAME_1      = "server1";
   private File                tcConfig           = null;
   private TcConfigBuilder     configBuilder;
   private ExternalDsoServer   server1;
   private int                 managementPort1;
-  private final long          SHUTDOWN_WAIT_TIME = TimeUnit.NANOSECONDS.convert(120, TimeUnit.SECONDS);
+  private final long          SHUTDOWN_WAIT_TIME = TimeUnit.NANOSECONDS.convert(120, SECONDS);
 
   @Override
   protected boolean cleanTempDir() {
@@ -92,8 +96,8 @@ public class TCStopBindAddressTest extends BaseDSOTestCase {
 
   public void testServerForceStop() throws Throwable {
     stop(server1, SERVER_NAME_1);
-    Assert.assertFalse(server1.isRunning());
-
+    //Shutdown is scheduled for 1 second after the call for legacy JMX reasons
+    assertThatWithin(server1::isRunning, is(false), 2, TimeUnit.SECONDS);
   }
 
   private void stop(ExternalDsoServer server, String serverName) throws Throwable {
