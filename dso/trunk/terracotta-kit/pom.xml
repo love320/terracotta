@@ -22,7 +22,7 @@ The Initial Developer of the Covered Software is
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>terracotta-parent</artifactId>
-    <version>4.3.5-SNAPSHOT</version>
+    <version>4.3.6-SNAPSHOT</version>
     <relativePath>../terracotta-parent/pom.xml</relativePath>
   </parent>
 
@@ -36,7 +36,7 @@ The Initial Developer of the Covered Software is
     <kit.name>${product.name}-${project.version}</kit.name>
     <root.dir>${project.build.directory}/${kit.name}</root.dir>
 
-    <ehcache.version>2.10.5-SNAPSHOT</ehcache.version>
+    <ehcache.version>2.10.6-SNAPSHOT</ehcache.version>
     <toolkit-api.version>2.1.0</toolkit-api.version>
     <escrow-maven-plugin.version>1.0.3-SNAPSHOT</escrow-maven-plugin.version>
     <management-cli.version>${project.version}</management-cli.version>
