@@ -88,31 +88,31 @@ public class L2DSOConfigObject extends BaseConfigObject implements L2DSOConfig {
 
     this.context.ensureRepositoryProvides(Server.class);
     Server server = (Server) this.context.bean();
-    this.garbageCollection = gc;
-    this.clientReconnectWindow = clientReconnectWindow;
-    this.restartable = restartable;
-    this.failoverPriority = failoverPriority;
+    synchronized (this.context.syncLockForBean()) {
+      this.garbageCollection = gc;
+      this.clientReconnectWindow = clientReconnectWindow;
+      this.restartable = restartable;
+      this.failoverPriority = failoverPriority;
 
-    this.bind = server.getBind();
-    this.host = server.getHost();
-    if (this.host.equalsIgnoreCase(LOCALHOST)) {
-      logger.warn("The specified hostname \"" + this.host
-                  + "\" may not work correctly if clients and operator console are connecting from other hosts. "
-                  + "Replace \"" + this.host + "\" with an appropriate hostname in configuration.");
-    }
-    this.serverName = server.getName();
-    this.tsaPort = server.getTsaPort();
-    this.tsaGroupPort = server.getTsaGroupPort();
-    this.managementPort = server.getManagementPort();
-    this.dataStorage = server.getDataStorage();
-    this.jmxEnabled = server.getJmxEnabled();
-    if (server.isSetSecurity()) {
-      this.securityConfig = server.getSecurity();
-    } else {
-      this.securityConfig = Security.Factory.newInstance();
-      this.securityConfig.setSsl(Ssl.Factory.newInstance());
-      this.securityConfig.setKeychain(Keychain.Factory.newInstance());
-      this.securityConfig.setAuth(Auth.Factory.newInstance());
+      this.bind = server.getBind();
+      this.host = server.getHost();
+      if (this.host.equalsIgnoreCase(LOCALHOST)) {
+        logger.warn("The specified hostname \"" + this.host + "\" may not work correctly if clients and operator console are connecting from other hosts. " + "Replace \"" + this.host + "\" with an appropriate hostname in configuration.");
+      }
+      this.serverName = server.getName();
+      this.tsaPort = server.getTsaPort();
+      this.tsaGroupPort = server.getTsaGroupPort();
+      this.managementPort = server.getManagementPort();
+      this.dataStorage = server.getDataStorage();
+      this.jmxEnabled = server.getJmxEnabled();
+      if (server.isSetSecurity()) {
+        this.securityConfig = server.getSecurity();
+      } else {
+        this.securityConfig = Security.Factory.newInstance();
+        this.securityConfig.setSsl(Ssl.Factory.newInstance());
+        this.securityConfig.setKeychain(Keychain.Factory.newInstance());
+        this.securityConfig.setAuth(Auth.Factory.newInstance());
+      }
     }
   }
 

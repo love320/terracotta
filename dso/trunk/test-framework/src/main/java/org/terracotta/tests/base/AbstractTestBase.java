@@ -565,4 +565,5 @@ public abstract class AbstractTestBase extends TCTestCase implements TestFailure
   public TestJMXServerManager getJmxServerManager() {
     return jmxServerManager;
   }
+
 }
