@@ -36,8 +36,10 @@ public class CommonL1ConfigObject extends BaseConfigObject implements CommonL1Co
 
   @Override
   public File logsPath() {
-    final Client client = (Client) this.context.bean();
-    return new File(client.getLogs());
+    synchronized (this.context.syncLockForBean()) {
+      final Client client = (Client) this.context.bean();
+      return new File(client.getLogs());
+    }
   }
 
 }

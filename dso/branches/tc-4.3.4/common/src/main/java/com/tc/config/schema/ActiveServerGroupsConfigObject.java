@@ -40,21 +40,25 @@ public class ActiveServerGroupsConfigObject extends BaseConfigObject implements 
     super(context);
     context.ensureRepositoryProvides(Servers.class);
 
-    Servers servers = (Servers) context.bean();
-    final MirrorGroup[] groupArray = servers.getMirrorGroupArray();
+    synchronized (context.syncLockForBean()) {
+      Servers servers = (Servers) context.bean();
+      final MirrorGroup[] groupArray = servers.getMirrorGroupArray();
 
-    if (groupArray == null || groupArray.length == 0) { throw new AssertionError(
-                                                                                 "ActiveServerGroup array is null!  This should never happen since we make sure default is used."); }
+      if (groupArray == null || groupArray.length == 0) {
+        throw new AssertionError(
+          "ActiveServerGroup array is null!  This should never happen since we make sure default is used.");
+      }
 
-    ActiveServerGroupConfigObject[] tempGroupConfigArray = new ActiveServerGroupConfigObject[groupArray.length];
+      ActiveServerGroupConfigObject[] tempGroupConfigArray = new ActiveServerGroupConfigObject[groupArray.length];
 
-    for (int i = 0; i < tempGroupConfigArray.length; i++) {
-      tempGroupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
-                                                                  setupManager);
+      for (int i = 0; i < tempGroupConfigArray.length; i++) {
+        tempGroupConfigArray[i] = new ActiveServerGroupConfigObject(createContext(setupManager, groupArray[i]),
+                                                                    setupManager);
+      }
+      final ActiveServerGroupConfig[] activeServerGroupConfigObjects = ActiveCoordinatorHelper.generateGroupInfo(
+        tempGroupConfigArray);
+      this.groupConfigs = Collections.unmodifiableList(Arrays.asList(activeServerGroupConfigObjects));
     }
-    final ActiveServerGroupConfig[] activeServerGroupConfigObjects = ActiveCoordinatorHelper
-        .generateGroupInfo(tempGroupConfigArray);
-    this.groupConfigs = Collections.unmodifiableList(Arrays.asList(activeServerGroupConfigObjects));
   }
 
   @Override

@@ -16,6 +16,7 @@
  */
 package com.tc.config.schema.setup;
 
+import com.tc.config.schema.context.ConfigContext;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
@@ -518,6 +519,12 @@ public class TestConfigurationSetupManagerFactory extends BaseConfigurationSetup
       public XmlObject getBean() {
         return null;
       }
+
+      @Override
+      public Object syncLockForBean() {
+        return null;
+      }
+
     });
   }
 
