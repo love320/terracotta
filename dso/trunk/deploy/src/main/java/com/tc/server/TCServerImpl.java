@@ -276,35 +276,41 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public L2Info[] infoForAllL2s() {
-    String[] allKnownL2s = this.configurationSetupManager.allCurrentlyKnownServers();
-    L2Info[] out = new L2Info[allKnownL2s.length];
+    synchronized (configurationSetupManager.commonl2Config().syncLockForBean()) {
+      String[] allKnownL2s = this.configurationSetupManager.allCurrentlyKnownServers();
+      L2Info[] out = new L2Info[allKnownL2s.length];
 
-    for (int i = 0; i < out.length; ++i) {
-      try {
-        CommonL2Config config = this.configurationSetupManager.commonL2ConfigFor(allKnownL2s[i]);
+      for (int i = 0; i < out.length; ++i) {
+        try {
+          CommonL2Config config = this.configurationSetupManager.commonL2ConfigFor(allKnownL2s[i]);
 
-        String name = allKnownL2s[i];
-        if (name == null) {
-          name = L2Info.IMPLICIT_L2_NAME;
+          String name = allKnownL2s[i];
+          if (name == null) {
+            name = L2Info.IMPLICIT_L2_NAME;
+          }
+
+          String host = config.jmxPort().getBind();
+          if (TCSocketAddress.WILDCARD_IP.equals(host)) {
+            host = config.host();
+          }
+          if (StringUtils.isBlank(host)) {
+            host = name;
+          }
+
+          out[i] = new L2Info(name,
+                              host,
+                              config.jmxPort().getIntValue(),
+                              config.tsaPort().getIntValue(),
+                              config.tsaGroupPort().getBind(),
+                              config.tsaGroupPort().getIntValue(),
+                              config.managementPort().getIntValue(),
+                              getSecurityHostname());
+        } catch (ConfigurationSetupException cse) {
+          throw Assert.failure("This should be impossible here", cse);
         }
-
-        String host = config.jmxPort().getBind();
-        if (TCSocketAddress.WILDCARD_IP.equals(host)) {
-          host = config.host();
-        }
-        if (StringUtils.isBlank(host)) {
-          host = name;
-        }
-
-        out[i] = new L2Info(name, host, config.jmxPort().getIntValue(), config.tsaPort().getIntValue(), config
-            .tsaGroupPort().getBind(), config.tsaGroupPort().getIntValue(), config.managementPort().getIntValue(),
-                            getSecurityHostname());
-      } catch (ConfigurationSetupException cse) {
-        throw Assert.failure("This should be impossible here", cse);
       }
+      return out;
     }
-
-    return out;
   }
 
   @Override
