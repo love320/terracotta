@@ -16,6 +16,7 @@
  */
 package com.tc.config.schema;
 
+import com.tc.config.schema.context.ConfigContext;
 import org.apache.xmlbeans.XmlObject;
 
 import com.tc.config.schema.dynamic.ConfigItem;
@@ -30,5 +31,7 @@ public interface Config {
   void changesInItemForbidden(ConfigItem item);
   
   XmlObject getBean();
+
+  Object syncLockForBean();
   
 }

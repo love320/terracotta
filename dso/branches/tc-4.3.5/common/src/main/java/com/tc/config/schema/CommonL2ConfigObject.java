@@ -57,78 +57,88 @@ public class CommonL2ConfigObject extends BaseConfigObject implements CommonL2Co
 
     Server server = (Server) context.bean();
 
-    this.host = server.getHost();
+    synchronized (context.syncLockForBean()) {
+      this.host = server.getHost();
 
-    // JMX authentication
-    String pwd = null;
-    String loginConfig = null;
-    String access = null;
-    this.authentication = server.isSetAuthentication();
+      // JMX authentication
+      String pwd = null;
+      String loginConfig = null;
+      String access = null;
+      this.authentication = server.isSetAuthentication();
 
-    if (authentication) {
-      if (server.getAuthentication().isSetMode()) {
-        if (server.getAuthentication().getMode().isSetLoginConfigName()) {
-          loginConfig = server.getAuthentication().getMode().getLoginConfigName();
+      if (authentication) {
+        if (server.getAuthentication().isSetMode()) {
+          if (server.getAuthentication().getMode().isSetLoginConfigName()) {
+            loginConfig = server.getAuthentication().getMode().getLoginConfigName();
+          } else {
+            pwd = server.getAuthentication().getMode().getPasswordFile();
+            if (pwd == null)
+              pwd = AuthenticationMode.type.getElementProperty(QName.valueOf("password-file")).getDefaultText();
+            pwd = new File(ParameterSubstituter.substitute(pwd)).getAbsolutePath();
+          }
         } else {
-          pwd = server.getAuthentication().getMode().getPasswordFile();
-          if (pwd == null) pwd = AuthenticationMode.type.getElementProperty(QName.valueOf("password-file"))
-              .getDefaultText();
+          pwd = AuthenticationMode.type.getElementProperty(QName.valueOf("password-file")).getDefaultText();
           pwd = new File(ParameterSubstituter.substitute(pwd)).getAbsolutePath();
         }
-      } else {
-        pwd = AuthenticationMode.type.getElementProperty(QName.valueOf("password-file")).getDefaultText();
-        pwd = new File(ParameterSubstituter.substitute(pwd)).getAbsolutePath();
+        access = server.getAuthentication().getAccessFile();
+        if (access == null)
+          access = Authentication.type.getElementProperty(QName.valueOf("access-file")).getDefaultText();
+        access = new File(ParameterSubstituter.substitute(access)).getAbsolutePath();
       }
-      access = server.getAuthentication().getAccessFile();
-      if (access == null) access = Authentication.type.getElementProperty(QName.valueOf("access-file"))
-          .getDefaultText();
-      access = new File(ParameterSubstituter.substitute(access)).getAbsolutePath();
-    }
-    this.passwordFile = pwd;
-    this.accessFile = access;
-    this.loginConfigName = loginConfig;
+      this.passwordFile = pwd;
+      this.accessFile = access;
+      this.loginConfigName = loginConfig;
 
-    // HTTP authentication
-    String userRealm = null;
-    this.httpAuthentication = server.isSetHttpAuthentication();
+      // HTTP authentication
+      String userRealm = null;
+      this.httpAuthentication = server.isSetHttpAuthentication();
 
-    if (httpAuthentication) {
-      userRealm = server.getHttpAuthentication().getUserRealmFile();
-      if (null == userRealm) {
-        userRealm = HttpAuthentication.type.getElementProperty(QName.valueOf("user-realm-file")).getDefaultText();
+      if (httpAuthentication) {
+        userRealm = server.getHttpAuthentication().getUserRealmFile();
+        if (null == userRealm) {
+          userRealm = HttpAuthentication.type.getElementProperty(QName.valueOf("user-realm-file")).getDefaultText();
+        }
+        userRealm = new File(ParameterSubstituter.substitute(userRealm)).getAbsolutePath();
       }
-      userRealm = new File(ParameterSubstituter.substitute(userRealm)).getAbsolutePath();
-    }
-    this.userRealmFile = userRealm;
+      this.userRealmFile = userRealm;
 
-    this.jmxPort = server.getJmxPort();
-    this.tsaPort = server.getTsaPort();
-    this.tsaGroupPort = server.getTsaGroupPort();
-    this.managementPort = server.getManagementPort();
+      this.jmxPort = server.getJmxPort();
+      this.tsaPort = server.getTsaPort();
+      this.tsaGroupPort = server.getTsaGroupPort();
+      this.managementPort = server.getManagementPort();
+    }
   }
 
   @Override
   public File dataPath() {
-    Server server = (Server) getBean();
-    return new File(server.getData());
+    synchronized (this.context.syncLockForBean()) {
+      Server server = (Server) getBean();
+      return new File(server.getData());
+    }
   }
 
   @Override
   public File logsPath() {
-    Server server = (Server) getBean();
-    return new File(server.getLogs());
+    synchronized (this.context.syncLockForBean()) {
+      Server server = (Server) getBean();
+      return new File(server.getLogs());
+    }
   }
 
   @Override
   public File serverDbBackupPath() {
-    Server server = (Server) getBean();
-    return new File(server.getDataBackup());
+    synchronized (this.context.syncLockForBean()) {
+      Server server = (Server) getBean();
+      return new File(server.getDataBackup());
+    }
   }
 
   @Override
   public File indexPath() {
-    Server server = (Server) getBean();
-    return new File(server.getIndex());
+    synchronized (this.context.syncLockForBean()) {
+      Server server = (Server) getBean();
+      return new File(server.getIndex());
+    }
   }
 
   @Override

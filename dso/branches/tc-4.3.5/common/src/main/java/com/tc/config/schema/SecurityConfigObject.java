@@ -40,88 +40,136 @@ public class SecurityConfigObject extends BaseConfigObject implements SecurityCo
 
   @Override
   public String getSslCertificateUri() {
-    Security bean = (Security)this.context.bean();
-    if (bean == null) { return null; }
-    Ssl ssl = bean.getSsl();
-    if (ssl == null) { return null; }
-    return ssl.getCertificate();
+    synchronized (this.context.syncLockForBean()) {
+      Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      Ssl ssl = bean.getSsl();
+      if (ssl == null) {
+        return null;
+      }
+      return ssl.getCertificate();
+    }
   }
 
   @Override
   public String getKeyChainImplClass() {
-    if(VM_ARG_KEYCHAIN_IMPL != null) {
-      return VM_ARG_KEYCHAIN_IMPL;
+    synchronized (this.context.syncLockForBean()) {
+      if (VM_ARG_KEYCHAIN_IMPL != null) {
+        return VM_ARG_KEYCHAIN_IMPL;
+      }
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      return bean.getKeychain().getClass1();
     }
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    return bean.getKeychain().getClass1();
   }
 
   @Override
   public String getSecretProviderImplClass() {
-    if(VM_ARG_KEYCHAIN_SECRET_PROVIDER != null) {
-      return VM_ARG_KEYCHAIN_SECRET_PROVIDER;
+    synchronized (this.context.syncLockForBean()) {
+      if (VM_ARG_KEYCHAIN_SECRET_PROVIDER != null) {
+        return VM_ARG_KEYCHAIN_SECRET_PROVIDER;
+      }
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      return bean.getKeychain().getSecretProvider();
     }
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    return bean.getKeychain().getSecretProvider();
   }
 
   @Override
   public String getKeyChainUrl() {
-    if(VM_ARG_KEYCHAIN_URL != null) {
-      return VM_ARG_KEYCHAIN_URL;
+    synchronized (this.context.syncLockForBean()) {
+      if (VM_ARG_KEYCHAIN_URL != null) {
+        return VM_ARG_KEYCHAIN_URL;
+      }
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      return bean.getKeychain().getUrl();
     }
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    return bean.getKeychain().getUrl();
   }
 
   @Override
   public String getRealmImplClass() {
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    return bean.getAuth().getRealm();
+    synchronized (this.context.syncLockForBean()) {
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      return bean.getAuth().getRealm();
+    }
   }
 
   @Override
   public String getRealmUrl() {
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    return bean.getAuth().getUrl();
+    synchronized (this.context.syncLockForBean()) {
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      return bean.getAuth().getUrl();
+    }
   }
 
   @Override
   public String getUser() {
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    return bean.getAuth().getUser();
+    synchronized (this.context.syncLockForBean()) {
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      return bean.getAuth().getUser();
+    }
   }
 
   @Override
   public String getSecurityServiceLocation() {
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    Management management = bean.getManagement();
-    if(management == null) { return null; }
-    return management.getIa();
+    synchronized (this.context.syncLockForBean()) {
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      Management management = bean.getManagement();
+      if (management == null) {
+        return null;
+      }
+      return management.getIa();
+    }
   }
 
   @Override
   public Integer getSecurityServiceTimeout() {
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    Management management = bean.getManagement();
-    if(management == null) { return null; }
-    return management.getTimeout();
+    synchronized (this.context.syncLockForBean()) {
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      Management management = bean.getManagement();
+      if (management == null) {
+        return null;
+      }
+      return management.getTimeout();
+    }
   }
 
   @Override
   public String getSecurityHostname() {
-    final Security bean = (Security)this.context.bean();
-    if(bean == null) { return null; }
-    Management management = bean.getManagement();
-    if(management == null) { return null; }
-    return management.getHostname();
+    synchronized (this.context.syncLockForBean()) {
+      final Security bean = (Security) this.context.bean();
+      if (bean == null) {
+        return null;
+      }
+      Management management = bean.getManagement();
+      if (management == null) {
+        return null;
+      }
+      return management.getHostname();
+    }
   }
 }
