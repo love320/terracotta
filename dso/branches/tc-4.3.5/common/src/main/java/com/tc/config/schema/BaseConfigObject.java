@@ -110,5 +110,10 @@ public class BaseConfigObject implements Config {
   public XmlObject getBean() {
     return this.context.bean();
   }
-  
+
+  @Override
+  public Object syncLockForBean() {
+    return this.context.syncLockForBean();
+  }
+
 }

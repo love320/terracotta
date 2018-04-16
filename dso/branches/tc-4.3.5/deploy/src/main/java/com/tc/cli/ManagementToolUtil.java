@@ -260,6 +260,7 @@ public abstract class ManagementToolUtil {
   }
 
   private static int computeManagementPort(CommonL2Config l2Config) {
+
     if (l2Config.managementPort() != null) {
       return l2Config.managementPort().getIntValue() == 0 ? DEFAULT_PORT : l2Config.managementPort().getIntValue();
     } else {

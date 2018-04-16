@@ -16,6 +16,7 @@
  */
 package com.tc.object.config;
 
+import com.tc.config.schema.context.ConfigContext;
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlObject;
 
@@ -215,6 +216,11 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
     @Override
     public XmlObject getBean() {
       return this.config.getBean();
+    }
+
+    @Override
+    public Object syncLockForBean() {
+      return null;
     }
 
   }

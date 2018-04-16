@@ -56,11 +56,14 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
     String groupName = group.getGroupName();
     this.grpName = groupName;
 
-    members = new LinkedHashSet<String>(group.sizeOfServerArray());
-    for (Server server : group.getServerArray()) {
-      boolean added = members.add(server.getName());
-      if (!added) { throw new ConfigurationSetupException("Duplicate server name [" + server.getName() + "] in group "
-                                                          + groupName); }
+    synchronized (context.syncLockForBean()) {
+      members = new LinkedHashSet<String>(group.sizeOfServerArray());
+      for (Server server : group.getServerArray()) {
+        boolean added = members.add(server.getName());
+        if (!added) {
+          throw new ConfigurationSetupException("Duplicate server name [" + server.getName() + "] in group " + groupName);
+        }
+      }
     }
   }
 
@@ -70,8 +73,12 @@ public class ActiveServerGroupConfigObject extends BaseConfigObject implements A
 
   @Override
   public int getElectionTimeInSecs() {
-    if (group.isSetElectionTime()) { return group.getElectionTime(); }
-    return DEFAULT_ELECETION_TIME;
+    synchronized (context.syncLockForBean()) {
+      if (group.isSetElectionTime()) {
+        return group.getElectionTime();
+      }
+      return DEFAULT_ELECETION_TIME;
+    }
   }
 
   public void setGroupName(String groupName) {
