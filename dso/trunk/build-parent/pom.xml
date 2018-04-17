@@ -58,7 +58,7 @@ The Initial Developer of the Covered Software is
     <!-- version of ehcache embedded inside toolkit -->
     <ehcache.version>2.10.6-SNAPSHOT</ehcache.version>
     <tcconfig.version>9.3</tcconfig.version>
-    <linked-child-process.version>1.0.9</linked-child-process.version>
+    <linked-child-process.version>1.0.10</linked-child-process.version>
     <gmaven-plugin.version>1.4</gmaven-plugin.version>
     <copy-maven-plugin.version>0.2.3.8</copy-maven-plugin.version>
     <surefire.version>2.15</surefire.version>
