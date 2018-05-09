@@ -51,8 +51,8 @@ public class GroupIDMapServlet extends HttpServlet {
     }
 
     OutputStream out = response.getOutputStream();
-    IOUtils.copy(groupnameIdMapDocument.newInputStream(), out);
-
+    int bytesCopied = IOUtils.copy(groupnameIdMapDocument.newInputStream(), out);
+    response.setContentLength(bytesCopied);
     response.flushBuffer();
   }
 }

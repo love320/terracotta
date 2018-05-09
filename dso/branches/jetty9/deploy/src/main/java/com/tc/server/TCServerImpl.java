@@ -23,22 +23,24 @@ import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.LoginService;
-import org.eclipse.jetty.security.MappedLoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
-import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
-import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 
@@ -80,6 +82,7 @@ import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
 import com.tc.net.core.BufferManagerFactoryProvider;
 import com.tc.net.core.BufferManagerFactoryProviderImpl;
+import com.tc.net.core.security.TCPrincipal;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.transport.ConnectionPolicy;
 import com.tc.net.protocol.transport.ConnectionPolicyImpl;
@@ -108,7 +111,6 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -117,7 +119,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import javax.security.auth.Subject;
+import javax.servlet.ServletRequest;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
@@ -552,10 +557,16 @@ public class TCServerImpl extends SEDA implements TCServer {
       if (Runtime.getRuntime().maxMemory() != Long.MAX_VALUE) {
         consoleLogger.info("Available Max Runtime Memory: " + (Runtime.getRuntime().maxMemory() / 1024 / 1024) + "MB");
       }
+      SslContextFactory sslContextFactory = null;
+      if (securityManager != null) {
+        sslContextFactory = new SslContextFactory();
+        sslContextFactory.setSslContext(securityManager.getSslContext());
+      }
 
-      TCServerImpl.this.terracottaConnector = new TerracottaConnector(
-                                                                      TCServerImpl.this.configurationSetupManager
-                                                                          .getSecurity() != null);
+      TCServerImpl.this.httpServer = new Server();
+      HttpConfiguration httpConfig = new HttpConfiguration();
+      httpConfig.setSendServerVersion(false);
+      TCServerImpl.this.terracottaConnector = new TerracottaConnector(httpServer, new HttpConnectionFactory(httpConfig));
       // connectors are named so that webapps can respond only on a specific one
       // see: http://wiki.eclipse.org/Jetty/Howto/WebappPerConnector
       TCServerImpl.this.terracottaConnector.setName(CONNECTOR_NAME_TERRACOTTA);
@@ -647,7 +658,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   private void bindManagementHttpPort(final CommonL2Config commonL2Config)
       throws Exception {
 
-    Connector managementConnector;
+    ServerConnector managementConnector;
+    HttpConfiguration httpConfig = new HttpConfiguration();
+    httpConfig.setSecureScheme("https");
+    httpConfig.setSendServerVersion(false);
+
     if (commonL2Config.isSecure()) {
       SslContextFactory sslContextFactory = new SslContextFactory();
       sslContextFactory.setSslContext(securityManager.getSslContext());
@@ -656,41 +671,36 @@ public class TCServerImpl extends SEDA implements TCServer {
       sslContextFactory.addExcludeProtocols(getVulnerableProtocols());
       // TAB-6658
       sslContextFactory.addExcludeCipherSuites((getVulnerableCipherSuites()));
-      SslSelectChannelConnector scc = new SslSelectChannelConnector(sslContextFactory);
-      scc.setPort(commonL2Config.managementPort().getIntValue());
-      scc.setHost(commonL2Config.managementPort().getBind());
-      // connectors are named so that webapps can respond only on a specific one
-      // see: http://wiki.eclipse.org/Jetty/Howto/WebappPerConnector
-      scc.setName(CONNECTOR_NAME_MANAGEMENT);
-      managementConnector = scc;
-    } else {
-      SelectChannelConnector scc = new SelectChannelConnector();
-      scc.setPort(commonL2Config.managementPort().getIntValue());
-      scc.setHost(commonL2Config.managementPort().getBind());
-      // connectors are named so that webapps can respond only on a specific one
-      // see: http://wiki.eclipse.org/Jetty/Howto/WebappPerConnector
-      scc.setName(CONNECTOR_NAME_MANAGEMENT);
-      managementConnector = scc;
-    }
+      httpConfig.addCustomizer(new SecureRequestCustomizer());
 
+      managementConnector = new ServerConnector(httpServer,
+          new SslConnectionFactory(sslContextFactory, "http/1.1"),
+          new HttpConnectionFactory(httpConfig));
+    } else {
+      managementConnector = new ServerConnector(httpServer, new HttpConnectionFactory(httpConfig));
+    }
+    // connectors are named so that webapps can respond only on a specific one
+    // see: http://wiki.eclipse.org/Jetty/Howto/WebappPerConnector
+    managementConnector.setName(CONNECTOR_NAME_MANAGEMENT);
+
+    managementConnector.setPort(commonL2Config.managementPort().getIntValue());
     this.httpServer.addConnector(managementConnector);
     if (this.httpServer.isStarted()) {
       managementConnector.start();
     }
 
-    String connectorHost = managementConnector.getHost();
+    String connectorHost = commonL2Config.managementPort().getBind();
     if (connectorHost.contains(":")) {
       connectorHost = "[" + connectorHost + "]";
     }
 
-    consoleLogger.info("Management server started on " + connectorHost + ":" + managementConnector.getLocalPort());
+    consoleLogger.info("Management server started on " + connectorHost + ":" + commonL2Config.managementPort().getIntValue());
   }
 
   private void startHTTPServer(final CommonL2Config commonL2Config, final TerracottaConnector tcConnector)
       throws Exception {
-    this.httpServer = new Server();
-    this.httpServer.setSendServerVersion(false);
-    this.httpServer.addConnector(tcConnector);
+
+    TCServerImpl.this.httpServer.addConnector(tcConnector);
 
     this.contextHandlerCollection = new ContextHandlerCollection();
     Handler rootHandler = getRootHandler();
@@ -767,7 +777,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     context.setServletHandler(servletHandler);
-    context.setConnectorNames(new String[] { CONNECTOR_NAME_TERRACOTTA });
+    context.setVirtualHosts(new String[] { "@" + CONNECTOR_NAME_TERRACOTTA });
     contextHandlerCollection.addHandler(context);
 
     this.httpServer.setHandler(rootHandler);
@@ -828,7 +838,7 @@ public class TCServerImpl extends SEDA implements TCServer {
         logger.info("deploying management REST services from archive " + warFile);
         WebAppContext restContext = new WebAppContext();
         restContext.setTempDirectory(warTempDir);
-        restContext.setConnectorNames(new String[] { CONNECTOR_NAME_MANAGEMENT });
+        restContext.setVirtualHosts(new String[] { "@" + CONNECTOR_NAME_MANAGEMENT });
 
         // DEV-8020: add slf4j to the web app's system classes to avoid "multiple bindings" warning
         List<String> systemClasses = new ArrayList<String>(Arrays.asList(restContext.getSystemClasses()));
@@ -1083,7 +1093,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     return securityManager.getIntraL2Username();
   }
 
-  private static final class TCUserRealm extends MappedLoginService {
+  private static final class TCUserRealm extends AbstractLoginService {
     private final TCSecurityManager securityManager;
 
     TCUserRealm(final TCSecurityManager securityManager) {
@@ -1092,29 +1102,34 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     @Override
-    public UserIdentity login(final String username, final Object credentials) {
-      final Principal authenticatedUser = securityManager.authenticate(username, ((String) credentials).toCharArray());
-      if (authenticatedUser == null) { return null; }
-
-      UserIdentity user = _users.get(username);
-      if (user == null) {
-        String[] roles = new String[0];
-        if (securityManager.isUserInRole(authenticatedUser, HTTP_SECURITY_ROLE)) {
-          roles = new String[] { HTTP_SECURITY_ROLE };
-        }
-        user = putUser(username, new Password((String) credentials), roles);
+    public UserIdentity login(final String username, final Object credentials, ServletRequest request ) {
+      final TCPrincipal userPrincipal = (TCPrincipal) securityManager.authenticate(username, ((String) credentials).toCharArray());
+      if (userPrincipal == null) {
+        return null;
       }
+      String[] roles = userPrincipal.getRoles().stream().map(Object::toString).collect(Collectors.toList()).toArray(new String[]{});
+
+      Subject subject = new Subject();
+      subject.getPrincipals().add(userPrincipal);
+      if (roles.length > 0) {
+        for (String role : roles) {
+          subject.getPrincipals().add(new RolePrincipal(role));
+        }
+      }
+      subject.setReadOnly();
+
+      UserIdentity user = _identityService.newUserIdentity(subject, userPrincipal, roles);
       return user;
     }
 
     @Override
-    protected UserIdentity loadUser(String username) {
-      return null;
+    protected UserPrincipal loadUserInfo(String username) {
+      throw new UnsupportedOperationException("Should not be called !");
     }
 
     @Override
-    protected void loadUsers() {
-      /**/
+    protected String[] loadRoleInfo(UserPrincipal user) {
+      throw new UnsupportedOperationException("Should not be called !");
     }
   }
 
