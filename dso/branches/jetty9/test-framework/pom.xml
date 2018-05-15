@@ -139,7 +139,7 @@ The Initial Developer of the Covered Software is
       <artifactId>gf.javax.mail</artifactId>
     </dependency>
     <dependency>
-      <groupId>gf-3122</groupId>
+      <groupId>gf-40</groupId>
       <artifactId>gf.javax.servlet-api</artifactId>
     </dependency>
     <!-- for packaging purpose -->
