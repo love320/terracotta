@@ -293,6 +293,21 @@ The Initial Developer of the Covered Software is
         <artifactId>gf.javax.servlet-api</artifactId>
         <version>3.1.0</version>
       </dependency>
+      <dependency>
+        <groupId>gf-3122</groupId>
+        <artifactId>gf.javax.security.auth.message</artifactId>
+        <version>1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>gf-3122</groupId>
+        <artifactId>gf.javax.annotation</artifactId>
+        <version>1.1</version>
+      </dependency>
+      <dependency>
+        <groupId>gf-3122</groupId>
+        <artifactId>gf.javax.mail</artifactId>
+        <version>1.4.4</version>
+      </dependency>
 
       <!-- Dependencies for core Terracotta artifacts -->
       <dependency>
