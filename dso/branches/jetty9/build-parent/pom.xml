@@ -205,22 +205,10 @@ The Initial Developer of the Covered Software is
         <!-- we exclude all flagged jars so we can switch them for Glassfish -->
         <exclusions>
           <exclusion>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.servlet</artifactId>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
           </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.security.auth.message</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.annotation</artifactId>       
-          </exclusion>
-          <exclusion>
-            <groupId>org.eclipse.jetty.orbit</groupId>
-            <artifactId>javax.mail.glassfish</artifactId>        
-          </exclusion>
-        </exclusions>        
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.eclipse.jetty.orbit</groupId>
@@ -301,24 +289,9 @@ The Initial Developer of the Covered Software is
 
       <!-- Glassfish substitutes -->
       <dependency>
-        <groupId>gf-3122</groupId>
+        <groupId>gf-40</groupId>
         <artifactId>gf.javax.servlet-api</artifactId>
-        <version>3.0.1</version>
-      </dependency>
-      <dependency>
-        <groupId>gf-3122</groupId>
-        <artifactId>gf.javax.security.auth.message</artifactId>
-        <version>1.0</version>
-      </dependency>  
-      <dependency>
-        <groupId>gf-3122</groupId>
-        <artifactId>gf.javax.annotation</artifactId>
-        <version>1.1</version>
-      </dependency>
-      <dependency>
-        <groupId>gf-3122</groupId>
-        <artifactId>gf.javax.mail</artifactId>
-        <version>1.4.4</version>
+        <version>3.1.0</version>
       </dependency>
 
       <!-- Dependencies for core Terracotta artifacts -->
