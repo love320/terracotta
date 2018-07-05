@@ -107,7 +107,8 @@ public class GroupInfoServlet extends HttpServlet {
   protected synchronized void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     createDocumentToSend();
     OutputStream out = getOutPutStream(response);
-    IOUtils.copy(this.serverGroupsDocument.newInputStream(), out);
+    int bytesCopied = IOUtils.copy(this.serverGroupsDocument.newInputStream(), out);
+    response.setContentLength(bytesCopied);
     response.flushBuffer();
   }
 

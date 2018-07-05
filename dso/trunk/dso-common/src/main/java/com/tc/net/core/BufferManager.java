@@ -36,6 +36,9 @@ public interface BufferManager {
   void close() throws IOException;
 
   // These methods are used by the PipeSocket.
+
+  boolean remainingToSend();
+
   int forwardFromReadBuffer(GatheringByteChannel gbc) throws IOException;
 
   int forwardToWriteBuffer(ScatteringByteChannel sbc) throws IOException;

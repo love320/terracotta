@@ -59,9 +59,22 @@ The Initial Developer of the Covered Software is
       <artifactId>tcstats</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty.aggregate</groupId>
-      <artifactId>jetty-all-server</artifactId>
-      <scope>compile</scope>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-security</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlet</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-webapp</artifactId>
+      <version>${jetty.version}</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -102,7 +115,7 @@ The Initial Developer of the Covered Software is
       <artifactId>gf.javax.mail</artifactId>
     </dependency>
     <dependency>
-      <groupId>gf-3122</groupId>
+      <groupId>gf-40</groupId>
       <artifactId>gf.javax.servlet-api</artifactId>
     </dependency>
     <dependency>

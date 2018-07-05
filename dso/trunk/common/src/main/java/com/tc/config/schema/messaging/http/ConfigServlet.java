@@ -46,7 +46,8 @@ public class ConfigServlet extends HttpServlet {
 
     if (params.size() == 0) {
       OutputStream out = response.getOutputStream();
-      IOUtils.copy(this.configSetupManager.effectiveConfigFile(), out);
+      int bytesCopied = IOUtils.copy(this.configSetupManager.effectiveConfigFile(), out);
+      response.setContentLength(bytesCopied);
     } else {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       PrintWriter writer = response.getWriter();

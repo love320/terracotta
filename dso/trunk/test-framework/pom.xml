@@ -93,8 +93,13 @@ The Initial Developer of the Covered Software is
       <artifactId>jetty-util</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty.aggregate</groupId>
-      <artifactId>jetty-all-server</artifactId>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-client</artifactId>
+      <version>${jetty.version}</version>
     </dependency>
     <dependency>
       <groupId>jline</groupId>
@@ -134,7 +139,7 @@ The Initial Developer of the Covered Software is
       <artifactId>gf.javax.mail</artifactId>
     </dependency>
     <dependency>
-      <groupId>gf-3122</groupId>
+      <groupId>gf-40</groupId>
       <artifactId>gf.javax.servlet-api</artifactId>
     </dependency>
     <!-- for packaging purpose -->

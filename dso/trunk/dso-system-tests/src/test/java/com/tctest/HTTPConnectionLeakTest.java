@@ -83,20 +83,27 @@ public class HTTPConnectionLeakTest extends BaseDSOTestCase {
   private int getNetInfoEstablishedConnectionsCount(int bindPort) {
     int establishedConnections = 0;
 
-    List<SocketConnection> connections = new ArrayList<Netstat.SocketConnection>();
-    connections.addAll(Netstat.getEstablishedTcpConnections());
-    connections.addAll(Netstat.getCloseWaitTcpConnections());
-
     System.out.println("XXX Established connections if any");
-    for (SocketConnection connection : connections) {
+    for (SocketConnection connection : Netstat.getEstablishedTcpConnections()) {
       long port = connection.getLocalPort();
       long remotePort = connection.getRemotePort();
       if ((bindPort == port || bindPort == remotePort) && connection.getLocalAddr().isLoopbackAddress()
           && connection.getRemoteAddr().isLoopbackAddress()) {
         establishedConnections++;
-        System.out.println("XXX " + connection);
+        System.out.println("XXX Established " + connection);
       }
     }
+
+    for (SocketConnection connection : Netstat.getCloseWaitTcpConnections()) {
+      long port = connection.getLocalPort();
+      long remotePort = connection.getRemotePort();
+      if ((bindPort == port || bindPort == remotePort) && connection.getLocalAddr().isLoopbackAddress()
+          && connection.getRemoteAddr().isLoopbackAddress()) {
+        establishedConnections++;
+        System.out.println("XXX closewait " + connection);
+      }
+    }
+
     return establishedConnections;
   }
 
