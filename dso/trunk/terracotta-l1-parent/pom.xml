@@ -42,7 +42,7 @@ The Initial Developer of the Covered Software is
       <version>${project.version}</version>      
       <exclusions>    
         <exclusion>
-          <groupId>gf-3122</groupId>
+          <groupId>gf-40</groupId>
           <artifactId>gf.javax.servlet-api</artifactId>
         </exclusion>        
         <exclusion>

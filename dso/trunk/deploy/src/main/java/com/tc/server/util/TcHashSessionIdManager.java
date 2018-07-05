@@ -16,11 +16,14 @@
  */
 package com.tc.server.util;
 
+import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.SessionIdManager;
-import org.eclipse.jetty.server.session.HashSessionIdManager;
+import org.eclipse.jetty.server.session.DefaultSessionIdManager;
+import org.eclipse.jetty.server.session.HouseKeeper;
+import org.eclipse.jetty.server.session.SessionHandler;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import java.util.Set;
 
 /**
  * Delegates to Jetty's HashSessionIdManager but initializes it lazily
@@ -28,21 +31,16 @@ import javax.servlet.http.HttpSession;
  */
 public class TcHashSessionIdManager implements SessionIdManager {
 
-  private volatile HashSessionIdManager delegate;
+  private volatile DefaultSessionIdManager delegate;
 
   @Override
-  public void addSession(HttpSession session) {
-    getDelegate().addSession(session);
+  public String getId(String nodeId) {
+    return getDelegate().getId(nodeId);
   }
 
   @Override
-  public String getClusterId(String nodeId) {
-    return getDelegate().getClusterId(nodeId);
-  }
-
-  @Override
-  public String getNodeId(String clusterId, HttpServletRequest request) {
-    return getDelegate().getNodeId(clusterId, request);
+  public String getExtendedId(String clusterId, HttpServletRequest request) {
+    return getDelegate().getExtendedId(clusterId, request);
   }
 
   @Override
@@ -50,9 +48,36 @@ public class TcHashSessionIdManager implements SessionIdManager {
     return getDelegate().getWorkerName();
   }
 
+
   @Override
-  public boolean idInUse(String id) {
-    return getDelegate().idInUse(id);
+  public String renewSessionId(String oldId, String oldExtendedId, HttpServletRequest request) {
+    return getDelegate().renewSessionId(oldId, oldExtendedId, request);
+  }
+
+  @Override
+  public Set<SessionHandler> getSessionHandlers() {
+    return getDelegate().getSessionHandlers();
+  }
+
+  @Override
+  public void setSessionHouseKeeper(HouseKeeper houseKeeper) {
+    getDelegate().setSessionHouseKeeper(houseKeeper);
+  }
+
+  @Override
+  public HouseKeeper getSessionHouseKeeper() {
+    return getDelegate().getSessionHouseKeeper();
+  }
+
+  @Override
+  public boolean isIdInUse(String id) {
+    return getDelegate().isIdInUse(id);
+  }
+
+
+  @Override
+  public void expireAll(String id) {
+    getDelegate().expireAll(id);
   }
 
   @Override
@@ -121,21 +146,16 @@ public class TcHashSessionIdManager implements SessionIdManager {
   }
 
   @Override
-  public void removeSession(HttpSession session) {
-    getDelegate().removeSession(session);
-  }
-
-  @Override
   public String newSessionId(HttpServletRequest request, long created) {
     return getDelegate().newSessionId(request, created);
   }
 
-  private HashSessionIdManager getDelegate() {
+  private DefaultSessionIdManager getDelegate() {
     if (delegate != null) { return delegate; }
     synchronized (this) {
       if (delegate != null) { return delegate; }
 
-      HashSessionIdManager realManager = new HashSessionIdManager();
+      DefaultSessionIdManager realManager = new DefaultSessionIdManager(new Server());
       try {
         realManager.start();
       } catch (Exception e) {

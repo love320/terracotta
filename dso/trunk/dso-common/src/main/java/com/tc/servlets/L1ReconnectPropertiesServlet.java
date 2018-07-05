@@ -59,8 +59,8 @@ public class L1ReconnectPropertiesServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
     OutputStream out = response.getOutputStream();
-    IOUtils.copy(this.l1ReconnectPropertiesDoc.newInputStream(), out);
-
+    int bytesCopied = IOUtils.copy(this.l1ReconnectPropertiesDoc.newInputStream(), out);
+    response.setContentLength(bytesCopied);
     response.flushBuffer();
   }
 }

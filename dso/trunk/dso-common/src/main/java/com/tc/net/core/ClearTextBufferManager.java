@@ -45,10 +45,20 @@ class ClearTextBufferManager implements BufferManager {
   }
 
   @Override
+  public boolean remainingToSend() {
+    int remaining = sendBuffer.position();
+    return remaining != 0;
+  }
+
+  @Override
   public int sendFromBuffer() throws IOException {
     sendBuffer.flip();
-    int written = this.channel.write(sendBuffer);
-    sendBuffer.compact();
+    int written;
+    try {
+      written = this.channel.write(sendBuffer);
+    } finally {
+      sendBuffer.compact();
+    }
     if (written == -1) { throw new EOFException(); }
     return written;
   }

@@ -19,10 +19,7 @@ package com.tc.test.config.builder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlException;
-import org.eclipse.jetty.client.ContentExchange;
 import org.eclipse.jetty.client.HttpClient;
-import org.eclipse.jetty.client.HttpExchange;
-import org.eclipse.jetty.io.Buffer;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +34,8 @@ import com.terracottatech.config.Server;
 import com.terracottatech.config.TcConfigDocument;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomDriver;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.api.Request;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -55,7 +54,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 /**
  * @author Ludovic Orban
@@ -287,42 +288,17 @@ public class ClusterManager {
     HttpClient httpClient = new HttpClient(new SslContextFactory(true));
     try {
       httpClient.start();
+      waitForAgentInitialization(port, httpClient, ClusterManager::contentTypeIsJson);
+    } finally {
+      httpClient.stop();
+    }
+  }
 
-      for (int i = 0; i < 30; i++) {
-        final AtomicBoolean success = new AtomicBoolean(false);
-
-        ContentExchange exchange = new ContentExchange(true) {
-          @Override
-          protected void onResponseComplete() throws IOException {
-            // if we get JSON back (even an error) then we can assume the agent started
-            Collection<String> contentTypes = getResponseFields().getValuesCollection("content-type");
-            for (String contentType : contentTypes) {
-              if (contentType.startsWith("application/json")) {
-                success.set(true);
-              }
-            }
-          }
-
-          @Override
-          protected synchronized void onResponseHeader(Buffer name, Buffer value) throws IOException {
-            super.onResponseHeader(name, value);    //To change body of overridden methods use File | Settings | File Templates.
-          }
-        };
-        exchange.setMethod("GET");
-        exchange.setURL("https://localhost:" + port + "/tc-management-api/agents");
-
-        httpClient.send(exchange);
-        int exchangeState = exchange.waitForDone();
-
-        if (exchangeState == HttpExchange.STATUS_COMPLETED && success.get()) {
-          LOG.info("TSA agent listening on port {}", port);
-          break;
-        }
-
-        ThreadUtil.reallySleep(1000L);
-        LOG.debug("Waiting for TSA agent to initialize on port {}... (#{})", port, i);
-      }
-
+  private static void https_waitUntilL1ThroughTsaAgentInitialized(int port) throws Exception {
+    HttpClient httpClient = new HttpClient(new SslContextFactory(true));
+    try {
+      httpClient.start();
+      waitForAgentInitialization(port, httpClient, ClusterManager::responseContainsAgencyEhcache);
     } finally {
       httpClient.stop();
     }
@@ -386,47 +362,36 @@ public class ClusterManager {
     }
   }
 
-
-  private static void https_waitUntilL1ThroughTsaAgentInitialized(int port) throws Exception {
-    HttpClient httpClient = new HttpClient(new SslContextFactory(true));
-    try {
-      httpClient.start();
-
-      for (int i = 0; i < 30; i++) {
-        final AtomicBoolean success = new AtomicBoolean(false);
-
-        ContentExchange exchange = new ContentExchange(true) {
-          @Override
-          protected void onResponseComplete() throws IOException {
-           if(getResponseContent().contains("\"agencyOf\": \"Ehcache\"")) {
-             success.set(true);
-           }
-          }
-
-          @Override
-          protected synchronized void onResponseHeader(Buffer name, Buffer value) throws IOException {
-            super.onResponseHeader(name, value);    //To change body of overridden methods use File | Settings | File Templates.
-          }
-        };
-        exchange.setMethod("GET");
-        exchange.setURL("https://localhost:" + port + "/tc-management-api/agents");
-
-        httpClient.send(exchange);
-        int exchangeState = exchange.waitForDone();
-
-        if (exchangeState == HttpExchange.STATUS_COMPLETED && success.get()) {
-          LOG.info("TSA agent listening on port {}", port);
-          break;
-        }
-
-        ThreadUtil.reallySleep(1000L);
-        LOG.debug("Waiting for TSA agent to initialize on port {}... (#{})", port, i);
+  private static void waitForAgentInitialization(int port, HttpClient httpClient, Predicate<ContentResponse> predicate) throws InterruptedException, TimeoutException, ExecutionException {
+    for (int i = 0; i < 30; i++) {
+      Request request = httpClient.newRequest("https://localhost:" + port + "/tc-management-api/agents");
+      ContentResponse send = request.send();
+      boolean success = predicate.test(send);
+      if (success) {
+        LOG.info("TSA agent listening on port {}", port);
+        break;
       }
 
-    } finally {
-      httpClient.stop();
+      ThreadUtil.reallySleep(1000L);
+      LOG.debug("Waiting for TSA agent to initialize on port {}... (#{})", port, i);
     }
   }
 
+  private static boolean contentTypeIsJson(ContentResponse contentResponse) {
+    Collection<String> contentTypes =  contentResponse.getHeaders().getValuesList("content-type");
+    for (String contentType : contentTypes) {
+      if (contentType.startsWith("application/json")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean responseContainsAgencyEhcache(ContentResponse contentResponse) {
+    if(contentResponse.getContentAsString().contains("\"agencyOf\": \"Ehcache\"")) {
+      return true;
+    }
+    return false;
+  }
 
 }
