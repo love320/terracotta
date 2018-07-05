@@ -41,6 +41,8 @@ public class TerracottaConnector extends LocalConnector {
 
   public TerracottaConnector(Server server, HttpConnectionFactory httpConnectionFactory) {
     super(server, httpConnectionFactory);
+    // to avoid idle timeout warnings in the logs
+    this.setIdleTimeout(-1);
     this.connect();
   }
 
@@ -74,7 +76,7 @@ public class TerracottaConnector extends LocalConnector {
     } catch (Exception e) {
       LOGGER.error("Exception while retrieving the HTTP response", e);
     } finally {
-      socket.getOutputStream().flush();
+      socket.close();
     }
 
   }
