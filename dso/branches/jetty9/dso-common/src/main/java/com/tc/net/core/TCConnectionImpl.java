@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,7 +11,7 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.net.core;
@@ -176,6 +176,14 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
 
   private void closeImpl(final Runnable callback) {
     Assert.assertTrue(this.closed.isSet());
+
+    if (pipeSocket != null) {
+      try {
+        pipeSocket.getOutputStream().flush();
+      } catch (IOException ioe) {
+        logger.warn("error flushing pipesocket output stream", ioe);
+      }
+    }
     this.transportEstablished.set(false);
     try {
       if (this.channel != null) {
@@ -193,7 +201,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
         synchronized (pipeSocketWriteInterestLock) {
           writeBufferSize = 0;
         }
-        pipeSocket.dispose();
+        pipeSocket.close();
       }
     } catch (IOException ioe) {
       logger.warn("error closing pipesocket", ioe);
@@ -247,9 +255,9 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private Socket detachImpl() throws IOException {
     this.pipeSocket = new PipeSocket(channel.socket()) {
       @Override
-      public void onWrite() {
+      public void onWrite(int len) {
         synchronized (pipeSocketWriteInterestLock) {
-          writeBufferSize++;
+          writeBufferSize += len;
           if (!hasPipeSocketWriteInterest) {
             TCConnectionImpl.this.commWorker.requestWriteInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
             hasPipeSocketWriteInterest = true;
@@ -258,9 +266,19 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
       }
 
       @Override
-      public synchronized void close() throws IOException {
-        super.close();
-        TCConnectionImpl.this.channel.socket().close();
+      public void onFlush() {
+        synchronized (pipeSocketWriteInterestLock) {
+          while (writeBufferSize != 0 || bufferManager.remainingToSend()) {
+            if (isWriteClosed()) {
+              break;
+            }
+            try {
+              pipeSocketWriteInterestLock.wait(1);
+            } catch (InterruptedException ie) {
+              throw new RuntimeException(ie);
+            }
+          }
+        }
       }
     };
     return pipeSocket;
@@ -900,7 +918,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public void closeReadOnException(IOException ioe) throws IOException {
     if (pipeSocket != null) {
       TCConnectionImpl.this.commWorker.removeReadInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-      pipeSocket.closeRead();
+      pipeSocket.closeRead(ioe);
     } else {
       if (ioe instanceof EOFException) {
         if (logger.isDebugEnabled()) {
@@ -925,7 +943,7 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   public void closeWriteOnException(IOException ioe) throws IOException {
     if (pipeSocket != null) {
       TCConnectionImpl.this.commWorker.removeWriteInterest(TCConnectionImpl.this, TCConnectionImpl.this.channel);
-      pipeSocket.closeWrite();
+      pipeSocket.closeWrite(ioe);
     } else {
       if (ioe instanceof EOFException) {
         if (logger.isDebugEnabled()) {
