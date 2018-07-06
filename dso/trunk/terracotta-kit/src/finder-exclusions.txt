@@ -14,6 +14,8 @@
 (.*)gf.javax.mail-1.4.4.jar
 (.*)gf.javax.security.auth.message-1.0.jar
 (.*)gf.javax.servlet-api-3.0.1.jar
+(.*)gf.javax.servlet-api-3.1.0.jar
+(.*)gf.javax.transaction-1.1.jar
 
 (.*)gf.jersey-server-2.6.jar
 (.*)gf.javax.annotation-api-1.2.jar
