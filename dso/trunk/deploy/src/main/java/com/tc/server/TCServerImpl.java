@@ -684,14 +684,15 @@ public class TCServerImpl extends SEDA implements TCServer {
     managementConnector.setName(CONNECTOR_NAME_MANAGEMENT);
 
     managementConnector.setPort(commonL2Config.managementPort().getIntValue());
-    this.httpServer.addConnector(managementConnector);
-    if (this.httpServer.isStarted()) {
-      managementConnector.start();
-    }
 
     String connectorHost = commonL2Config.managementPort().getBind();
     if (connectorHost.contains(":")) {
       connectorHost = "[" + connectorHost + "]";
+    }
+    managementConnector.setHost(connectorHost);
+    this.httpServer.addConnector(managementConnector);
+    if (this.httpServer.isStarted()) {
+      managementConnector.start();
     }
 
     consoleLogger.info("Management server started on " + connectorHost + ":" + commonL2Config.managementPort().getIntValue());
