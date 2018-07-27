@@ -31,17 +31,36 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Ludovic Orban
  */
 public class EventServiceImplV2 implements EventServiceV2 {
+  private static final Logger LOG = LoggerFactory.getLogger(EventServiceImplV2.class);
 
   private final Map<EventListener, ListenerHolder> listenerMap = Collections.synchronizedMap(new IdentityHashMap<EventListener, ListenerHolder>());
   private final RemoteManagementSource remoteManagementSource;
 
+  private static final Timer ssePingTimer = new Timer("sse-ping-timer", true);
+
   public EventServiceImplV2(RemoteManagementSource remoteManagementSource) {
     this.remoteManagementSource = remoteManagementSource;
+    ssePingTimer.schedule(new TimerTask() {
+      @Override
+      public void run() {
+        listenerMap.keySet().forEach((eventListener) -> {
+          EventEntityV2 pingEvent = new EventEntityV2();
+          pingEvent.setType("TSA.SSE.PING");
+          pingEvent.setAgentId(Representable.EMBEDDED_AGENT_ID);
+          eventListener.onEvent(pingEvent);
+        });
+      }
+    }, 120_000, 120_000);
   }
 
   @Override
