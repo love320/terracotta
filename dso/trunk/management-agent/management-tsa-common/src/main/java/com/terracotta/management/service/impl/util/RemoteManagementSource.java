@@ -420,6 +420,7 @@ public class RemoteManagementSource {
         for (Future<EventInput> future : futureList) {
           future.cancel(true);
         }
+        futureList.clear();
       }
     }
   }
