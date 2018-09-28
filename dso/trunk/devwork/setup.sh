@@ -26,3 +26,4 @@ svn co https://svn.terracotta.org/repo/forge/projects/management-core/trunk mana
 svn co https://svn.terracotta.org/repo/forge/projects/management-common/trunk management-common
 #svn co https://svn.terracotta.org/repo/forge/enterprise/terracotta-session/trunk terracotta-sessions
 svn co https://svn.terracotta.org/repo/internal/wan40/trunk wan40
+svn co https://svn.terracotta.org/repo/forge/projects/bigmemory/max/trunk/code-samples code-samples
