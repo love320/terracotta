@@ -52,11 +52,6 @@ public class ServerConfigurationSource implements ConfigurationSource {
   public InputStream getInputStream(long maxTimeoutMillis) throws IOException, ConfigurationSetupException {
     try {
       ServerURL theURL = new ServerURL(host, port, "/config" , (int)maxTimeoutMillis, securityInfo);
-
-      // JDK: 1.4.2 - These settings are proprietary to Sun's implementation of java.net.URL in version 1.4.2
-      System.setProperty("sun.net.client.defaultConnectTimeout", String.valueOf(maxTimeoutMillis));
-      System.setProperty("sun.net.client.defaultReadTimeout", String.valueOf(maxTimeoutMillis));
-
       return theURL.openStream(pwProvider);
     } catch (MalformedURLException murle) {
       throw new ConfigurationSetupException("Can't load configuration from "+this+".");
