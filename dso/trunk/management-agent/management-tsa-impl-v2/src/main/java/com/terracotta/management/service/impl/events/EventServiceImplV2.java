@@ -28,7 +28,6 @@ import org.terracotta.management.resource.events.EventEntityV2;
 import org.terracotta.management.resource.services.events.EventServiceV2;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -43,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public class EventServiceImplV2 implements EventServiceV2 {
   private static final Logger LOG = LoggerFactory.getLogger(EventServiceImplV2.class);
 
-  private final Map<EventListener, ListenerHolder> listenerMap = Collections.synchronizedMap(new IdentityHashMap<EventListener, ListenerHolder>());
+  private final Map<EventListener, ListenerHolder> listenerMap = new IdentityHashMap<>();
   private final RemoteManagementSource remoteManagementSource;
 
   private static final Timer ssePingTimer = new Timer("sse-ping-timer", true);
@@ -53,12 +52,18 @@ public class EventServiceImplV2 implements EventServiceV2 {
     ssePingTimer.schedule(new TimerTask() {
       @Override
       public void run() {
-        listenerMap.keySet().forEach((eventListener) -> {
-          EventEntityV2 pingEvent = new EventEntityV2();
-          pingEvent.setType("TSA.SSE.PING");
-          pingEvent.setAgentId(Representable.EMBEDDED_AGENT_ID);
-          eventListener.onEvent(pingEvent);
-        });
+        synchronized (listenerMap) {
+          listenerMap.keySet().forEach((eventListener) -> {
+            EventEntityV2 pingEvent = new EventEntityV2();
+            pingEvent.setType("TSA.SSE.PING");
+            pingEvent.setAgentId(Representable.EMBEDDED_AGENT_ID);
+            try {
+              eventListener.onEvent(pingEvent);
+            } catch (Exception e) {
+              // ignore
+            }
+          });
+        }
       }
     }, 120_000, 120_000);
   }
@@ -118,13 +123,18 @@ public class EventServiceImplV2 implements EventServiceV2 {
         listener.onEvent(eventEntity);
       }
     };
-    listenerMap.put(listener, new ListenerHolder(managementEventListener, remoteTSAEventListener));
+    synchronized (listenerMap) {
+      listenerMap.put(listener, new ListenerHolder(managementEventListener, remoteTSAEventListener));
+    }
     remoteManagementInstance.registerEventListener(managementEventListener);
   }
 
   @Override
   public void unregisterEventListener(EventListener listener) {
-    ListenerHolder listenerHolder = listenerMap.remove(listener);
+    ListenerHolder listenerHolder;
+    synchronized (listenerMap) {
+      listenerHolder = listenerMap.remove(listener);
+    }
     if (listenerHolder != null) {
       RemoteManagement remoteManagementInstance = TerracottaRemoteManagement.getRemoteManagementInstance();
       remoteManagementInstance.unregisterEventListener(listenerHolder.managementEventListener);
