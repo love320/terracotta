@@ -23,6 +23,8 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.net.core.SecurityInfo;
+import com.tc.properties.TCPropertiesConsts;
+import com.tc.properties.TCPropertiesImpl;
 import com.tc.security.PwProvider;
 import com.tc.security.TCAuthenticationException;
 import com.tc.security.TCAuthorizationException;
@@ -67,9 +69,8 @@ public class ServerURL {
     this(host, port, file, -1, securityInfo);
   }
 
-  public ServerURL(String host, int port, String file, int timeout, SecurityInfo securityInfo)
-      throws MalformedURLException {
-    this.timeout = timeout;
+  public ServerURL(String host, int port, String file, int timeout, SecurityInfo securityInfo) throws MalformedURLException {
+    this.timeout = calculateTimeout(timeout);
     this.securityInfo = securityInfo;
     this.theURL = new URL(securityInfo.isSecure() ? "https" : "http", host, port, file);
   }
@@ -251,6 +252,14 @@ public class ServerURL {
       sslUrlConnection.setSSLSocketFactory(sslContext.getSocketFactory());
     } catch (Exception e) {
       throw new RuntimeException("unable to create SSL connection from " + urlConnection.getURL(), e);
+    }
+  }
+
+  private int calculateTimeout(int timeout) {
+    if (timeout == -1) {
+      return (int) TCPropertiesImpl.getProperties().getLong(TCPropertiesConsts.TC_CONFIG_SOURCEGET_TIMEOUT, 30000);
+    } else {
+      return timeout;
     }
   }
 }

@@ -43,13 +43,10 @@ public class URLConfigurationSource implements ConfigurationSource {
   @Override
   public InputStream getInputStream(long maxTimeoutMillis) throws IOException, ConfigurationSetupException {
     URL theURL = new URL(this.url);
-    
-    // JDK: 1.4.2 - These settings are proprietary to Sun's implementation of java.net.URL in version 1.4.2
-    System.setProperty("sun.net.client.defaultConnectTimeout", String.valueOf(maxTimeoutMillis));
-    System.setProperty("sun.net.client.defaultReadTimeout", String.valueOf(maxTimeoutMillis));
-    
     try {
       URLConnection connection = theURL.openConnection();
+      connection.setConnectTimeout((int) maxTimeoutMillis);
+      connection.setReadTimeout((int) maxTimeoutMillis);
       return connection.getInputStream();
     } catch (MalformedURLException murle) {
       throw new ConfigurationSetupException("The URL '" + this.url
