@@ -55,8 +55,8 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
   private final String            defaultL2Identifier;
   private final ConfigurationSpec configurationSpec;
   private final PwProvider        pwProvider;
-  private final boolean           designatedActive; 
-
+  private final boolean           designatedActive;
+  private final boolean           safeModeConfigured;
   public static enum ConfigMode {
     L2, CUSTOM_L1, EXPRESS_L1
   }
@@ -133,10 +133,15 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     this.defaultL2Identifier = getDefaultL2Identifier(commandLine);
     this.designatedActive = isDesignatedActive(commandLine);
     this.pwProvider = pwProvider;
+    this.safeModeConfigured = isSafeModeConfigured(commandLine);
   }
 
   private static boolean isDesignatedActive(CommandLine commandLine) {
     return commandLine.hasOption('a');
+  }
+
+  private static boolean isSafeModeConfigured(CommandLine commandLine) {
+    return commandLine.hasOption('s');
   }
       
   private String getDefaultL2Identifier(final CommandLine commandLine) {
@@ -198,6 +203,12 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
       roleOption.setType(Boolean.class);
       roleOption.setArgName("l2-role");
       options.addOption(roleOption);
+
+      Option safeModeOption = new Option("s", "safe-mode", false, "whether this L2 should start in Safe Mode");
+      safeModeOption.setRequired(false);
+      safeModeOption.setType(Boolean.class);
+      safeModeOption.setArgName("l2-safe-mode");
+      options.addOption(safeModeOption);
     } else {
       configFileOption.setRequired(true);
       options.addOption(configFileOption);
@@ -246,7 +257,8 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
     configurationCreator = new StandardXMLFileConfigurationCreator(this.configurationSpec, this.beanFactory, this.pwProvider);
 
     return new L2ConfigurationSetupManagerImpl(args, configurationCreator, l2Name, this.defaultValueProvider,
-                                               this.xmlObjectComparator, this.illegalChangeHandler, setupLogging, designatedActive);
+                                               this.xmlObjectComparator, this.illegalChangeHandler, setupLogging,
+                                               designatedActive, safeModeConfigured);
   }
 
   public String[] getArguments() {

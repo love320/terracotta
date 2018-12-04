@@ -61,6 +61,7 @@ public class ExternalDsoServer {
   private int                       managementPort;
   private int                       tsaGroupPort;
   private final List                jvmArgs                = new ArrayList();
+  private final List<String>        additionalArgs         = new ArrayList<>();
   private final File                workingDir;
   private String                    serverName;
   private boolean                   inited                 = false;
@@ -160,6 +161,7 @@ public class ExternalDsoServer {
     serverProc.setRunningDirectory(workingDir);
     serverProc.setServerName(serverName);
     serverProc.writeOutputTo(logOutputStream);
+    serverProc.additionalArgs.addAll(additionalArgs);
     inited = true;
   }
   
@@ -295,7 +297,7 @@ public class ExternalDsoServer {
   }
 
   public void addMoreArg(String arg) {
-    serverProc.additionalArgs.add(arg);
+    additionalArgs.add(arg);
   }
 
   public void dumpServerControl() throws Exception {

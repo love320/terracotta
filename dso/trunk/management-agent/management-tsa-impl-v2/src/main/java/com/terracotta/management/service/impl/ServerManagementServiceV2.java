@@ -75,8 +75,8 @@ import static com.terracotta.management.service.impl.util.RemoteManagementSource
 public class ServerManagementServiceV2 implements L1MBeansSource {
 
   private static final String[] SERVER_ENTITY_ATTRIBUTE_NAMES = new String[] { "Version", "BuildID",
-      "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "TSAListenPort", "TSAGroupPort", "State",
-      "StartTime", "ActivateTime", "Restartable", "ResourceState" };
+      "DescriptionOfCapabilities", "PersistenceMode", "FailoverMode", "TSAListenPort", "TSAGroupPort", "InitialState",
+      "State", "StartTime", "ActivateTime", "Restartable", "ResourceState" };
 
   private static final String[] SERVER_STATS_ATTRIBUTE_NAMES = new String[] { "LiveObjectCount",
       "ReadOperationRate", "WriteOperationRate", "OffheapMaxSize", "OffheapReservedSize", "OffheapUsedSize",

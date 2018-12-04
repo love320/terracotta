@@ -68,4 +68,6 @@ public interface L2ConfigurationSetupManager {
    * active(which could cause a split brain if there is a network partition between the nodes)
    */
   boolean isDesignatedActive();
+
+  boolean isSafeModeConfigured();
 }

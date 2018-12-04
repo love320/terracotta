@@ -199,6 +199,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   }
 
   @Override
+  public String getInitialState() {
+    return null;
+  }
+
+  @Override
   public boolean getRequestDebug() {
     return false;
   }
@@ -335,6 +340,11 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
 
   @Override
   public boolean isLegacyProductionModeEnabled() {
+    return false;
+  }
+
+  @Override
+  public boolean exitSafeMode() {
     return false;
   }
 }

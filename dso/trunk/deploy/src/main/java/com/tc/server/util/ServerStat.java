@@ -48,6 +48,7 @@ public class ServerStat {
   private final boolean             connected;
   private final String              groupName;
   private final String              errorMessage;
+  private final String              initialState;
   private final String              state;
   private final String              role;
   private final String              health;
@@ -57,6 +58,7 @@ public class ServerStat {
     this.connected = false;
     this.port = port;
     this.groupName = UNKNOWN;
+    this.initialState = UNKNOWN;
     this.state = UNKNOWN;
     this.role = UNKNOWN;
     this.health = UNKNOWN;
@@ -64,17 +66,22 @@ public class ServerStat {
     this.hostName = null;
   }
 
-  private ServerStat(String host, String hostAlias, int port, String groupName, String state, String role,
-                     String health) {
+  private ServerStat(String host, String hostAlias, int port, String groupName, String initialState, String state,
+                     String role, String health) {
     this.host = host;
     this.hostName = hostAlias;
     this.port = port;
     this.groupName = groupName;
+    this.initialState = initialState;
     this.state = state;
     this.role = role;
     this.health = health;
     this.connected = true;
     this.errorMessage = "";
+  }
+
+  public String getInitialState() {
+    return initialState;
   }
 
   public String getState() {
@@ -107,6 +114,7 @@ public class ServerStat {
     StringBuilder sb = new StringBuilder();
     sb.append(serverId + ".health: " + getHealth()).append(NEWLINE);
     sb.append(serverId + ".role: " + getRole()).append(NEWLINE);
+    sb.append(serverId + ".initialState: " + getInitialState()).append(NEWLINE);
     sb.append(serverId + ".state: " + getState()).append(NEWLINE);
     sb.append(serverId + ".port: " + port).append(NEWLINE);
     sb.append(serverId + ".group name: " + getGroupName()).append(NEWLINE);
@@ -168,8 +176,8 @@ public class ServerStat {
 
       if (response.getStatus() >= 200 && response.getStatus() < 300) {
         Map<String, String> map = response.readEntity(Map.class);
-        return new ServerStat(host, map.get("name"), port, map.get("serverGroupName"), map.get("state"), map.get("role"),
-            map.get("health"));
+        return new ServerStat(host, map.get("name"), port, map.get("serverGroupName"), map.get("initialState"),
+                              map.get("state"), map.get("role"), map.get("health"));
       } else if (response.getStatus() == 401) {
         return new ServerStat(host, port, "Authentication error, check username/password and try again.");
       } else if (response.getStatus() == 404) {

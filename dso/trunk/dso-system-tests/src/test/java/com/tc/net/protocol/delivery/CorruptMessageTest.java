@@ -54,6 +54,7 @@ import com.tc.object.bytecode.MockClassProvider;
 import com.tc.object.config.PreparedComponentsFromL2Connection;
 import com.tc.object.config.StandardDSOClientConfigHelperImpl;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.objectserver.impl.SafeMode;
 import com.tc.objectserver.managedobject.ManagedObjectStateFactory;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.platform.rejoin.RejoinManagerImpl;
@@ -170,9 +171,12 @@ public class CorruptMessageTest extends BaseDSOTestCase {
     public MyDistributedObjectServer(L2ConfigurationSetupManager configSetupManager, TCThreadGroup threadGroup,
                                      ConnectionPolicy connectionPolicy, Sink httpSink,
                                      TCServerInfoMBean tcServerInfoMBean, ObjectStatsRecorder objectStatsRecorder,
-                                     L2State l2State, SEDA seda, TCServer server, TCSecurityManager securityManager) {
+                                     L2State l2State, L2State initialState, SEDA seda, TCServer server,
+                                     TCSecurityManager securityManager, SafeMode safeMode,
+                                     Runnable managementStartup) {
       super(configSetupManager, threadGroup, connectionPolicy, httpSink,
-          tcServerInfoMBean, objectStatsRecorder, l2State, seda, server, securityManager, null, new SBPResolverImpl());
+            tcServerInfoMBean, objectStatsRecorder, l2State, initialState, seda, server, securityManager, null,
+            new SBPResolverImpl(), safeMode, managementStartup);
     }
 
     @Override
@@ -203,9 +207,11 @@ public class CorruptMessageTest extends BaseDSOTestCase {
                                                                     ConnectionPolicy policy, Sink httpSink,
                                                                     TCServerInfo serverInfo,
                                                                     ObjectStatsRecorder objectStatsRecorder,
-                                                                    L2State l2State, TCServerImpl serverImpl) {
+                                                                    L2State l2State,
+                                                                    L2State initialState, TCServerImpl serverImpl,
+                                                                    SafeMode safeMode, Runnable managementStartup) {
       return new MyDistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
-          objectStatsRecorder, l2State, this, this, securityManager);
+                                           objectStatsRecorder, l2State, initialState, this, this, securityManager, safeMode, managementStartup);
     }
   }
 

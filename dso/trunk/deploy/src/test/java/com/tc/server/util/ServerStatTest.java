@@ -46,6 +46,7 @@ public class ServerStatTest {
     Map<String, Object> responseMap = new HashMap<String, Object>();
     responseMap.put("name", "foo");
     responseMap.put("serverGroupName", "blahblah");
+    responseMap.put("initialState", "somestate");
     responseMap.put("state", "somestate");
     responseMap.put("role", "paper pusher");
     responseMap.put("health", "great");
@@ -55,6 +56,7 @@ public class ServerStatTest {
         .readEntity(any(Class.class))).thenReturn(responseMap);
     ServerStat stats = ServerStat.getStats(target);
     assertThat(stats.getGroupName(), is(responseMap.get("serverGroupName")));
+    assertThat(stats.getState(), is(responseMap.get("initialState")));
     assertThat(stats.getState(), is(responseMap.get("state")));
     assertThat(stats.getRole(), is(responseMap.get("role")));
     assertThat(stats.getHealth(), is(responseMap.get("health")));
@@ -93,6 +95,7 @@ public class ServerStatTest {
     assertThat(stats.getGroupName(), is("unknown"));
     assertThat(stats.getHealth(), is("unknown"));
     assertThat(stats.getRole(), is("unknown"));
+    assertThat(stats.getInitialState(), is("unknown"));
     assertThat(stats.getState(), is("unknown"));
     assertThat(stats.getErrorMessage(), notNullValue());
   }

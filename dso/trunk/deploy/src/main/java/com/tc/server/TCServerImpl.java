@@ -36,7 +36,6 @@ import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -91,6 +90,8 @@ import com.tc.objectserver.core.api.ServerConfigurationContext;
 import com.tc.objectserver.core.impl.ServerManagementContext;
 import com.tc.objectserver.dgc.impl.GCStatsEventPublisher;
 import com.tc.objectserver.impl.DistributedObjectServer;
+import com.tc.objectserver.impl.NullSafeMode;
+import com.tc.objectserver.impl.SafeMode;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.operatorevent.TerracottaOperatorEventHistoryProvider;
 import com.tc.properties.TCProperties;
@@ -168,12 +169,14 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   private final Object                      stateLock                                    = new Object();
   private final L2State                     state                                        = new L2State();
+  private final L2State                     initialState                                 = new L2State();
 
   private final L2ConfigurationSetupManager configurationSetupManager;
   protected final ConnectionPolicy          connectionPolicy;
   private boolean                           shutdown                                     = false;
   protected final TCSecurityManager         securityManager;
   protected SBPResolver                     sbpResolver;
+  private final SafeMode                    safeMode;
 
   /**
    * This should only be used for tests.
@@ -201,6 +204,8 @@ public class TCServerImpl extends SEDA implements TCServer {
     } else {
       this.securityManager = null;
     }
+
+    this.safeMode = configurationSetupManager.isSafeModeConfigured() ? getSafeMode() : new NullSafeMode();
   }
 
   private void verifySecurityManagerFindsCredentialsForAllL2Servers() {
@@ -233,6 +238,11 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   protected TCSecurityManager createSecurityManager(final SecurityConfig securityConfig) {
     throw new UnsupportedOperationException("Only Terracotta EE supports the security feature, "
+                                            + "you're currently running an OS version");
+  }
+
+  protected SafeMode getSafeMode() {
+    throw new UnsupportedOperationException("Only Terracotta EE supports the Safe Mode feature, "
                                             + "you're currently running an OS version");
   }
 
@@ -367,7 +377,7 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public boolean canShutdown() {
-    return state.isPassiveStandby() || state.isActiveCoordinator() || state.isPassiveUninitialized();
+    return state.isPassiveStandby() || state.isActiveCoordinator() || state.isPassiveUninitialized() || state.isSafeModeState();
   }
 
   private final Object SHUTDOWN_LOCK = new Object();
@@ -578,7 +588,15 @@ public class TCServerImpl extends SEDA implements TCServer {
       stage.start(new NullContext(getStageManager()));
 
       // the following code starts the jmx server as well
-      startDSOServer(stage.getSink());
+      startDSOServer(stage.getSink(), () -> {
+        try {
+          File warTempDir = new File(commonL2Config.dataPath(), "jetty");
+          prepareJettyWarTempDir(warTempDir);
+          addManagementWebApp(warTempDir, commonL2Config);
+        } catch (Exception e) {
+          throw new RuntimeException("Caught exception while starting management", e);
+        }
+      });
 
       if (isActive()) {
         updateActivateTime();
@@ -586,11 +604,6 @@ public class TCServerImpl extends SEDA implements TCServer {
           TCServerImpl.this.activationListener.serverActivated();
         }
       }
-
-      // this is the last thing to do
-      File warTempDir = new File(commonL2Config.dataPath(), "jetty");
-      prepareJettyWarTempDir(warTempDir);
-      addManagementWebApp(warTempDir, commonL2Config);
 
       String l2Identifier = TCServerImpl.this.configurationSetupManager.getL2Identifier();
       if (l2Identifier != null) {
@@ -625,7 +638,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     new StartupHelper(getThreadGroup(), new StartAction()).startUp();
   }
 
-  private void startDSOServer(final Sink httpSink) throws Exception {
+  private void startDSOServer(final Sink httpSink, final Runnable managementStartup) throws Exception {
     Assert.assertTrue(this.state.isStartState());
     TCProperties tcProps = TCPropertiesImpl.getProperties();
     ObjectStatsRecorder objectStatsRecorder = new ObjectStatsRecorder(
@@ -637,22 +650,34 @@ public class TCServerImpl extends SEDA implements TCServer {
                                                                           .getBoolean(TCPropertiesConsts.L2_OBJECTMANAGER_PERSISTOR_LOGGING_ENABLED));
 
     this.dsoServer = createDistributedObjectServer(this.configurationSetupManager, this.connectionPolicy, httpSink,
-                                                   new TCServerInfo(this, this.state, objectStatsRecorder),
-                                                   objectStatsRecorder, this.state, this);
+                                                   new TCServerInfo(this, this.state, this.initialState,
+                                                                    objectStatsRecorder, this.safeMode),
+                                                   objectStatsRecorder, this.state, this.initialState, this,
+                                                   this.safeMode, () -> {
+                                                     try {
+                                                       registerDSOServer();
+                                                     } catch (Exception e) {
+                                                       throw new RuntimeException("Caught exception while registering DSO Server", e);
+                                                     }
+                                                     managementStartup.run();
+                                                   });
     this.dsoServer.start();
-    registerDSOServer();
   }
 
   protected DistributedObjectServer createDistributedObjectServer(L2ConfigurationSetupManager configSetupManager,
                                                                   ConnectionPolicy policy, Sink httpSink,
                                                                   TCServerInfo serverInfo,
                                                                   ObjectStatsRecorder objectStatsRecorder,
-                                                                  L2State l2State, TCServerImpl serverImpl) {
+                                                                  L2State l2State,
+                                                                  L2State initialState,
+                                                                  TCServerImpl serverImpl,
+                                                                  SafeMode safeMode,
+                                                                  Runnable managementStartup) {
     BufferManagerFactoryProvider bufferManagerFactoryProvider = new BufferManagerFactoryProviderImpl(this.securityManager);
     this.sbpResolver = new SBPResolverImpl();
     return new DistributedObjectServer(configSetupManager, getThreadGroup(), policy, httpSink, serverInfo,
-                                       objectStatsRecorder, l2State, this, this, securityManager,
-                                       bufferManagerFactoryProvider, this.sbpResolver);
+                                       objectStatsRecorder, l2State, initialState, this, this, securityManager,
+                                       bufferManagerFactoryProvider, this.sbpResolver, safeMode, managementStartup);
   }
 
   private void bindManagementHttpPort(final CommonL2Config commonL2Config)

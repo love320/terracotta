@@ -104,6 +104,8 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
 
   String getState();
 
+  String getInitialState();
+
   void setRequestDebug(boolean requestDebug);
 
   boolean getRequestDebug();
@@ -147,4 +149,6 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   String getResourceState();
 
   boolean isLegacyProductionModeEnabled();
+
+  boolean exitSafeMode();
 }
