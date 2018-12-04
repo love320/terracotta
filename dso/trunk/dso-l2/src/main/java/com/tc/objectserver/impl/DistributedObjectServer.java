@@ -26,7 +26,6 @@ import com.tc.async.api.SEDA;
 import com.tc.async.api.Sink;
 import com.tc.async.api.Stage;
 import com.tc.async.api.StageManager;
-import com.tc.async.impl.NullSink;
 import com.tc.config.HaConfig;
 import com.tc.config.HaConfigImpl;
 import com.tc.config.schema.setup.ConfigurationSetupException;
@@ -276,6 +275,7 @@ import com.tc.util.PortChooser;
 import com.tc.util.ProductInfo;
 import com.tc.util.SequenceValidator;
 import com.tc.util.StartupLock;
+import com.tc.util.State;
 import com.tc.util.TCTimeoutException;
 import com.tc.util.UUID;
 import com.tc.util.concurrent.Runners;
@@ -316,6 +316,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
   private final TCServerInfoMBean                tcServerInfoMBean;
   private final ObjectStatsRecorder              objectStatsRecorder;
   private final L2State                          l2State;
+  private final L2State                          initialState;
   private final DSOServerBuilder                 serverBuilder;
   protected final L2ConfigurationSetupManager    configSetupManager;
   private final Sink                             httpSink;
@@ -323,6 +324,7 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   private static final TCLogger                  logger           = CustomerLogging.getDSOGenericLogger();
   private static final TCLogger                  consoleLogger    = CustomerLogging.getConsoleLogger();
+  private final Runnable                         managementStartup;
 
   private ServerID                               thisServerNodeID = ServerID.NULL_ID;
   protected NetworkListener                      l1Listener;
@@ -376,14 +378,18 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
 
   protected final BufferManagerFactoryProvider bufferManagerFactoryProvider; 
   private final SBPResolver sbpResolver;
+  private final SafeMode safeMode;
 
   public DistributedObjectServer(final L2ConfigurationSetupManager configSetupManager, final TCThreadGroup threadGroup,
                                  final ConnectionPolicy connectionPolicy, final Sink httpSink,
                                  final TCServerInfoMBean tcServerInfoMBean,
-                                 final ObjectStatsRecorder objectStatsRecorder, final L2State l2State, final SEDA seda,
-                                 final TCServer server, final TCSecurityManager securityManager,
+                                 final ObjectStatsRecorder objectStatsRecorder, final L2State l2State,
+                                 final L2State initialState, final SEDA seda, final TCServer server,
+                                 final TCSecurityManager securityManager,
                                  final BufferManagerFactoryProvider bufferManagerFactoryProvider,
-                                 final SBPResolver sbpResolver) {
+                                 final SBPResolver sbpResolver,
+                                 final SafeMode safeMode,
+                                 final Runnable managementStartup) {
     // This assertion is here because we want to assume that all threads spawned by the server (including any created in
     // 3rd party libs) inherit their thread group from the current thread . Consider this before removing the assertion.
     // Even in tests, we probably don't want different thread group configurations
@@ -403,11 +409,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     this.tcServerInfoMBean = tcServerInfoMBean;
     this.objectStatsRecorder = objectStatsRecorder;
     this.l2State = l2State;
+    this.initialState = initialState;
     this.threadGroup = threadGroup;
     this.seda = seda;
     this.serverBuilder = createServerBuilder(this.haConfig, logger, server, configSetupManager.dsoL2Config());
     this.taskRunner = Runners.newDefaultCachedScheduledTaskRunner(this.threadGroup);
     this.sbpResolver = sbpResolver;
+    this.safeMode = safeMode;
+    this.managementStartup = managementStartup;
   }
 
   protected DSOServerBuilder createServerBuilder(final HaConfig config, final TCLogger tcLogger, final TCServer server,
@@ -557,6 +566,11 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
     dumpHandler.registerForDump(new CallbackDumpAdapter(persistor));
     new ServerPersistenceVersionChecker(persistor.getClusterStatePersistor()).checkAndSetVersion();
     persistor.start();
+
+    State initialState = persistor.getClusterStatePersistor().getInitialState();
+    if (initialState != null) {
+      this.initialState.setState(initialState);
+    }
 
     // register the terracotta operator event logger
     this.operatorEventHistoryProvider = new DsoOperatorEventHistoryProvider();
@@ -1078,12 +1092,14 @@ public class DistributedObjectServer implements TCDumper, LockInfoDumpHandler, S
                                                          this.lockManager, (DSOChannelManagerMBean) channelManager,
                                                          serverStats, channelStats, instanceMonitor,
                                                          indexHACoordinator, connectionPolicy, remoteManagement);
-    final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
-    this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
+    this.safeMode.enter(l2State, managementStartup, () -> {
+      final CallbackOnExitHandler handler = new CallbackGroupExceptionHandler(logger, consoleLogger);
+      this.threadGroup.addCallbackOnExitExceptionHandler(GroupException.class, handler);
 
-    startGroupManagers();
-    this.l2Coordinator.start();
-    setLoggerOnExit();
+      startGroupManagers();
+      this.l2Coordinator.start();
+      setLoggerOnExit();
+    });
   }
 
   protected CommunicationsManagerImpl createCommunicationsManager(TCMessageRouter messageRouter) {

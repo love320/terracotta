@@ -41,7 +41,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 /**
- * A resource service for performing local server shutdown.
+ * A resource service for getting server stats.
  * 
  * @author Ludovic Orban
  */
@@ -59,8 +59,8 @@ public class ServerStatResourceServiceImplV2 {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  public ServerStatEntityV2 shutdown(@Context UriInfo info) {
-    LOG.debug(String.format("Invoking ServerStatResourceServiceImplV2.shutdown: %s", info.getRequestUri()));
+  public ServerStatEntityV2 getServerStats(@Context UriInfo info) {
+    LOG.debug(String.format("Invoking ServerStatResourceServiceImplV2.getServerStats: %s", info.getRequestUri()));
 
     try {
       ServerGroupEntityV2 currentServerGroup = getCurrentServerGroup();
@@ -68,21 +68,23 @@ public class ServerStatResourceServiceImplV2 {
 
       String health = "OK";
       String role =  null;
+      String initialState = null;
       String state = null;
       if(currentServer != null) {
         role = (currentServer.getAttributes().get("State").equals("ACTIVE-COORDINATOR") ? "ACTIVE" : "PASSIVE");
         if(localManagementSource.isWaitingForFailOverAction()) {
           role = "WAITING-FOR-PROMOTION";
         }
+        initialState = (String) currentServer.getAttributes().get("InitialState");
         state = (String) currentServer.getAttributes().get("State");
       }
       String managementPort = currentServer.getAttributes().get("ManagementPort").toString();
       String serverGroupName = currentServerGroup.getName();
 
-      return new ServerStatEntityV2(health, role, state, managementPort, serverGroupName,
+      return new ServerStatEntityV2(health, role, initialState, state, managementPort, serverGroupName,
           localManagementSource.getLocalServerName());
     } catch (ServiceExecutionException see) {
-      throw new ResourceRuntimeException("Failed to shutdown TSA", see, Response.Status.BAD_REQUEST.getStatusCode());
+      throw new ResourceRuntimeException("Failed to get stats", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
   }
 

@@ -96,6 +96,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   private volatile boolean                  secure;
 
   private final Servers                     serversBean;
+  private final boolean                     safeModeConfigured;
 
   public L2ConfigurationSetupManagerImpl(ConfigurationCreator configurationCreator, String thisL2Identifier,
                                          DefaultValueProvider defaultValueProvider,
@@ -104,14 +105,14 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
                                          boolean setupLogging)
       throws ConfigurationSetupException {
     this(null, configurationCreator, thisL2Identifier, defaultValueProvider, xmlObjectComparator,
-         illegalConfigChangeHandler, setupLogging, false);
+         illegalConfigChangeHandler, setupLogging, false, false);
   }
 
   public L2ConfigurationSetupManagerImpl(String[] args, ConfigurationCreator configurationCreator,
                                          String thisL2Identifier, DefaultValueProvider defaultValueProvider,
                                          XmlObjectComparator xmlObjectComparator,
                                          IllegalConfigurationChangeHandler illegalConfigChangeHandler,
-                                         boolean setupLogging, boolean designatedActive)
+                                         boolean setupLogging, boolean designatedActive, boolean safeModeConfigured)
       throws ConfigurationSetupException {
     super(args, configurationCreator, defaultValueProvider, xmlObjectComparator, illegalConfigChangeHandler);
 
@@ -119,6 +120,7 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
     Assert.assertNotNull(xmlObjectComparator);
 
     this.designatedActive = designatedActive;
+    this.safeModeConfigured = safeModeConfigured;
     this.l2ConfigData = new HashMap<String, L2ConfigData>();
 
     this.localInetAddresses = getAllLocalInetAddresses();
@@ -214,6 +216,11 @@ public class L2ConfigurationSetupManagerImpl extends BaseConfigurationSetupManag
   @Override
   public boolean isDesignatedActive() {
     return this.designatedActive;
+  }
+
+  @Override
+  public boolean isSafeModeConfigured() {
+    return this.safeModeConfigured;
   }
 
   @Override

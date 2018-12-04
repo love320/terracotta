@@ -255,10 +255,14 @@ public class LocalManagementSource {
     return "ACTIVE-COORDINATOR".equals(tcServerInfoMBean.getState());
   }
 
+  private boolean isInSafeMode() {
+    return "SAFE-MODE-STATE".equals(tcServerInfoMBean.getState());
+  }
+
   public boolean containsJmxMBeans() {
     // the active of groupId 0 is always the one where the MBeans are tunneled to
     // see: com.tc.net.OrderedGroupIDs.getActiveCoordinatorGroup()
-    return isActiveCoordinator() && isLocalGroupCoordinator();
+    return (isActiveCoordinator() || isInSafeMode()) && isLocalGroupCoordinator();
   }
 
 
@@ -532,5 +536,9 @@ public class LocalManagementSource {
     } catch (Exception e) {
       throw new ManagementSourceException(e);
     }
+  }
+
+  public boolean exitSafeMode() {
+    return tcServerInfoMBean.exitSafeMode();
   }
 }

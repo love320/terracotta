@@ -85,6 +85,8 @@ public class L2State implements StateChangeListener {
     return getState().equals(StateManager.RECOVERING);
   }
 
+  public boolean isSafeModeState() { return getState().equals(StateManager.SAFE_MODE_STATE); }
+
   public void registerStateChangeListener(StateChangeListener listener) {
     if (changeListener != null) { throw new AssertionError("State change listerer is already set."); }
     changeListener = listener;

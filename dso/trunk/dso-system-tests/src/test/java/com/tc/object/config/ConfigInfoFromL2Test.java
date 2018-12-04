@@ -16,7 +16,6 @@
  */
 package com.tc.object.config;
 
-import com.tc.config.schema.context.ConfigContext;
 import org.apache.commons.io.IOUtils;
 import org.apache.xmlbeans.XmlObject;
 
@@ -315,6 +314,10 @@ public class ConfigInfoFromL2Test extends BaseDSOTestCase {
       return this.l2Config.isDesignatedActive();
     }
 
+    @Override
+    public boolean isSafeModeConfigured() {
+      return this.l2Config.isSafeModeConfigured();
+    }
   }
 
 }

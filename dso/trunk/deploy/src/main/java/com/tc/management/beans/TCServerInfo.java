@@ -24,6 +24,7 @@ import com.tc.l2.state.StateManager;
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
 import com.tc.management.AbstractTerracottaMBean;
+import com.tc.objectserver.impl.SafeMode;
 import com.tc.objectserver.mgmt.ObjectStatsRecorder;
 import com.tc.properties.TCPropertiesConsts;
 import com.tc.properties.TCPropertiesImpl;
@@ -68,6 +69,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   private final ProductInfo                    productInfo;
   private final String                         buildID;
   private final L2State                        l2State;
+  private final L2State                        initialState;
 
   private final StateChangeNotificationInfo    stateChangeNotificationInfo;
   private long                                 nextSequenceNumber;
@@ -76,11 +78,18 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
 
   private final ObjectStatsRecorder            objectStatsRecorder;
 
-  public TCServerInfo(final TCServer server, final L2State l2State, final ObjectStatsRecorder objectStatsRecorder)
+  private final SafeMode                       safeMode;
+
+  public TCServerInfo(final TCServer server,
+                      final L2State l2State,
+                      final L2State initialState,
+                      final ObjectStatsRecorder objectStatsRecorder,
+                      final SafeMode safeMode)
       throws NotCompliantMBeanException {
     super(TCServerInfoMBean.class, true);
     this.server = server;
     this.l2State = l2State;
+    this.initialState = initialState;
     this.l2State.registerStateChangeListener(this);
     productInfo = ProductInfo.getInstance();
     buildID = productInfo.buildID();
@@ -89,6 +98,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     manager = TCRuntime.getJVMMemoryManager();
 
     this.objectStatsRecorder = objectStatsRecorder;
+    this.safeMode = safeMode;
   }
 
   public ObjectStatsRecorder getObjectStatsRecorder() {
@@ -103,6 +113,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public boolean isLegacyProductionModeEnabled() {
     return TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.L2_ENABLE_LEGACY_PRODUCTION_MODE);
+  }
+
+  @Override
+  public boolean exitSafeMode() {
+    return this.safeMode.exit();
   }
 
   @Override
@@ -206,6 +221,11 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   @Override
   public String getState() {
     return l2State.toString();
+  }
+
+  @Override
+  public String getInitialState() {
+    return initialState.toString();
   }
 
   @Override

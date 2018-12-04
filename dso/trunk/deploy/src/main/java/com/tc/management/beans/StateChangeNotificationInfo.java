@@ -36,6 +36,8 @@ public class StateChangeNotificationInfo {
       "jmx.terracotta.L2.stop-state"                };
   private static final String[] RECOVERING_INFO        = new String[] { "TCServer recovering", "Recovering",
       "jmx.terracotta.L2.recovering"                };
+  private static final String[] SAFE_MODE_INFO        = new String[] { "TCServer safe-mode", "Safe-Mode",
+      "jmx.terracotta.L2.safe-mode"                };
 
 
   private static final Map<String, String[]>             map;
@@ -47,6 +49,7 @@ public class StateChangeNotificationInfo {
     map.put(StateManager.START_STATE.getName(), START_INFO);
     map.put(StateManager.STOP_STATE.getName(), STOP_INFO);
     map.put(StateManager.RECOVERING.getName(), RECOVERING_INFO);
+    map.put(StateManager.SAFE_MODE_STATE.getName(), SAFE_MODE_INFO);
   }
 
   public String getMsg(State state) {
