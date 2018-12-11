@@ -347,4 +347,19 @@ public class NullTCServerInfo extends AbstractTerracottaMBean implements TCServe
   public boolean exitSafeMode() {
     return false;
   }
+
+  @Override
+  public void shutdownIfActive(RestartMode restartMode) {
+    //
+  }
+
+  @Override
+  public void shutdownIfPassive(RestartMode restartMode) {
+    //
+  }
+
+  @Override
+  public void shutdown(RestartMode restartMode) {
+    //
+  }
 }

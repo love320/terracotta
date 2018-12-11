@@ -20,6 +20,8 @@ import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
 import com.tc.config.schema.setup.ConfigurationSetupException;
 import com.tc.config.schema.setup.FailOverAction;
+import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.beans.TCServerInfoMBean.RestartMode;
 
 import java.io.IOException;
 import java.util.Map;
@@ -46,6 +48,8 @@ public interface TCServer {
   boolean canShutdown();
 
   void shutdown();
+
+  void shutdown(RestartMode restartMode);
 
   boolean isGarbageCollectionEnabled();
 

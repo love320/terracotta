@@ -17,10 +17,17 @@
 package com.tc.lang;
 
 public interface ServerExitStatus {
+  public static final short EXITCODE_STOP_REQUEST = 0;
+
   /**
    * RMP-309 : Error code to convey auto-restart of TC server needed
    */
   public static final short EXITCODE_RESTART_REQUEST = 11;
+
+  /**
+   * Error code to convey auto-restart of TC server needed in Safe Mode
+   */
+  public static final short EXITCODE_RESTART_IN_SAFE_MODE_REQUEST = 12;
 
   /**
    * Error codes during the Server start

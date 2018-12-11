@@ -20,6 +20,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.GnuParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.UnrecognizedOptionException;
@@ -61,6 +62,13 @@ public class CommandLineBuilder {
     option.setType(type);
     option.setRequired(isRequired);
     options.addOption(option);
+  }
+
+  public Option createOption(String opt, String longOpt, boolean hasArg, String description, Class type, boolean isRequired) {
+    Option option = new Option(opt, longOpt, hasArg, description);
+    option.setType(type);
+    option.setRequired(isRequired);
+    return option;
   }
 
   public void addOption(String opt, String description, Class type, boolean isRequired) {
@@ -105,6 +113,10 @@ public class CommandLineBuilder {
     option.setArgName(argName);
 
     options.addOption(option);
+  }
+
+  public void addOptionGroup(OptionGroup optionGroup) {
+    options.addOptionGroup(optionGroup);
   }
 
   public String[] getArguments() {

@@ -71,20 +71,32 @@ set JAVA_OPTS=%OPTS% %JAVA_OPTS%
 :START_TCSERVER
 %JAVA_COMMAND% %JAVA_OPTS% -cp %CLASSPATH% com.tc.server.TCServerMain !ARGS!
 if %ERRORLEVEL% EQU 11 (
-  set MOD_ARGS=
-  rem The --active flag needs to be removed from the startup options when a server gets auto-restarted.
-  rem When a server node is auto-restarted, the intention is to make it join the cluster as a passive.
-  rem So in that case it doesn't make sense to start the server with the active flag.
-  for %%I in (%ARGS%) do (
-    if --active NEQ %%I if -a NEQ %%I (
-      if "" EQU "!MOD_ARGS!" (
-        set MOD_ARGS=%%I
-      ) else (
-        set MOD_ARGS=!MOD_ARGS! %%I
-      )
-    )
-  )
-  set ARGS=!MOD_ARGS!
+  CALL :clean_args_for_auto_restart
   ECHO start-tc-server: Restarting the server...
   GOTO START_TCSERVER
 )
+
+if %ERRORLEVEL% EQU 12 (
+  CALL :clean_args_for_auto_restart
+  set ARGS=!ARGS! --safe-mode
+  ECHO start-tc-server: Restarting the server in Safe Mode...
+  GOTO START_TCSERVER
+)
+
+:clean_args_for_auto_restart
+set MOD_ARGS=
+rem The --active flag needs to be removed from the startup options when a server gets auto-restarted.
+rem When a server node is auto-restarted, the intention is to make it join the cluster as a passive.
+rem So in that case it doesn't make sense to start the server with the active flag.
+for %%I in (%ARGS%) do (
+  if --active NEQ %%I if -a NEQ %%I if --safe-mode NEQ %%I (
+    if "" EQU "!MOD_ARGS!" (
+      set MOD_ARGS=%%I
+    ) else (
+      set MOD_ARGS=!MOD_ARGS! %%I
+    )
+  )
+  set ARGS=!MOD_ARGS!
+)
+EXIT /B 0
+

@@ -22,16 +22,18 @@ import org.terracotta.management.resource.exceptions.ResourceRuntimeException;
 
 import com.tc.logging.TCLogger;
 import com.tc.logging.TCLogging;
-import com.terracotta.management.resource.ForceStopEntityV2;
+import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.beans.TCServerInfoMBean.RestartMode;
+import com.tc.management.beans.UnexpectedStateException;
+import com.tc.server.TCServer;
+import com.terracotta.management.resource.StopEntityV2;
 import com.terracotta.management.resource.ServerEntityV2;
 import com.terracotta.management.resource.ServerGroupEntityV2;
 import com.terracotta.management.resource.TopologyEntityV2;
-import com.terracotta.management.service.ShutdownServiceV2;
 import com.terracotta.management.service.TopologyServiceV2;
 import com.terracotta.management.service.impl.util.LocalManagementSource;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
@@ -52,32 +54,55 @@ public class LocalShutdownResourceServiceImplV2 {
 
   private static final TCLogger LOG = TCLogging.getLogger(LocalShutdownResourceServiceImplV2.class);
 
-  private final ShutdownServiceV2 shutdownService;
   private final TopologyServiceV2 topologyService;
   private final LocalManagementSource localManagementSource = new LocalManagementSource();
 
   public LocalShutdownResourceServiceImplV2() {
-    this.shutdownService = ServiceLocator.locate(ShutdownServiceV2.class);
     this.topologyService = ServiceLocator.locate(TopologyServiceV2.class);
   }
 
   @POST
   @Consumes(MediaType.APPLICATION_JSON)
-  public void shutdown(@Context UriInfo info, ForceStopEntityV2 force) {
+  public Response shutdown(@Context UriInfo info, StopEntityV2 stopConfig) {
     LOG.info(String.format("Invoking shutdown: %s", info.getRequestUri()));
 
     try {
-      if (force != null && !force.isForceStop() && !isPassiveStandbyAvailable() && localManagementSource.isLegacyProductionModeEnabled()) {
+      if (stopConfig != null && !stopConfig.isForceStop() && !isPassiveStandbyAvailable() && localManagementSource.isLegacyProductionModeEnabled()) {
         String errorMessage = "No passive server available in Standby mode. Use force option to stop the server.";
         LOG.debug(errorMessage);
         throw new ResourceRuntimeException(errorMessage, Response.Status.BAD_REQUEST.getStatusCode());
       }
-
-      shutdownService.shutdown(Collections.singleton(localManagementSource.getLocalServerName()));
     } catch (ServiceExecutionException see) {
       throw new ResourceRuntimeException("Failed to shutdown TSA", see, Response.Status.BAD_REQUEST.getStatusCode());
     }
-    
+
+    boolean stopIfPassive = false;
+    boolean stopIfActive = false;
+    RestartMode restartMode = RestartMode.STOP_ONLY;
+
+    if (stopConfig != null) {
+      stopIfActive = stopConfig.isStopIfActive();
+      stopIfPassive = stopConfig.isStopIfPassive();
+      if (stopConfig.isRestart()) {
+        restartMode = RestartMode.STOP_AND_RESTART;
+      } else if (stopConfig.isRestartInSafeMode()) {
+        restartMode = RestartMode.STOP_AND_RESTART_IN_SAFE_MODE;
+      }
+    }
+
+    try {
+      if (stopIfActive) {
+        localManagementSource.shutdownServerIfActive(restartMode);
+      } else if (stopIfPassive) {
+        localManagementSource.shutdownServerIfPassive(restartMode);
+      } else {
+        localManagementSource.shutdownServer(restartMode);
+      }
+    } catch (UnexpectedStateException e) {
+      return Response.ok(false).build();
+    }
+
+    return Response.ok(true).build();
   }
 
   private boolean isPassiveStandbyAvailable() throws ServiceExecutionException {

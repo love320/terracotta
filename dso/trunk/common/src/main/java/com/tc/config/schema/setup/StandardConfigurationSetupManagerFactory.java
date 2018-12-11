@@ -141,7 +141,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
   }
 
   private static boolean isSafeModeConfigured(CommandLine commandLine) {
-    return commandLine.hasOption('s');
+    return commandLine.hasOption("safe-mode");
   }
       
   private String getDefaultL2Identifier(final CommandLine commandLine) {
@@ -204,7 +204,7 @@ public class StandardConfigurationSetupManagerFactory extends BaseConfigurationS
       roleOption.setArgName("l2-role");
       options.addOption(roleOption);
 
-      Option safeModeOption = new Option("s", "safe-mode", false, "whether this L2 should start in Safe Mode");
+      Option safeModeOption = new Option(null, "safe-mode", false, "whether this L2 should start in Safe Mode");
       safeModeOption.setRequired(false);
       safeModeOption.setType(Boolean.class);
       safeModeOption.setArgName("l2-safe-mode");

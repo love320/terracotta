@@ -16,6 +16,8 @@
  */
 package com.tc.admin;
 
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.OptionGroup;
 import org.apache.commons.cli.Options;
 
 import com.tc.cli.CommandLineBuilder;
@@ -29,7 +31,8 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.client.Entity;
@@ -42,6 +45,12 @@ public class TCStop {
 
   private static final int MAX_TRIES = 50;
   private static final int TRY_INTERVAL = 1000;
+
+  private static final String FORCE_OPTION_NAME = "force";
+  private static final String STOP_IF_ACTIVE_OPTION_NAME = "stop-if-active";
+  private static final String STOP_IF_PASSIVE_OPTION_NAME = "stop-if-passive";
+  private static final String RESTART_OPTION_NAME = "restart";
+  private static final String RESTART_IN_SAFE_MODE_OPTION_NAME = "restart-in-safe-mode";
 
   public static void main(String[] args) throws Exception {
     CommandLineBuilder commandLineBuilder = getCommandLineBuilder(args);
@@ -65,7 +74,7 @@ public class TCStop {
 
     for (WebTarget target : ManagementToolUtil.getTargets(commandLineBuilder)) {
         try {
-          restStop(target, commandLineBuilder.hasOption("force"));
+          restStop(target, commandLineBuilder);
         } catch (SecurityException se) {
           consoleLogger.error(se.getMessage(), se);
           throw se;
@@ -85,10 +94,38 @@ public class TCStop {
   protected static CommandLineBuilder getCommandLineBuilder(final String[] args) {Options options = StandardConfigurationSetupManagerFactory
     .createOptions(StandardConfigurationSetupManagerFactory.ConfigMode.L2);
     CommandLineBuilder commandLineBuilder = new CommandLineBuilder(TCStop.class.getName(), args);
-    commandLineBuilder.setOptions(options);
+    Collection collection = options.getOptions();
+    Options filteredOptions = new Options();
+    for (Object obj : collection) {
+      Option option = (Option)obj;
+      if (!"safe-mode".equals(option.getLongOpt())) {
+        filteredOptions.addOption(option);
+      }
+    }
+
+    commandLineBuilder.setOptions(filteredOptions);
     ManagementToolUtil.addConnectionOptionsTo(commandLineBuilder);
-    commandLineBuilder.addOption("force", "force", false, "force", String.class, false);
+
+    commandLineBuilder.addOption(FORCE_OPTION_NAME, FORCE_OPTION_NAME, false, "force", String.class, false);
+    Option stopIfActive = commandLineBuilder.createOption(null, STOP_IF_ACTIVE_OPTION_NAME, false, "Stop only if Active", String.class, false);
+    Option stopIfPassive = commandLineBuilder.createOption(null, STOP_IF_PASSIVE_OPTION_NAME, false, "Stop only if Passive", String.class, false);
+    Option restart = commandLineBuilder.createOption(null, RESTART_OPTION_NAME, false, "Restart the server", String.class, false);
+    Option restartInSafeMode = commandLineBuilder.createOption(null, RESTART_IN_SAFE_MODE_OPTION_NAME, false, "Restart the server in Safe Mode", String.class, false);
     commandLineBuilder.addOption("h", "help", String.class, false);
+
+    OptionGroup activePassiveGroup = new OptionGroup();
+    activePassiveGroup.setRequired(false);
+    activePassiveGroup.addOption(stopIfActive);
+    activePassiveGroup.addOption(stopIfPassive);
+
+    OptionGroup restartGroup = new OptionGroup();
+    restartGroup.setRequired(false);
+    restartGroup.addOption(restart);
+    restartGroup.addOption(restartInSafeMode);
+
+    commandLineBuilder.addOptionGroup(activePassiveGroup);
+    commandLineBuilder.addOptionGroup(restartGroup);
+
     commandLineBuilder.parse();
     return commandLineBuilder;
   }
@@ -102,14 +139,50 @@ public class TCStop {
     return e;
   }
 
+  private static void restStop(WebTarget target, CommandLineBuilder commandLineBuilder) throws IOException {
+    boolean force = commandLineBuilder.hasOption(FORCE_OPTION_NAME);
+    boolean stopIfActive = commandLineBuilder.hasOption(STOP_IF_ACTIVE_OPTION_NAME);
+    boolean stopIfPassive = commandLineBuilder.hasOption(STOP_IF_PASSIVE_OPTION_NAME);
+    boolean restart = commandLineBuilder.hasOption(RESTART_OPTION_NAME);
+    boolean restartInSafeMode = commandLineBuilder.hasOption(RESTART_IN_SAFE_MODE_OPTION_NAME);
+
+    restStop(target, force, stopIfActive, stopIfPassive, restart, restartInSafeMode);
+  }
+
   public static void restStop(WebTarget target, boolean force) throws IOException {
+    restStop(target, force, false, false, false, false);
+  }
+
+  public static void restStop(WebTarget target,
+                              boolean force,
+                              boolean stopIfActive,
+                              boolean stopIfPassive,
+                              boolean restart,
+                              boolean restartInSafeMode) throws IOException {
     for (int i = 0; i < MAX_TRIES; i++) {
-      Entity<Map<String, Boolean>> forceStop = Entity.json(Collections.singletonMap("forceStop", force));
+      Map<String, Boolean> map = new HashMap<>();
+      map.put("forceStop", force);
+      map.put("stopIfActive", stopIfActive);
+      map.put("stopIfPassive", stopIfPassive);
+      map.put("restart", restart);
+      map.put("restartInSafeMode", restartInSafeMode);
+      Entity<Map<String, Boolean>> stopConfig = Entity.json(map);
       Response response = target.path("/tc-management-api/v2/local/shutdown").request(MediaType.APPLICATION_JSON_TYPE)
-          .post(forceStop);
+          .post(stopConfig);
 
       if (response.getStatus() >= 200 && response.getStatus() < 300) {
-        consoleLogger.info("Stop success. Response code " + response.getStatus());
+        Boolean success = response.readEntity(Boolean.class);
+        if (success) {
+          consoleLogger.info("Stop success. Response code " + response.getStatus());
+        } else {
+          if (stopIfActive) {
+            consoleLogger.warn("Server is not in active state, not stopping the server");
+          } else if (stopIfPassive) {
+            consoleLogger.warn("Server is not in passive state, not stopping the server");
+          } else {
+            throw new AssertionError();
+          }
+        }
         return;
       } else if (response.getStatus() == 401) {
         consoleLogger.error("Authentication/Authorization failure: Invalid username/password or insufficient permissions");
@@ -129,6 +202,14 @@ public class TCStop {
   public static void restStop(String host, int port, String username, String password, boolean force, boolean secured,
                               final boolean ignoreUntrusted)
       throws IOException, KeyManagementException, NoSuchAlgorithmException {
-    restStop(ManagementToolUtil.targetFor(host, port, username, password, secured, ignoreUntrusted), force);
+    restStop(host, port, username, password, force, secured, ignoreUntrusted, false, false, false, false);
+  }
+
+  public static void restStop(String host, int port, String username, String password, boolean force, boolean secured,
+                              boolean ignoreUntrusted, boolean stopIfActive, boolean stopIfPassive,
+                              boolean restart, boolean restartInSafeMode)
+      throws IOException, KeyManagementException, NoSuchAlgorithmException {
+    restStop(ManagementToolUtil.targetFor(host, port, username, password, secured, ignoreUntrusted), force, stopIfActive,
+             stopIfPassive, restart, restartInSafeMode);
   }
 }

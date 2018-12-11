@@ -18,6 +18,7 @@ package com.tc.management.beans;
 
 import com.tc.config.schema.L2Info;
 import com.tc.config.schema.ServerGroupInfo;
+import com.tc.lang.ServerExitStatus;
 import com.tc.management.RuntimeStatisticConstants;
 import com.tc.management.TerracottaMBean;
 
@@ -151,4 +152,26 @@ public interface TCServerInfoMBean extends TerracottaMBean, RuntimeStatisticCons
   boolean isLegacyProductionModeEnabled();
 
   boolean exitSafeMode();
+
+  void shutdownIfActive(RestartMode restartMode) throws UnexpectedStateException;
+
+  void shutdownIfPassive(RestartMode restartMode) throws UnexpectedStateException;
+
+  void shutdown(RestartMode restartMode);
+
+  enum RestartMode {
+    STOP_ONLY(ServerExitStatus.EXITCODE_STOP_REQUEST),
+    STOP_AND_RESTART(ServerExitStatus.EXITCODE_RESTART_REQUEST),
+    STOP_AND_RESTART_IN_SAFE_MODE(ServerExitStatus.EXITCODE_RESTART_IN_SAFE_MODE_REQUEST);
+
+    private final int exitStatus;
+
+    RestartMode(int exitStatus) {
+      this.exitStatus = exitStatus;
+    }
+
+    public int getExitStatus() {
+      return exitStatus;
+    }
+  }
 }

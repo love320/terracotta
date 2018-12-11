@@ -18,8 +18,12 @@ package com.terracotta.management.resource;
 
 import java.io.Serializable;
 
-public class ForceStopEntityV2 implements Serializable {
+public class StopEntityV2 implements Serializable {
   private boolean forceStop;
+  private boolean stopIfActive;
+  private boolean stopIfPassive;
+  private boolean restart;
+  private boolean restartInSafeMode;
 
   public boolean isForceStop() {
     return forceStop;
@@ -30,4 +34,35 @@ public class ForceStopEntityV2 implements Serializable {
   }
 
 
+  public boolean isStopIfActive() {
+    return stopIfActive;
+  }
+
+  public void setStopIfActive(boolean stopIfActive) {
+    this.stopIfActive = stopIfActive;
+  }
+
+  public boolean isStopIfPassive() {
+    return stopIfPassive;
+  }
+
+  public void setStopIfPassive(boolean stopIfPassive) {
+    this.stopIfPassive = stopIfPassive;
+  }
+
+  public boolean isRestart() {
+    return restart;
+  }
+
+  public void setRestart(boolean restart) {
+    this.restart = restart;
+  }
+
+  public boolean isRestartInSafeMode() {
+    return restartInSafeMode;
+  }
+
+  public void setRestartInSafeMode(boolean restartInSafeMode) {
+    this.restartInSafeMode = restartInSafeMode;
+  }
 }
