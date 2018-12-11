@@ -121,6 +121,24 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
   }
 
   @Override
+  public void shutdownIfActive(RestartMode restartMode) throws UnexpectedStateException {
+    if (isActive()) {
+      shutdown(restartMode);
+    } else {
+      throw new UnexpectedStateException("Server is not in active state, current state: " + l2State);
+    }
+  }
+
+  @Override
+  public void shutdownIfPassive(RestartMode restartMode) throws UnexpectedStateException {
+    if (isPassiveUninitialized() || isPassiveStandby()) {
+      shutdown(restartMode);
+    } else {
+      throw new UnexpectedStateException("Server is not in passive state, current state: " + l2State);
+    }
+  }
+
+  @Override
   public boolean isStarted() {
     return l2State.isStartState();
   }
@@ -176,12 +194,17 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     return server.canShutdown();
   }
 
+  @Override
+  public void shutdown() {
+    shutdown(RestartMode.STOP_ONLY);
+  }
+
   /**
    * This schedules the shutdown to occur one second after we return from this call because otherwise JMX will be
    * shutdown and we'll get all sorts of other errors trying to return from this call.
    */
   @Override
-  public void shutdown() {
+  public void shutdown(RestartMode restartMode) {
     if (l2State.isStopState()) {
       logger.info("Server is already shutting down.");
       return;
@@ -196,7 +219,7 @@ public class TCServerInfo extends AbstractTerracottaMBean implements TCServerInf
     final TimerTask task = new TimerTask() {
       @Override
       public void run() {
-        server.shutdown();
+        server.shutdown(restartMode);
       }
     };
     timer.schedule(task, 1000);

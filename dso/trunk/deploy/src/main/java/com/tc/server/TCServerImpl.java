@@ -65,6 +65,7 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.sbp.SBPResolver;
 import com.tc.l2.state.sbp.SBPResolverImpl;
+import com.tc.lang.ServerExitStatus;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
@@ -76,6 +77,8 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfo;
+import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.beans.TCServerInfoMBean.RestartMode;
 import com.tc.net.GroupID;
 import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
@@ -384,6 +387,11 @@ public class TCServerImpl extends SEDA implements TCServer {
 
   @Override
   public void shutdown() {
+    shutdown(RestartMode.STOP_ONLY);
+  }
+
+  @Override
+  public void shutdown(RestartMode restartMode) {
     boolean doShutdown = false;
 
     synchronized (SHUTDOWN_LOCK) {
@@ -396,7 +404,7 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (doShutdown) {
       consoleLogger.info("Server exiting...");
       notifyShutdown();
-      Runtime.getRuntime().exit(0);
+      Runtime.getRuntime().exit(restartMode.getExitStatus());
     } else {
       logger.warn("Server in incorrect state (" + this.state.getState() + ") to be shutdown.");
     }

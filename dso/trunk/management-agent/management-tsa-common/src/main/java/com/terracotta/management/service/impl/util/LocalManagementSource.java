@@ -27,6 +27,8 @@ import com.tc.license.LicenseManager;
 import com.tc.license.ProductID;
 import com.tc.management.beans.L2DumperMBean;
 import com.tc.management.beans.TCServerInfoMBean;
+import com.tc.management.beans.TCServerInfoMBean.RestartMode;
+import com.tc.management.beans.UnexpectedStateException;
 import com.tc.management.beans.l1.L1InfoMBean;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
 import com.tc.management.beans.object.EnterpriseTCServerMbean;
@@ -490,6 +492,19 @@ public class LocalManagementSource {
 
   public void shutdownServer() throws ManagementSourceException {
     tcServerInfoMBean.shutdown();
+  }
+
+
+  public void shutdownServerIfActive(RestartMode restartMode) throws UnexpectedStateException {
+    tcServerInfoMBean.shutdownIfActive(restartMode);
+  }
+
+  public void shutdownServerIfPassive(RestartMode restartMode) throws UnexpectedStateException {
+    tcServerInfoMBean.shutdownIfPassive(restartMode);
+  }
+
+  public void shutdownServer(RestartMode restartMode) {
+    tcServerInfoMBean.shutdown(restartMode);
   }
 
   public boolean markOperatorEvent(TerracottaOperatorEvent terracottaOperatorEvent, boolean read) throws ManagementSourceException {
