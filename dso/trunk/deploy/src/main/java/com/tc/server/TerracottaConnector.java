@@ -22,15 +22,21 @@ import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PushbackInputStream;
-import java.io.StringWriter;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A Jetty connector that is handed sockets from the DSO listen port once they are identified as HTTP requests
@@ -38,47 +44,61 @@ import java.util.List;
 public class TerracottaConnector extends LocalConnector {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TerracottaConnector.class);
+  private static final int IDLE_TIMEOUT_IN_MS = 30000;
+  private final ExecutorService executorService;
 
   public TerracottaConnector(Server server, HttpConnectionFactory httpConnectionFactory) {
     super(server, httpConnectionFactory);
-    // to avoid idle timeout warnings in the logs
-    this.setIdleTimeout(-1);
-    this.connect();
+    setIdleTimeout(IDLE_TIMEOUT_IN_MS);
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 64, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadFactory() {
+      final AtomicInteger counter = new AtomicInteger();
+      @Override
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "Jetty Connector - " + counter.incrementAndGet());
+      }
+    });
+    executorService = executor;
+  }
+
+  public void close() {
+    executorService.shutdownNow();
   }
 
   public void handleSocketFromDSO(Socket socket, byte[] data) throws IOException {
+    LocalConnector.LocalEndPoint endPoint = this.connect();
+    Future<Object> reader = executorService.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        endPoint.addInput(ByteBuffer.wrap(data));
 
-    //PushbackInputStream allows us to retrieve the original http request
-    PushbackInputStream pis = new PushbackInputStream(socket.getInputStream(), data.length);
-    pis.unread(data);
-    InputStreamReader inputStreamReader = new InputStreamReader(pis, "ISO-8859-1");
-    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        try (InputStream inputStream = socket.getInputStream()) {
+          while (true) {
+            byte[] buffer = new byte[128];
+            int read = inputStream.read(buffer);
+            if (read == -1) {
+              break;
+            }
+            endPoint.addInput(ByteBuffer.wrap(buffer, 0, read));
+          }
+        }
 
-    String readLineFromBuffer = bufferedReader.readLine();
-    StringWriter writer = new StringWriter();
-    do {
-      writer.write(readLineFromBuffer);
-      writer.write("\r\n");
-      readLineFromBuffer = bufferedReader.readLine();
-    }
-    while (!readLineFromBuffer.equals(""));
-    writer.write("\r\n");
-
-    String requestAsString = writer.toString();
+        return null;
+      }
+    });
 
     try {
-      String response = this.getResponse(requestAsString);
-      String[] splitResponse = response.split("\n");
-      List<String> responseLines = new ArrayList<>(Arrays.asList(splitResponse));
-      responseLines.add(1, "Connection: close\r");
-      String responseWithConnectionClose = String.join("\n", responseLines) + "\n";
-      socket.getOutputStream().write(responseWithConnectionClose.getBytes("ISO-8859-1"));
+      ByteBuffer byteBuffer = endPoint.waitForOutput(IDLE_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+      reader.cancel(true);
+      if (byteBuffer.remaining() > 0) {
+        try (WritableByteChannel channel = Channels.newChannel(socket.getOutputStream())) {
+          channel.write(byteBuffer);
+        }
+      }
     } catch (Exception e) {
-      LOGGER.error("Exception while retrieving the HTTP response", e);
+      LOGGER.error("Error processing an HTTP request", e);
     } finally {
       socket.close();
     }
-
   }
 
 }
