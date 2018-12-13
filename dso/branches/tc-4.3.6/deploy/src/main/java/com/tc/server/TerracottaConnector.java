@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -32,7 +31,7 @@ import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -50,7 +49,7 @@ public class TerracottaConnector extends LocalConnector {
   public TerracottaConnector(Server server, HttpConnectionFactory httpConnectionFactory) {
     super(server, httpConnectionFactory);
     setIdleTimeout(IDLE_TIMEOUT_IN_MS);
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 64, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadFactory() {
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 64, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadFactory() {
       final AtomicInteger counter = new AtomicInteger();
       @Override
       public Thread newThread(Runnable r) {
@@ -60,8 +59,10 @@ public class TerracottaConnector extends LocalConnector {
     executorService = executor;
   }
 
-  public void close() {
+  @Override
+  public Future<Void> shutdown() {
     executorService.shutdownNow();
+    return super.shutdown();
   }
 
   public void handleSocketFromDSO(Socket socket, byte[] data) throws IOException {
@@ -86,19 +87,27 @@ public class TerracottaConnector extends LocalConnector {
       }
     });
 
-    try {
-      ByteBuffer byteBuffer = endPoint.waitForOutput(IDLE_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
-      reader.cancel(true);
-      if (byteBuffer.remaining() > 0) {
-        try (WritableByteChannel channel = Channels.newChannel(socket.getOutputStream())) {
-          channel.write(byteBuffer);
+    executorService.submit(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        try {
+          ByteBuffer byteBuffer = endPoint.waitForOutput(IDLE_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
+          reader.cancel(true);
+          if (byteBuffer.remaining() > 0) {
+            try (WritableByteChannel channel = Channels.newChannel(socket.getOutputStream())) {
+              channel.write(byteBuffer);
+            }
+          }
+        } catch (Exception e) {
+          LOGGER.error("Error processing an HTTP request", e);
+        } finally {
+          endPoint.close();
+          socket.close();
         }
+
+        return null;
       }
-    } catch (Exception e) {
-      LOGGER.error("Error processing an HTTP request", e);
-    } finally {
-      socket.close();
-    }
+    });
   }
 
 }
