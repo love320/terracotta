@@ -16,6 +16,8 @@
  */
 package com.tc.net.core;
 
+import com.tc.util.MultiIOExceptionHandler;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -114,10 +116,13 @@ public abstract class PipeSocket extends Socket {
   @Override
   public synchronized void close() throws IOException {
     if (isClosed()) return;
-    super.close();
-    closeRead(null);
-    closeWrite(null);
-    socket.close();
+
+    MultiIOExceptionHandler handler = new MultiIOExceptionHandler();
+    handler.doSafely(() -> super.close());
+    handler.doSafely(() -> closeRead(null));
+    handler.doSafely(() -> closeWrite(null));
+    handler.doSafely(() -> socket.close());
+    handler.done("Error closing pipe socket");
   }
 
   public abstract void onWrite(int len);
@@ -127,18 +132,21 @@ public abstract class PipeSocket extends Socket {
   public void closeRead(IOException ioe) throws IOException {
     if (this.readClosed) return;
     this.closeReadReason = ioe;
+    MultiIOExceptionHandler handler = new MultiIOExceptionHandler();
+    handler.doSafely(() -> inputStream.close());
+    handler.doSafely(() -> inputPipe.sink().close());
+    handler.doSafely(() -> inputPipe.source().close());
     this.readClosed = true;
-    inputStream.close();
-    inputPipe.sink().close();
-    inputPipe.source().close();
+    handler.done("Error closing read side");
   }
 
   public void closeWrite(IOException ioe) throws IOException {
     if (this.writeClosed) return;
     this.closeWriteReason = ioe;
-    outputStream.close();
-    outputPipe.sink().close();
-    outputPipe.source().close();
+    MultiIOExceptionHandler handler = new MultiIOExceptionHandler();
+    handler.doSafely(() -> outputStream.close());
+    writeClosed = true;
+    handler.done("Error closing write side");
   }
 
   private final class PipeSocketOutputStream extends OutputStream {
@@ -179,12 +187,18 @@ public abstract class PipeSocket extends Socket {
     @Override
     public void close() throws IOException {
       if (writeClosed) return;
+
+      MultiIOExceptionHandler handler = new MultiIOExceptionHandler();
       if (!isWritePipeBroken()) {
-        delegate.flush();
-        onFlush();
+        handler.doSafely(() -> delegate.flush());
+        handler.doSafely(() -> onFlush());
       }
-      delegate.close();
-      writeClosed = true;
+      handler.doSafely(() -> delegate.close());
+      handler.doSafely(() -> outputPipe.sink().close());
+      handler.doSafely(() -> outputPipe.source().close());
+      handler.done("Error closing pipe socket OutputStream");
     }
+
   }
 }
+
