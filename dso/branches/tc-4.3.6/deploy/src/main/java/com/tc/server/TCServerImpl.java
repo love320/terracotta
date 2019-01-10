@@ -19,6 +19,7 @@ package com.tc.server;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.HashLoginService;
@@ -26,8 +27,11 @@ import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpChannel;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -36,7 +40,6 @@ import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.ErrorPageErrorHandler;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -77,6 +80,7 @@ import com.tc.logging.TCLogging;
 import com.tc.management.beans.L2MBeanNames;
 import com.tc.management.beans.L2State;
 import com.tc.management.beans.TCServerInfo;
+import com.tc.management.beans.TCServerInfoMBean;
 import com.tc.net.GroupID;
 import com.tc.net.OrderedGroupIDs;
 import com.tc.net.TCSocketAddress;
@@ -122,12 +126,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
-import javax.servlet.ServletRequest;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class TCServerImpl extends SEDA implements TCServer {
 
@@ -563,7 +569,20 @@ public class TCServerImpl extends SEDA implements TCServer {
         sslContextFactory.setSslContext(securityManager.getSslContext());
       }
 
-      TCServerImpl.this.httpServer = new Server();
+      TCServerImpl.this.httpServer = new Server() {
+        @Override
+        public void handle(HttpChannel connection) throws IOException, ServletException {
+          Request request = connection.getRequest();
+          Response response = connection.getResponse();
+
+          if (HttpMethod.TRACE.is(request.getMethod())) {
+            request.setHandled(true);
+            response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+          } else {
+            super.handle(connection);
+          }
+        }
+      };
       HttpConfiguration httpConfig = new HttpConfiguration();
       httpConfig.setSendServerVersion(false);
       TCServerImpl.this.terracottaConnector = new TerracottaConnector(httpServer, new HttpConnectionFactory(httpConfig));
