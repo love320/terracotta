@@ -93,7 +93,7 @@ public class TerracottaConnector extends LocalConnector {
         try {
           ByteBuffer byteBuffer = endPoint.waitForOutput(IDLE_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
           reader.cancel(true);
-          if (byteBuffer.remaining() > 0) {
+          if (byteBuffer != null && byteBuffer.remaining() > 0) {
             try (WritableByteChannel channel = Channels.newChannel(socket.getOutputStream())) {
               channel.write(byteBuffer);
             }
