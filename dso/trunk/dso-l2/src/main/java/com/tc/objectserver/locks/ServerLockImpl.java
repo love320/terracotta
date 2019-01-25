@@ -16,6 +16,8 @@
  */
 package com.tc.objectserver.locks;
 
+import com.tc.logging.TCLogger;
+import com.tc.logging.TCLogging;
 import com.tc.net.ClientID;
 import com.tc.object.locks.ClientServerExchangeLockContext;
 import com.tc.object.locks.LockID;
@@ -37,6 +39,7 @@ import java.util.List;
 public final class ServerLockImpl extends AbstractServerLock {
   private final static EnumSet<Type> SET_OF_GREEDY_HOLDERS = EnumSet.of(Type.GREEDY_HOLDER);
 
+  protected final static TCLogger    logger                = TCLogging.getLogger(ServerLockImpl.class);
   private boolean                    isRecalled            = false;
 
   public ServerLockImpl(LockID lockID) {
@@ -225,6 +228,26 @@ public final class ServerLockImpl extends AbstractServerLock {
           break;
         case HOLDER:
           Assert.assertFalse(hasGreedyReadHolder);
+          // TAB-7605: Avoid crashing server if there is an existing lock-state
+          // Assumes client-side state holds precedence
+          if (checkDuplicate(new SingleServerLockContext(cid, cselc.getThreadID()))) {
+            ServerLockContext existing = remove(cid, cselc.getThreadID(), EnumSet.allOf(Type.class));
+            logger.info(String.format("Detected existing %s request for %s while recalling with holder." +
+                                      "\n\tExisting: %s\n\tRecalling: %s", existing.getState().getType(),
+                                      this.getLockID(), existing, cselc));
+            switch (existing.getState().getType()) {
+              case TRY_PENDING:
+              case WAITER:
+                cancelTryLockOrWaitTimer(existing, helper);
+                break;
+              case PENDING:
+                if (!existing.getState().getLockLevel().equals(cselc.getState().getLockLevel())) {
+                  cannotAward(existing.getClientID(), existing.getThreadID(), existing.getState().getLockLevel(), helper);
+                }
+                break;
+              default:
+            }
+          }
           awardLock(helper, createPendingContext(cid, cselc.getThreadID(), cselc.getState().getLockLevel(), helper),
                     false);
           break;
