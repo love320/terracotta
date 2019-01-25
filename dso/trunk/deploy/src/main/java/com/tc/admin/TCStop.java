@@ -176,9 +176,13 @@ public class TCStop {
           consoleLogger.info("Stop success. Response code " + response.getStatus());
         } else {
           if (stopIfActive) {
-            consoleLogger.warn("Server is not in active state, not stopping the server");
+            String errorMsg = "Server is not in active state, not stopping the server";
+            consoleLogger.warn(errorMsg);
+            throw new RuntimeException(errorMsg);
           } else if (stopIfPassive) {
-            consoleLogger.warn("Server is not in passive state, not stopping the server");
+            String errorMsg = "Server is not in passive state, not stopping the server";
+            consoleLogger.warn(errorMsg);
+            throw new RuntimeException(errorMsg);
           } else {
             throw new AssertionError();
           }
