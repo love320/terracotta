@@ -177,11 +177,11 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
   private void closeImpl(final Runnable callback) {
     Assert.assertTrue(this.closed.isSet());
 
-    if (pipeSocket != null) {
+    if (pipeSocket != null && !pipeSocket.isWriteClosed()) {
       try {
         pipeSocket.getOutputStream().flush();
       } catch (IOException ioe) {
-        logger.warn("error flushing pipesocket output stream", ioe);
+        logger.warn("Error flushing pipesocket output stream", ioe);
       }
     }
     this.transportEstablished.set(false);
@@ -830,7 +830,6 @@ final class TCConnectionImpl implements TCConnection, TCChannelReader, TCChannel
     try {
       this.protocolAdaptor.addReadData(this, data, length);
     } catch (final Exception e) {
-      logger.error(this.toString() + " " + e.getMessage());
       for (TCByteBuffer tcByteBuffer : data) {
         tcByteBuffer.clear();
       }
