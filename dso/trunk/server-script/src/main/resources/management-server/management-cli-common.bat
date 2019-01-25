@@ -58,7 +58,7 @@ set java_opts=
 if not "%cli_name%"=="__hidden__" (
   echo Terracotta Command Line Tools %cli_name:"=%
 )
-%JAVA_HOME%\bin\java -Dmanager=%COMMAND_MANAGER% -Xmx256m -XX:MaxPermSize=128m ^
+%JAVA_HOME%\bin\java -Dmanager=%COMMAND_MANAGER% -Xmx256m ^
  %java_opts% ^
  -cp %cli_runner% %main_class:"=% %CMD_LINE_ARGS%
 
