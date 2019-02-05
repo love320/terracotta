@@ -64,19 +64,6 @@ do
   if test "$?" = "0" ; then break; fi
 done
 
-function clean_args_for_auto_restart {
-  # The --active flag needs to be removed from the startup options when a server gets auto-restarted.
-  # When a server node is auto-restarted, the intention is to make it join the cluster as a passive.
-  # So in that case it doesn't make sense to start the server with the active flag.
-  # The --safe-mode flag needs to be removed for auto-restarts
-  for var in $args; do
-    if [ '--active' != "$var" ] && [ '-a' != "$var" ] && [ "--safe-mode" != "$var" ]; then
-      mod_args="$mod_args $var";
-    fi
-  done
-  args="$mod_args"
-}
-
 #rmi.dgc.server.gcInterval is set an year to avoid system gc in case authentication is enabled
 #users may change it accordingly
 args="$@"
@@ -95,12 +82,29 @@ eval ${JAVA_COMMAND} -Xms2g -Xmx2g -XX:+HeapDumpOnOutOfMemoryError \
 
  if test "$exitValue" = "11"; then
    start=true;
-   clean_args_for_auto_restart
+   # The --active flag needs to be removed from the startup options when a server gets auto-restarted.
+   # When a server node is auto-restarted, the intention is to make it join the cluster as a passive.
+   # So in that case it doesn't make sense to start the server with the active flag.
+   # The --safe-mode flag needs to be removed for auto-restarts
+   for var in $args; do
+     if [ '--active' != "$var" ] && [ '-a' != "$var" ] && [ "--safe-mode" != "$var" ]; then
+       mod_args="$mod_args $var";
+     fi
+   done
+   args="$mod_args"
    echo "start-tc-server: Restarting the server..."
  elif test "$exitValue" = "12"; then
    start=true;
-   clean_args_for_auto_restart
-   args="$args --safe-mode"
+   # The --active flag needs to be removed from the startup options when a server gets auto-restarted.
+   # When a server node is auto-restarted, the intention is to make it join the cluster as a passive.
+   # So in that case it doesn't make sense to start the server with the active flag.
+   # The --safe-mode flag needs to be removed for auto-restarts
+   for var in $args; do
+     if [ '--active' != "$var" ] && [ '-a' != "$var" ] && [ "--safe-mode" != "$var" ]; then
+       mod_args="$mod_args $var";
+     fi
+   done
+   args="$mod_args --safe-mode"
    echo "start-tc-server: Restarting the server in Safe Mode..."
  else
    exit $exitValue
