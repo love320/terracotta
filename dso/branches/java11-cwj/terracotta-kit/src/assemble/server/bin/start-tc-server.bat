@@ -23,10 +23,13 @@ if "%1" == "-?" goto :printHelp
 goto :start
 
 :printHelp
-echo Syntax: %~n0 [-f /path/to/tc-config.xml] [-n server_name]
+echo Syntax: %~n0 [-f /path/to/tc-config.xml] [-n server_name] [--safe-mode]
 echo.
-echo -f : start the server with your own Terracotta configuration instead of the default one
-echo -n : specify which server you want to start when you have more than one servers configured
+echo          -f : start the server with your own Terracotta configuration instead of the default one
+echo          -n : specify which server you want to start when you have more than one servers configured
+echo --safe-mode : start the server in safe mode
+echo.
+echo NOTE: An external trigger will be required to resume operations if server is started in safe mode
 exit /b 0
 
 

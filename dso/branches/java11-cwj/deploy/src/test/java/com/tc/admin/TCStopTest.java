@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
@@ -79,7 +81,7 @@ public class TCStopTest {
     responseCode(target, 200);
     TCStop.restStop(target, true);
     verify(target.request(MediaType.APPLICATION_JSON_TYPE)).post(
-        argThat(entityWithContent(Collections.singletonMap("forceStop", true), MediaType.APPLICATION_JSON_TYPE)));
+        argThat(entityWithContent(true, MediaType.APPLICATION_JSON_TYPE)));
   }
 
   @Test
@@ -88,7 +90,7 @@ public class TCStopTest {
     responseCode(target, 200);
     TCStop.restStop(target, false);
     verify(target.request(MediaType.APPLICATION_JSON_TYPE)).post(
-        argThat(entityWithContent(Collections.singletonMap("forceStop", false), MediaType.APPLICATION_JSON_TYPE)));
+        argThat(entityWithContent(false, MediaType.APPLICATION_JSON_TYPE)));
   }
 
   private void responseCode(WebTarget target, int responseCode) {
@@ -97,6 +99,7 @@ public class TCStopTest {
 
   private WebTarget mockWebTarget(String host, int port) throws URISyntaxException {
     Response response = mock(Response.class);
+    when(response.readEntity(Boolean.class)).thenReturn(true);
     Invocation.Builder builder = mock(Invocation.Builder.class);
     when(builder.post(any(Entity.class))).thenReturn(response);
     WebTarget target = mock(WebTarget.class);
@@ -106,13 +109,14 @@ public class TCStopTest {
     return target;
   }
 
-  private static <T> ArgumentMatcher<Entity<T>> entityWithContent(final T entity, final MediaType mediaType) {
+  private static <T> ArgumentMatcher<Entity<T>> entityWithContent(final boolean expected, final MediaType mediaType) {
     return new ArgumentMatcher<Entity<T>>() {
       @Override
       public boolean matches(final Object argument) {
         if (argument instanceof Entity) {
           Entity match = (Entity) argument;
-          return match.getMediaType() == mediaType && entity.equals(match.getEntity());
+          if (!(match.getEntity() instanceof Map)) return false;
+          return match.getMediaType() == mediaType && ((Map)match.getEntity()).get("forceStop").equals(expected);
         }
         return false;
       }

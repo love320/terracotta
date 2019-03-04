@@ -23,6 +23,9 @@ import com.tc.objectserver.api.TestSink;
 import com.tc.objectserver.locks.LockManagerImpl;
 import com.tc.objectserver.locks.LockResponseContext;
 import com.tc.objectserver.locks.NullChannelManager;
+import com.tc.objectserver.locks.ServerLock;
+import com.tc.objectserver.locks.context.SingleServerLockContext;
+import com.terracottatech.config.Server;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -449,5 +452,61 @@ public class GreedyLockManagerTest extends TestCase {
       lockManager = null;
       resetLockManager();
     }
+  }
+
+  public void testRecallHolderReadWithExistingPendingWrite() throws Exception {
+    ClientID cid1 = new ClientID(1);
+    ThreadID tid1 = new ThreadID(1);
+    ThreadID tid2 = new ThreadID(2);
+    LockID lockID = new StringLockID("duplicate-lock");
+    ArrayList<ClientServerExchangeLockContext> recallSet = new ArrayList();
+    recallSet.add(new ClientServerExchangeLockContext(lockID, cid1, tid2, State.HOLDER_READ));
+
+    try {
+      lockManager.start();
+      // Setup initial-state of [GREEDY_HOLDER:READ, PENDING:WRITE]
+      lockManager.lock(lockID, cid1, tid1, ServerLockLevel.READ);
+      lockManager.lock(lockID, cid1, tid2, ServerLockLevel.WRITE);
+      sink.clear();
+
+      ServerLock lock = lockManager.getHelper().getLockStore().checkOut(lockID);
+      lockManager.getHelper().getLockStore().checkIn(lock);
+
+      System.out.println("\n[DEBUG] Before recall:");
+      printLockInfo(lockID);
+
+      // Recall with HOLDER:READ and verify that PENDING:WRITE was refused
+      lockManager.recallCommit(lockID, cid1, recallSet);
+      LockResponseContext response = (LockResponseContext) sink.waitForAdd(2000L);
+      assertTrue(response.isLockNotAwarded());
+
+      System.out.println("\n[DEBUG] After recall:");
+      printLockInfo(lockID);
+
+      ServerLockContext expectedContext = new SingleServerLockContext(cid1, tid2);
+      expectedContext.setState(new ServerLockContextStateMachine(), State.HOLDER_READ);
+      assertTrue(getLockInfo(lockID).contains(expectedContext.toString()));
+    } finally {
+      lockManager = null;
+      resetLockManager();
+    }
+  }
+
+  private void printLockInfo(LockID lockID) {
+    ServerLock lock = lockManager.getHelper().getLockStore().checkOut(lockID);
+    System.out.println(lock);
+    lockManager.getHelper().getLockStore().checkIn(lock);
+  }
+
+  private String getLockInfo(LockID lockID) {
+    ServerLock lock = null;
+    try {
+      lock = lockManager.getHelper().getLockStore().checkOut(lockID);
+    return lock.toString();
+    } finally {
+      if (lock != null)
+        lockManager.getHelper().getLockStore().checkIn(lock);
+    }
+
   }
 }

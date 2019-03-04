@@ -138,7 +138,7 @@ public abstract class ManagementToolUtil {
       if (allFromConfigs) {
         targets.addAll(getAllTargetsForConfig(commandLineBuilder.getOptionValue("f"), username, password, secured, ignoreUntrusted));
       } else {
-        targets.add(getTargetsForConfig(commandLineBuilder.getOptionValue("-f"), commandLineBuilder.getOptionValue("-n"),
+        targets.add(getTargetsForConfig(commandLineBuilder.getOptionValue("f"), commandLineBuilder.getOptionValue("n"),
             username, password, secured, ignoreUntrusted));
       }
     }
