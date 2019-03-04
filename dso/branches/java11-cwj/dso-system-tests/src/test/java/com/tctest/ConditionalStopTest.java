@@ -88,6 +88,24 @@ public class ConditionalStopTest extends BaseDSOTestCase {
     runTest(false, false, true, EXITCODE_RESTART_IN_SAFE_MODE_REQUEST);
   }
 
+  public void testConditionalActiveStopFailure() {
+    try {
+      stop(managementPort_1, false, true, false, false);
+    } catch (Exception expected) {
+      assertContains("not stopping the server", expected.getMessage());
+      assertTrue(server_1.isRunning());
+    }
+  }
+
+  public void testConditionalPassiveStopFailure() {
+    try {
+      stop(managementPort_2, true, false, false, false);
+    } catch (Exception expected) {
+      assertContains("not stopping the server", expected.getMessage());
+      assertTrue(server_2.isRunning());
+    }
+  }
+
   private void runTest(boolean conditional,
                        boolean restart,
                        boolean restartInSafeMode,

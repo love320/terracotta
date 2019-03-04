@@ -12,7 +12,7 @@ public class StandardConfigurationSetupManagerFactoryTest {
 
   @Test
   public void testSafeModeConfiguration() throws Exception {
-    String[] args = {"-f", this.getClass().getResource("/default-config.xml").getPath(), "-s"};
+    String[] args = {"-f", this.getClass().getResource("/default-config.xml").getPath(), "--safe-mode"};
 
     StandardConfigurationSetupManagerFactory factory =
         new StandardConfigurationSetupManagerFactory(args,

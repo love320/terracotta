@@ -27,6 +27,7 @@ import com.tc.net.core.event.TCListenerEventListener;
 import com.tc.net.core.security.TCSecurityManager;
 import com.tc.net.protocol.ProtocolAdaptorFactory;
 import com.tc.net.protocol.TCProtocolAdaptor;
+import com.tc.net.protocol.TCProtocolException;
 import com.tc.net.protocol.transport.ConnectionHealthCheckerUtil;
 import com.tc.net.protocol.transport.HealthCheckerConfig;
 import com.tc.net.protocol.transport.HealthCheckerConfigImpl;
@@ -50,7 +51,7 @@ import java.util.Set;
 public class TCConnectionManagerImpl implements TCConnectionManager {
   protected static final TCConnection[] EMPTY_CONNECTION_ARRAY = new TCConnection[] {};
   protected static final TCListener[]   EMPTY_LISTENER_ARRAY   = new TCListener[] {};
-  protected static final TCLogger       logger                 = TCLogging.getLogger(TCConnectionManager.class);
+  protected static final TCLogger       logger                 = TCLogging.getLogger(TCConnectionManagerImpl.class);
 
   private final TCCommImpl              comm;
   private final HealthCheckerConfig     healthCheckerConfig;
@@ -294,9 +295,15 @@ public class TCConnectionManagerImpl implements TCConnectionManager {
         if (err != null) {
           if (err instanceof IOException) {
             if (logger.isInfoEnabled()) {
-              logger.info("error event on connection " + event.getSource() + ": " + err.getMessage());
+              logger.info("Error event on connection: " + event.getSource() + ": " + err.getMessage());
             } else if (logger.isDebugEnabled()) {
-              logger.debug("error event on connection " + event.getSource() + ": " + err.getMessage(), err);
+              logger.debug("Error event on connection: " + event.getSource() + ": " + err.getMessage(), err);
+            }
+          } else if (err instanceof TCProtocolException) {
+            if (logger.isInfoEnabled()) {
+              logger.info("Invalid connection request: " + event.getSource() + ": " + err.getMessage());
+            } else if (logger.isDebugEnabled()) {
+              logger.debug("Invalid connection request: " + event.getSource() + ": " + err.getMessage(), err);
             }
           } else {
             logger.error(err);

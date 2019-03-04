@@ -19,6 +19,7 @@ package com.tc.server;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.HashLoginService;
@@ -26,8 +27,11 @@ import org.eclipse.jetty.security.LoginService;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.security.AbstractLoginService;
 import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpChannel;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -65,7 +69,6 @@ import com.tc.exception.TCRuntimeException;
 import com.tc.l2.state.StateManager;
 import com.tc.l2.state.sbp.SBPResolver;
 import com.tc.l2.state.sbp.SBPResolverImpl;
-import com.tc.lang.ServerExitStatus;
 import com.tc.lang.StartupHelper;
 import com.tc.lang.StartupHelper.StartupAction;
 import com.tc.lang.TCThreadGroup;
@@ -126,12 +129,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
-import javax.servlet.ServletRequest;
 import javax.management.InstanceAlreadyExistsException;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MBeanServer;
 import javax.management.NotCompliantMBeanException;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class TCServerImpl extends SEDA implements TCServer {
 
@@ -581,7 +586,20 @@ public class TCServerImpl extends SEDA implements TCServer {
         sslContextFactory.setSslContext(securityManager.getSslContext());
       }
 
-      TCServerImpl.this.httpServer = new Server();
+      TCServerImpl.this.httpServer = new Server() {
+        @Override
+        public void handle(HttpChannel connection) throws IOException, ServletException {
+          Request request = connection.getRequest();
+          Response response = connection.getResponse();
+
+          if (HttpMethod.TRACE.is(request.getMethod())) {
+            request.setHandled(true);
+            response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+          } else {
+            super.handle(connection);
+          }
+        }
+      };
       HttpConfiguration httpConfig = new HttpConfiguration();
       httpConfig.setSendServerVersion(false);
       TCServerImpl.this.terracottaConnector = new TerracottaConnector(httpServer, new HttpConnectionFactory(httpConfig));
@@ -606,16 +624,16 @@ public class TCServerImpl extends SEDA implements TCServer {
         }
       });
 
+      String l2Identifier = TCServerImpl.this.configurationSetupManager.getL2Identifier();
+      if (l2Identifier != null) {
+        logger.info("Server started as " + l2Identifier);
+      }
+
       if (isActive()) {
         updateActivateTime();
         if (TCServerImpl.this.activationListener != null) {
           TCServerImpl.this.activationListener.serverActivated();
         }
-      }
-
-      String l2Identifier = TCServerImpl.this.configurationSetupManager.getL2Identifier();
-      if (l2Identifier != null) {
-        logger.info("Server started as " + l2Identifier);
       }
     }
 

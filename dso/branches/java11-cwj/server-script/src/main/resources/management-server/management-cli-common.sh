@@ -69,7 +69,7 @@ if [[ "${cli_name}" != "__hidden__" ]]; then
   echo Terracotta Command Line Tools - $cli_name
 fi
 
-"$JAVA_HOME"/bin/java -Dmanager=$COMMAND_MANAGER -Xmx256m -XX:MaxPermSize=128m \
+"$JAVA_HOME"/bin/java -Dmanager=$COMMAND_MANAGER -Xmx256m \
  $java_opts \
  -cp $cli_runner $main_class "$@"
 exit_code=$?

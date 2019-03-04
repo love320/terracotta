@@ -30,8 +30,6 @@ import org.terracotta.management.resource.services.events.EventServiceV2;
 import java.io.Serializable;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,27 +43,8 @@ public class EventServiceImplV2 implements EventServiceV2 {
   private final Map<EventListener, ListenerHolder> listenerMap = new IdentityHashMap<>();
   private final RemoteManagementSource remoteManagementSource;
 
-  private static final Timer ssePingTimer = new Timer("sse-ping-timer", true);
-
   public EventServiceImplV2(RemoteManagementSource remoteManagementSource) {
     this.remoteManagementSource = remoteManagementSource;
-    ssePingTimer.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        synchronized (listenerMap) {
-          listenerMap.keySet().forEach((eventListener) -> {
-            EventEntityV2 pingEvent = new EventEntityV2();
-            pingEvent.setType("TSA.SSE.PING");
-            pingEvent.setAgentId(Representable.EMBEDDED_AGENT_ID);
-            try {
-              eventListener.onEvent(pingEvent);
-            } catch (Exception e) {
-              // ignore
-            }
-          });
-        }
-      }
-    }, 120_000, 120_000);
   }
 
   @Override
