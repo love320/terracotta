@@ -28,7 +28,7 @@ The Initial Developer of the Covered Software is
 
   <groupId>org.terracotta</groupId>
   <artifactId>terracotta-root</artifactId>
-  <version>4.3.7-SNAPSHOT</version>
+  <version>4.4.0_JAVA11-SNAPSHOT</version>
   <name>terracotta-root</name>
   <packaging>pom</packaging>
 
@@ -38,7 +38,7 @@ The Initial Developer of the Covered Software is
   
   <properties>
     <build.edition>opensource</build.edition>
-    <maven-forge-plugin.version>1.2.19</maven-forge-plugin.version>
+    <maven-forge-plugin.version>1.2.22</maven-forge-plugin.version>
     <tc-shader.version>1.2</tc-shader.version>
     <skip.deploy>false</skip.deploy>
   </properties>
@@ -162,7 +162,9 @@ The Initial Developer of the Covered Software is
       </modules>
     </profile>
     <!-- activate by default if 'ehcache' module exists.
-         You have to check out this module manually under 'community/devwork' -->
+         You have to check out this module manually under 'community/devwork'.
+         The 'ehcache-ee' module includes 'ehcache' (as 'ehcache-os') so this profile
+         is unneeded if 'ehcache-ee' is present. -->
     <profile>
       <id>ehcache</id>
       <activation>
@@ -175,7 +177,8 @@ The Initial Developer of the Covered Software is
       </modules>
     </profile>
     <!-- activate by default if 'ehcache-ee' module exists.
-         You have to check out this module manually under 'community/devwork' -->
+         You have to check out this module manually under 'community/devwork'.
+         This module includes the 'ehcache' module (as 'ehcache-os'). -->
     <profile>
       <id>ehcache-ee</id>
       <activation>
@@ -188,6 +191,7 @@ The Initial Developer of the Covered Software is
       </modules>
     </profile>
 
+<!--  Will no longer build properly under community/devwork
     <profile>
       <id>quartz</id>
       <activation>
@@ -199,7 +203,9 @@ The Initial Developer of the Covered Software is
         <module>devwork/quartz</module>
       </modules>
     </profile>
+-->
 
+<!--  Will no longer build properly under community/devwork
     <profile>
       <id>quartz-ee</id>
       <activation>
@@ -211,7 +217,9 @@ The Initial Developer of the Covered Software is
         <module>devwork/quartz-ee</module>
       </modules>
     </profile>
+-->
 
+<!--  Now under management-common
     <profile>
       <id>management-core</id>
       <activation>
@@ -223,6 +231,7 @@ The Initial Developer of the Covered Software is
         <module>devwork/management-core</module>
       </modules>
     </profile>
+-->
 
     <profile>
       <id>management-common</id>
@@ -245,6 +254,30 @@ The Initial Developer of the Covered Software is
       </activation>
       <modules>
         <module>devwork/management-apps</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>tc-messaging</id>
+      <activation>
+        <file>
+          <exists>devwork/tc-messaging</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>devwork/tc-messaging</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>ipc-eventbus</id>
+      <activation>
+        <file>
+          <exists>devwork/ipc-eventbus</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>devwork/ipc-eventbus</module>
       </modules>
     </profile>
 
@@ -279,6 +312,29 @@ The Initial Developer of the Covered Software is
       </activation>
       <modules>
         <module>devwork/bigmemory-core-storage</module>
+      </modules>
+    </profile>
+
+    <profile>
+      <id>offheap-restartable-store</id>
+      <activation>
+        <file>
+          <exists>devwork/offheap-restartable-store</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>devwork/offheap-restartable-store</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>bigmemory-restartable-core-storage</id>
+      <activation>
+        <file>
+          <exists>devwork/bigmemory-restartable-core-storage</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>devwork/bigmemory-restartable-core-storage</module>
       </modules>
     </profile>
 
@@ -365,6 +421,7 @@ The Initial Developer of the Covered Software is
         <module>devwork/terracotta-sessions</module>
       </modules>
     </profile>
+
     <profile>
       <id>sag-deps</id>
         <activation>
@@ -379,6 +436,7 @@ The Initial Developer of the Covered Software is
               <plugin>
               <groupId>org.terracotta</groupId>
               <artifactId>maven-forge-plugin</artifactId>
+              <version>1.2.22</version>
               <dependencies>
                 <dependency>
                   <groupId>com.softwareag.ibit.tools.util</groupId>

@@ -22,7 +22,7 @@ The Initial Developer of the Covered Software is
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>build-parent</artifactId>
-    <version>4.3.7-SNAPSHOT</version>
+    <version>4.4.0_JAVA11-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
 
@@ -33,9 +33,10 @@ The Initial Developer of the Covered Software is
 
   <properties>
     <skip.deploy>true</skip.deploy>
-    <jersey.version>2.6</jersey.version>
-    <hk2.version>2.2.0</hk2.version>
+    <jersey.version>2.27</jersey.version>
+    <hk2.version>2.5.0-b42</hk2.version>
     <jackson.version>2.9.8</jackson.version>
+    <activation.version>1.1.1</activation.version>
   </properties>
 
   <dependencies>
@@ -98,44 +99,56 @@ The Initial Developer of the Covered Software is
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.javax.annotation-api</artifactId>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
       <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>gf-3122</groupId>
       <artifactId>gf.javax.security.auth.message</artifactId>
     </dependency>
+<!-- Temporarily retained to maintain diff alignment
     <dependency>
       <groupId>gf-3122</groupId>
       <artifactId>gf.javax.annotation</artifactId>
     </dependency>
+-->
     <dependency>
       <groupId>gf-3122</groupId>
       <artifactId>gf.javax.mail</artifactId>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.javax.servlet-api</artifactId>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.jersey-client</artifactId>
-      <version>2.6</version>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-client</artifactId>
+      <version>${jersey.version}</version>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.jersey-common</artifactId>
-      <version>2.6</version>
+      <groupId>org.glassfish.jersey.core</groupId>
+      <artifactId>jersey-common</artifactId>
+      <version>${jersey.version}</version>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.javax.ws.rs-api</artifactId>
-      <version>2.0</version>
+      <groupId>org.glassfish.jersey.inject</groupId>
+      <artifactId>jersey-hk2</artifactId>
+      <version>${jersey.version}</version>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.jersey-media-sse</artifactId>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+      <version>2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.media</groupId>
+      <artifactId>jersey-media-sse</artifactId>
+      <version>${jersey.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.media</groupId>
+      <artifactId>jersey-media-json-jackson</artifactId>
       <version>${jersey.version}</version>
     </dependency>
     <dependency>
@@ -143,39 +156,59 @@ The Initial Developer of the Covered Software is
       <artifactId>validation-api</artifactId>
       <version>1.1.0.Final</version>
     </dependency>
+<!--
     <dependency>
       <groupId>gf-40</groupId>
       <artifactId>gf.jersey-guava</artifactId>
       <version>${jersey.version}</version>
     </dependency>
+-->
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.hk2-api</artifactId>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>hk2-api</artifactId>
+      <version>${hk2.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.inject</groupId>
+          <artifactId>javax.inject</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>hk2-utils</artifactId>
+      <version>${hk2.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>javax.inject</groupId>
+          <artifactId>javax.inject</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.hk2.external</groupId>
+      <artifactId>aopalliance-repackaged</artifactId>
       <version>${hk2.version}</version>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.hk2-utils</artifactId>
+      <groupId>org.glassfish.hk2.external</groupId>
+      <artifactId>javax.inject</artifactId>
       <version>${hk2.version}</version>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.aopalliance-repackaged</artifactId>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>hk2-locator</artifactId>
       <version>${hk2.version}</version>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.javax.inject</artifactId>
-      <version>${hk2.version}</version>
+      <groupId>javax.activation</groupId>
+      <artifactId>activation</artifactId>
+      <version>${activation.version}</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.hk2-locator</artifactId>
-      <version>${hk2.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>gf-3122</groupId>
-      <artifactId>gf.osgi-resource-locator</artifactId>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>osgi-resource-locator</artifactId>
       <version>1.0.1</version>
     </dependency>
 
@@ -237,6 +270,12 @@ The Initial Developer of the Covered Software is
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
       <version>2.3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>2.3.0</version>
+      <scope>runtime</scope>
     </dependency>
   </dependencies>
 
