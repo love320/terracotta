@@ -22,7 +22,7 @@ The Initial Developer of the Covered Software is
   <parent>
     <groupId>org.terracotta</groupId>
     <artifactId>build-parent</artifactId>
-    <version>4.3.7-SNAPSHOT</version>
+    <version>4.4.0_JAVA11-SNAPSHOT</version>
     <relativePath>../build-parent</relativePath>
   </parent>
   
@@ -112,8 +112,8 @@ The Initial Developer of the Covered Software is
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>gf-40</groupId>
-      <artifactId>gf.javax.servlet-api</artifactId>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
