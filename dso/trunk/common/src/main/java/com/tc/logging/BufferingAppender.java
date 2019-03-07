@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,15 +11,24 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.logging;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.Layout;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.plugins.Plugin;
+import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
+import org.apache.logging.log4j.core.config.plugins.PluginElement;
+import org.apache.logging.log4j.core.config.plugins.PluginFactory;
+import org.apache.logging.log4j.core.impl.MutableLogEvent;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 
+import java.io.Serializable;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -28,31 +37,22 @@ import java.util.concurrent.BlockingQueue;
  * sure all logging information gets to the file; we buffer records created before logging gets sent to a file, then
  * send them there.
  */
-public class BufferingAppender extends AppenderSkeleton {
 
-  private final BlockingQueue<LoggingEvent> buffer;
-  private boolean             on;
+public class BufferingAppender extends AbstractAppender {
 
-  public BufferingAppender(int maxCapacity) {
-    this.buffer = new ArrayBlockingQueue<LoggingEvent>(maxCapacity);
+  private final BlockingQueue<LogEvent> buffer;
+  private boolean on;
+
+  public BufferingAppender(int capacity, String name, Filter filter, Layout<? extends Serializable> layout, boolean ignoreExceptions) {
+    super(name, filter, layout, ignoreExceptions);
+    this.buffer = new ArrayBlockingQueue<LogEvent>(capacity);
     this.on = true;
   }
 
-  @Override
-  protected synchronized void append(LoggingEvent event) {
+  public synchronized void append(LogEvent logEvent) {
     if (on) {
-      this.buffer.offer(event);
+      this.buffer.offer(logEvent.toImmutable());
     }
-  }
-
-  @Override
-  public boolean requiresLayout() {
-    return false;
-  }
-
-  @Override
-  public void close() {
-    // nothing needs to be here.
   }
 
   public void stopAndSendContentsTo(Appender otherAppender) {
@@ -61,10 +61,9 @@ public class BufferingAppender extends AppenderSkeleton {
     }
 
     while (true) {
-      LoggingEvent event = this.buffer.poll();
+      LogEvent event = this.buffer.poll();
       if (event == null) break;
-      otherAppender.doAppend(event);
+      otherAppender.append(event);
     }
   }
-
 }
