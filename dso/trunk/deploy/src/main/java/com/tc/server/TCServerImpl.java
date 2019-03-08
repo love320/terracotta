@@ -885,7 +885,10 @@ public class TCServerImpl extends SEDA implements TCServer {
     if (warFile != null) {
       // DEV-8583: use a lock file in java.io.tmpdir to serialize deployments of the management webapp on a single
       // server
-      fileLock();
+      if (!fileLock()) {
+        consoleLogger.warn("Unable to start management server. Try deleting " + TC_MANAGEMENT_API_LOCKFILE.getAbsolutePath() + " and restart");
+        return;
+      }
       try {
         logger.info("deploying management REST services from archive " + warFile);
         WebAppContext restContext = new WebAppContext();
@@ -923,18 +926,21 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
   }
 
-  private void fileLock() throws InterruptedException, IOException {
+  private boolean fileLock() throws InterruptedException, IOException {
     while (true) {
       // check if the lock file is older than 60s, in that case assume another VM crashed and delete it
       if (TC_MANAGEMENT_API_LOCKFILE.lastModified() != 0L && System.currentTimeMillis() - TC_MANAGEMENT_API_LOCKFILE.lastModified() >= 20000) {
         consoleLogger.debug("removing Management Server lock file after waiting 20 seconds");
-        TC_MANAGEMENT_API_LOCKFILE.delete();
+        boolean deleted = TC_MANAGEMENT_API_LOCKFILE.delete();
+        if(!deleted) {
+          return false;
+        }
       }
 
       // check if the file exists and if not, create it. That's atomic across the entire FS.
       boolean created = TC_MANAGEMENT_API_LOCKFILE.createNewFile();
       if (created) {
-        break;
+        return true;
       }
 
       // if the file exists and is not older than 1 minute, sleep a bit and retry
