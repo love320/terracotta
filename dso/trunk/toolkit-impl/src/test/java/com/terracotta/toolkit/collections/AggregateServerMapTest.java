@@ -103,7 +103,8 @@ public class AggregateServerMapTest {
     when(platformService.getTCProperties()).thenReturn(TCPropertiesImpl.getProperties());
     ListAppender appender = new ListAppender(list, "list-appender", null, null, true);
     appender.start();
-    LoggerContext context = (LoggerContext) LogManager.getContext(false);
+    LoggerContext context = LoggerContext.getContext(false);
+    context.reconfigure();
     context.getLogger(LogManager.getLogger(AggregateServerMap.class).getName()).addAppender(appender);
     ServerMapLocalStore serverMapLocalStore = mock(ServerMapLocalStore.class);
     serverMapLocalStoreFactory = mock(ServerMapLocalStoreFactory.class);
