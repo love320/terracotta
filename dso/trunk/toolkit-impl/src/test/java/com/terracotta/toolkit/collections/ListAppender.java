@@ -6,7 +6,6 @@ import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
