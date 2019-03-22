@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<tc:tc-config xmlns:tc="http://www.terracotta.org/config"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://www.terracotta.org/schema/terracotta-9.xsd">
+  <servers>
+
+    <mirror-group group-name="group1">
+      <server host="localhost" name="server1">
+        <tsa-port>9510</tsa-port>
+      </server>
+      <server host="localhost" name="server2">
+        <tsa-port>9610</tsa-port>
+      </server>
+      <server host="localhost" name="server3"> <!-- A third server-->
+        <tsa-port>9710</tsa-port>
+      </server>
+    </mirror-group>
+
+    <failover-priority>CONSISTENCY</failover-priority>
+
+  </servers>
+
+</tc:tc-config>
