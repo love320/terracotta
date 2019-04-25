@@ -490,7 +490,7 @@ The Initial Developer of the Covered Software is
 									javax.management.loading,
 									javax.net.ssl,*</Import-Package>
 								<Export-Package>org.terracotta.toolkit.*;-split-package:=merge-last</Export-Package>
-								<Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
+								<Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
 								<Bundle-ClassPath>., {maven-dependencies}</Bundle-ClassPath>
 								<Include-Resource> {maven-resources}, {maven-dependencies},
 									target/classes

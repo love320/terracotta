@@ -74,13 +74,13 @@ svn co https://svn.terracotta.org/repo/forge/projects/osgi-test-tool/branches/ja
 svn co https://svn.terracotta.org/repo/forge/projects/bigmemory/go/branches/java11-cwj/code-samples go-code-samples
 svn co https://svn.terracotta.org/repo/forge/projects/bigmemory/go/branches/java11-cwj/code-samples-test go-code-samples-test
 
-# svn co https://svn.terracotta.org/repo/internal/fast-restartable-store/branches/java11-cwj fast-restartable-store
-svn co https://svn.terracotta.org/repo/internal/fast-restartable-store/branches/java11-cwj-1.0.x fast-restartable-store-1.0.x
+svn co https://svn.terracotta.org/repo/internal/fast-restartable-store/branches/java11-cwj fast-restartable-store
+## svn co https://svn.terracotta.org/repo/internal/fast-restartable-store/branches/java11-cwj-1.0.x fast-restartable-store-1.0.x ** Replaced by trunk **
 
 
 # offheap-store moved to GitHub at release 2.0.0
 # git clone https://github.com/Terracotta-OSS/offheap-store.git offheap-store
 # git clone https://github.com/cljohnso/offheap-store.git offheap-store
 # Use of 'git worktree add' is preferred.
-svn co https://svn.terracotta.org/repo/internal/offheap-store/branches/java11-cwj-1.1.x ehcache-ee/offheap-store
+## svn co https://svn.terracotta.org/repo/internal/offheap-store/branches/java11-cwj-1.1.x ehcache-ee/offheap-store  ** Replaced by Terracotta-OSS/offheap-store **
 

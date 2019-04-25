@@ -44,14 +44,14 @@ The Initial Developer of the Covered Software is
     <core-storage-api.version>1.4_JAVA11-SNAPSHOT</core-storage-api.version>
     <heap-core-storage.version>1.2.0_JAVA11-SNAPSHOT</heap-core-storage.version>
     <bigmemory-core-storage.version>2.1.0_JAVA11-SNAPSHOT</bigmemory-core-storage.version>
-    <jetty.version>9.4.14.v20181114</jetty.version>
+    <jetty.version>9.4.15.v20190215</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.7.25</slf4j.version>
-    <search.version>1.5.8_JAVA11-SNAPSHOT</search.version>
+    <search.version>1.6.0_JAVA11-SNAPSHOT</search.version>
     <shiro.version>1.4.0</shiro.version>
     <management-core-version>2.2.0_JAVA11-SNAPSHOT</management-core-version>
     <session-management.version>${project.version}</session-management.version>
-    <tc-messaging.version>1.1.3_JAVA11-SNAPSHOT</tc-messaging.version>
+    <tc-messaging.version>1.2.0_JAVA11-SNAPSHOT</tc-messaging.version>
     <terracotta-license.version>1.1.5</terracotta-license.version>
     <toolkit-api.version>2.8_JAVA11-SNAPSHOT</toolkit-api.version>
     <toolkit-api-internal.version>1.17</toolkit-api-internal.version>

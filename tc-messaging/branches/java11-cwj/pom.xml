@@ -16,7 +16,7 @@
   <artifactId>tc-messaging</artifactId>
   <packaging>jar</packaging>
   <name>Terracotta Messaging</name>
-  <version>1.1.3_JAVA11-SNAPSHOT</version>
+  <version>1.2.0_JAVA11-SNAPSHOT</version>
 
   <properties>
   </properties>
@@ -25,7 +25,7 @@
     <dependency>
       <groupId>com.terracottatech</groupId>
       <artifactId>search</artifactId>
-      <version>1.5.8_JAVA11-SNAPSHOT</version>
+      <version>1.6.0_JAVA11-SNAPSHOT</version>
     </dependency>
 
     <dependency>
