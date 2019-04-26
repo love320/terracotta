@@ -16,8 +16,7 @@
  */
 package com.tc.logging;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Priority;
+import org.apache.logging.log4j.Level;
 
 import com.tc.util.Assert;
 
@@ -87,18 +86,18 @@ public class LogLevelImpl implements LogLevel {
 
   static LogLevel fromLog4JLevel(Level level) {
     if (level == null) return null;
-    switch (level.toInt()) {
-      case Priority.DEBUG_INT:
+    switch (level.getStandardLevel()) {
+      case DEBUG:
         return DEBUG;
-      case Priority.INFO_INT:
+      case INFO:
         return INFO;
-      case Priority.WARN_INT:
+      case WARN:
         return WARN;
-      case Priority.ERROR_INT:
+      case ERROR:
         return ERROR;
-      case Priority.FATAL_INT:
+      case FATAL:
         return FATAL;
-      case Priority.OFF_INT:
+      case OFF:
         return OFF;
       default:
         throw Assert.failure("Unsupported Level" + level);

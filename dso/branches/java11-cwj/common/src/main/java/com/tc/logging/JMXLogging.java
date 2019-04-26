@@ -16,7 +16,7 @@
  */
 package com.tc.logging;
 
-import org.apache.log4j.PatternLayout;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 
 public class JMXLogging {
 
@@ -24,9 +24,10 @@ public class JMXLogging {
 
   static { 
     // all logging goes to JMX based appender
-    jmxAppender = new JMXAppender();
-    jmxAppender.setLayout(new PatternLayout(TCLogging.FILE_AND_JMX_PATTERN));
-    jmxAppender.setName("JMX appender");
+    PatternLayout layout = PatternLayout.newBuilder()
+                .withPattern(TCLogging.FILE_AND_JMX_PATTERN).build();
+    jmxAppender = new JMXAppender("JMX appender", null, layout, true);
+    jmxAppender.start();
     TCLogging.addToAllLoggers(jmxAppender);
   }
   
