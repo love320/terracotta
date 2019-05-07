@@ -16,9 +16,7 @@
  */
 package com.tc.logging;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.log4j.Logger;
 
 /**
  * An implementation of TCLogger that just delegates to a log4j Logger instance NOTE: This implementation differs from
@@ -35,7 +33,7 @@ class TCLoggerImpl implements TCLogger {
 
   TCLoggerImpl(String name) {
     if (name == null) { throw new IllegalArgumentException("Logger name cannot be null"); }
-    logger = LogManager.getLogger(name);
+    logger = Logger.getLogger(name);
   }
 
   Logger getLogger() {
@@ -124,7 +122,7 @@ class TCLoggerImpl implements TCLogger {
 
   @Override
   public void setLevel(LogLevel level) {
-    Configurator.setLevel(logger.getName(), LogLevelImpl.toLog4JLevel(level));
+    logger.setLevel(LogLevelImpl.toLog4JLevel(level));
   }
 
   @Override
