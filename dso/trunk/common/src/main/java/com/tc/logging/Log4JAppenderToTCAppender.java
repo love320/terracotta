@@ -1,7 +1,7 @@
-/*
+/* 
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
+ * License. You may obtain a copy of the License at 
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,30 +11,38 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is
+ * The Initial Developer of the Covered Software is 
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.logging;
 
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.spi.LoggingEvent;
+import org.apache.log4j.spi.ThrowableInformation;
 
-import java.io.Serializable;
-
-public class Log4JAppenderToTCAppender extends AbstractAppender {
+public class Log4JAppenderToTCAppender extends AppenderSkeleton {
 
   private final TCAppender appender;
 
-  public Log4JAppenderToTCAppender(TCAppender tcAppender, String name, Filter filter, Layout<? extends Serializable> layout, boolean ignoreExceptions) {
-    super(name, filter, layout, ignoreExceptions);
-    this.appender = tcAppender;
+  public Log4JAppenderToTCAppender(TCAppender appender) {
+    this.appender = appender;
   }
 
   @Override
-  public void append(LogEvent logEvent) {
-    appender.append(LogLevelImpl.fromLog4JLevel(logEvent.getLevel()), logEvent.getMessage(), logEvent.getThrown());
+  protected void append(LoggingEvent event) {
+    ThrowableInformation throwableInformation = event.getThrowableInformation();
+    Throwable t = (throwableInformation == null) ? null : throwableInformation.getThrowable();
+    appender.append(LogLevelImpl.fromLog4JLevel(event.getLevel()), event.getMessage(), t);
+  }
+
+  @Override
+  public void close() {
+    //
+  }
+
+  @Override
+  public boolean requiresLayout() {
+    return false;
   }
 
 }
