@@ -1,7 +1,7 @@
-/*
+/* 
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
+ * License. You may obtain a copy of the License at 
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,7 +11,7 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is
+ * The Initial Developer of the Covered Software is 
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.logging;
@@ -19,28 +19,14 @@ package com.tc.logging;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.ConsoleAppender;
-import org.apache.logging.log4j.core.appender.NullAppender;
-import org.apache.logging.log4j.core.appender.RollingFileAppender;
-import org.apache.logging.log4j.core.appender.rolling.DefaultRolloverStrategy;
-import org.apache.logging.log4j.core.appender.rolling.RolloverStrategy;
-import org.apache.logging.log4j.core.appender.rolling.SizeBasedTriggeringPolicy;
-import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilder;
-import org.apache.logging.log4j.core.config.builder.api.ConfigurationBuilderFactory;
-import org.apache.logging.log4j.core.config.builder.impl.BuiltConfiguration;
-import org.apache.logging.log4j.core.impl.Log4jContextFactory;
-import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.apache.logging.log4j.core.layout.PatternMatch;
-import org.apache.logging.log4j.core.layout.ScriptPatternSelector;
-import org.apache.logging.log4j.core.script.Script;
-import org.apache.logging.log4j.core.util.DefaultShutdownCallbackRegistry;
-import org.apache.logging.log4j.spi.LoggerContextFactory;
+import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.RollingFileAppender;
+import org.apache.log4j.varia.NullAppender;
 
 import com.tc.properties.TCProperties;
 import com.tc.properties.TCPropertiesImpl;
@@ -66,61 +52,61 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-
 /**
  * Factory class for obtaining TCLogger instances.
- *
+ * 
  * @author teck
  */
 public class TCLogging {
 
-  public static final String LOG_CONFIGURATION_PREFIX = "The configuration read for Logging: ";
+  public static final String        LOG_CONFIGURATION_PREFIX           = "The configuration read for Logging: ";
 
-  private static final int MAX_BUFFERED_LOG_MESSAGES = 10 * 1000;
+  private static final int          MAX_BUFFERED_LOG_MESSAGES          = 10 * 1000;
 
-  private static final String TERRACOTTA_L1_LOG_FILE_NAME = "terracotta-client.log";
-  private static final String TERRACOTTA_L2_LOG_FILE_NAME = "terracotta-server.log";
-  private static final String TERRACOTTA_GENERIC_LOG_FILE_NAME = "terracotta-generic.log";
+  private static final String       TERRACOTTA_L1_LOG_FILE_NAME        = "terracotta-client.log";
+  private static final String       TERRACOTTA_L2_LOG_FILE_NAME        = "terracotta-server.log";
+  private static final String       TERRACOTTA_GENERIC_LOG_FILE_NAME   = "terracotta-generic.log";
 
-  private static final String LOCK_FILE_NAME = ".terracotta-logging.lock";
+  private static final String       LOCK_FILE_NAME                     = ".terracotta-logging.lock";
 
-  private static final String[] INTERNAL_LOGGER_NAMESPACES = new String[] { "com.tc", "com.terracotta",
-      "com.terracottatech", "org.terracotta", "tc.operator" };
+  private static final String[]     INTERNAL_LOGGER_NAMESPACES         = new String[] { "com.tc", "com.terracotta",
+      "com.terracottatech", "org.terracotta", "tc.operator"           };
 
-  private static final String CUSTOMER_LOGGER_NAMESPACE = "com.terracottatech";
-  private static final String CUSTOMER_LOGGER_NAMESPACE_WITH_DOT = CUSTOMER_LOGGER_NAMESPACE + ".";
+  private static final String       CUSTOMER_LOGGER_NAMESPACE          = "com.terracottatech";
+  private static final String       CUSTOMER_LOGGER_NAMESPACE_WITH_DOT = CUSTOMER_LOGGER_NAMESPACE + ".";
 
-  private static final String CONSOLE_LOGGER_NAME = CUSTOMER_LOGGER_NAMESPACE + ".console";
-  public static final String DUMP_LOGGER_NAME = "com.tc.dumper.dump";
-  public static final String DERBY_LOGGER_NAME = "com.tc.derby.log";
-  private static final String OPERATOR_EVENT_LOGGER_NAME = "tc.operator.event";
+  private static final String       CONSOLE_LOGGER_NAME                = CUSTOMER_LOGGER_NAMESPACE + ".console";
+  public static final String        DUMP_LOGGER_NAME                   = "com.tc.dumper.dump";
+  public static final String        DERBY_LOGGER_NAME                  = "com.tc.derby.log";
+  private static final String       OPERATOR_EVENT_LOGGER_NAME         = "tc.operator.event";
 
-  private static final String LOGGING_PROPERTIES_SECTION = "logging";
-  private static final String MAX_LOG_FILE_SIZE_PROPERTY = "maxLogFileSize";
-  private static final int DEFAULT_MAX_LOG_FILE_SIZE = 512;
-  private static final String MAX_BACKUPS_PROPERTY = "maxBackups";
-  private static final int DEFAULT_MAX_BACKUPS = 20;
-  private static final String LOG4J_CUSTOM_FILENAME = ".tc.custom.log4j.properties";
-  public static final String LOG4J_PROPERTIES_FILENAME = ".tc.dev.log4j.properties";
+  private static final String       LOGGING_PROPERTIES_SECTION         = "logging";
+  private static final String       MAX_LOG_FILE_SIZE_PROPERTY         = "maxLogFileSize";
+  private static final int          DEFAULT_MAX_LOG_FILE_SIZE          = 512;
+  private static final String       MAX_BACKUPS_PROPERTY               = "maxBackups";
+  private static final int          DEFAULT_MAX_BACKUPS                = 20;
+  private static final String       LOG4J_CUSTOM_FILENAME              = ".tc.custom.log4j.properties";
+  public static final String        LOG4J_PROPERTIES_FILENAME          = ".tc.dev.log4j.properties";
 
-  private static final String CONSOLE_PATTERN = "%d %p - %m%n";
-  public static final String DUMP_PATTERN = "[dump] %m%n";
-  public static final String DERBY_PATTERN = "[derby.log] %m%n";
-  private static final String CONSOLE_PATTERN_DEVELOPMENT = "%d [%t] %p %c - %m%n";
-  public static final String FILE_AND_JMX_PATTERN = "%d [%t] %p %c - %m%n";
+  private static final String       CONSOLE_PATTERN                    = "%d %p - %m%n";
+  public static final String        DUMP_PATTERN                       = "[dump] %m%n";
+  public static final String        DERBY_PATTERN                      = "[derby.log] %m%n";
+  private static final String       CONSOLE_PATTERN_DEVELOPMENT        = "%d [%t] %p %c - %m%n";
+  // This next pattern is used when we're *only* logging to the console.
+  private static final String       CONSOLE_LOGGING_ONLY_PATTERN       = "[TC] %d %p - %m%n";
+  public static final String        FILE_AND_JMX_PATTERN               = "%d [%t] %p %c - %m%n";
 
-  private static  TCLogger console;
-  private static  TCLogger operatorEventLogger;
-  private static Appender consoleAppender;
-
-  private static  Logger[] allLoggers;
+  private static final TCLogger     console;
+  private static final TCLogger     operatorEventLogger;
+  private static final Appender     consoleAppender;
+  private static final Logger[]     allLoggers;
 
   private static DelegatingAppender delegateFileAppender;
   private static DelegatingAppender delegateBufferingAppender;
   private static boolean            buffering;
-  private static File               currentLoggingDirectory = null;
-  private static FileLock           currentLoggingDirectoryFileLock = null;
-  private static boolean            lockingDisabled = false;
+  private static File               currentLoggingDirectory            = null;
+  private static FileLock           currentLoggingDirectoryFileLock    = null;
+  private static boolean            lockingDisabled                    = false;
 
   private static Properties         loggingProperties;
 
@@ -218,7 +204,6 @@ public class TCLogging {
       boolean devLog4JPropsFilePresent = false;
       InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(LOG4J_PROPERTIES_FILENAME);
       if (stream != null) {
-        System.setProperty("log4j.configurationFile", LOG4J_PROPERTIES_FILENAME);
         devLog4JPropsFilePresent = true;
         try {
           devLoggingProperties.load(stream);
@@ -228,7 +213,6 @@ public class TCLogging {
       } else {
         for (File propFile : devLoggingLocations) {
           if (propFile.isFile() && propFile.canRead()) {
-            System.setProperty("log4j.configurationFile", propFile.getAbsolutePath()); // This should do the job of PropertyConfigurator
             devLog4JPropsFilePresent = true;
             InputStream in = new FileInputStream(propFile);
             try {
@@ -240,14 +224,9 @@ public class TCLogging {
         }
       }
       if (devLog4JPropsFilePresent) {
+        Logger.getRootLogger().setLevel(Level.INFO);
+        PropertyConfigurator.configure(devLoggingProperties);
         loggingProperties = devLoggingProperties;
-        // If empty file is there log4j2 uses its default configuration to print logs on console
-        // which will result in repetition.
-        if(!devLoggingProperties.isEmpty()) {
-          Configurator.setRootLevel(Level.INFO);
-        } else {
-          initializeLogging();
-        }
         return true;
       }
     } catch (Exception e) {
@@ -270,7 +249,7 @@ public class TCLogging {
 
       for (File propFile : locations) {
         if (propFile.isFile() && propFile.canRead()) {
-          System.setProperty("log4j.configurationFile", propFile.getAbsolutePath()); // This should do the job of PropertyConfigurator
+
           Properties properties = new Properties();
           FileInputStream fis = null;
           try {
@@ -280,13 +259,12 @@ public class TCLogging {
             IOUtils.closeQuietly(fis);
           }
 
+          PropertyConfigurator.configure(properties);
           loggingProperties = properties;
-          if(properties.isEmpty()) {
-            initializeLogging();
-          }
           return true;
         }
       }
+
       return false;
     } catch (Exception e) {
       reportLoggingError(e);
@@ -329,16 +307,17 @@ public class TCLogging {
         return;
       }
 
-      delegateFileAppender.setDelegate(NullAppender.createAppender("null"));
+      delegateFileAppender.setDelegate(new NullAppender());
+      consoleAppender.setLayout(new PatternLayout(CONSOLE_LOGGING_ONLY_PATTERN));
 
-      LoggerContext context = LoggerContext.getContext(false);
-      context.getRootLogger().addAppender(consoleAppender);
+      // Logger.addAppender() doesn't double-add, so this is safe
+      Logger.getRootLogger().addAppender(consoleAppender);
 
       if (buffering) {
         BufferingAppender realBufferingAppender = (BufferingAppender) delegateBufferingAppender
-            .setDelegate(NullAppender.createAppender("null"));
+            .setDelegate(new NullAppender());
         realBufferingAppender.stopAndSendContentsTo(consoleAppender);
-        realBufferingAppender.stop();
+        realBufferingAppender.close();
         buffering = false;
       }
 
@@ -422,70 +401,32 @@ public class TCLogging {
     }
 
     String logFilePath = new File(theDirectory, logFileName).getAbsolutePath();
-    String fileNamePrefix = "";
-    String fileNameSuffix = "";
-    int index = logFilePath.lastIndexOf(".");
-    fileNamePrefix = logFilePath.substring(0, index);
-    fileNameSuffix = logFilePath.substring(index);
+
     synchronized (TCLogging.class) {
       try {
         TCProperties props = TCPropertiesImpl.getProperties().getPropertiesFor(LOGGING_PROPERTIES_SECTION);
+        newFileAppender = new TCRollingFileAppender(new PatternLayout(FILE_AND_JMX_PATTERN), logFilePath, true);
+        newFileAppender.setName("file appender");
         int maxLogFileSize = props.getInt(MAX_LOG_FILE_SIZE_PROPERTY, DEFAULT_MAX_LOG_FILE_SIZE);
+        newFileAppender.setMaxFileSize(maxLogFileSize + "MB");
+        newFileAppender.setMaxBackupIndex(props.getInt(MAX_BACKUPS_PROPERTY, DEFAULT_MAX_BACKUPS));
 
-        SizeBasedTriggeringPolicy sizeBasedTriggeringPolicy = SizeBasedTriggeringPolicy.createPolicy(maxLogFileSize + "MB");
-
-        int maxBackupIndex = props.getInt(MAX_BACKUPS_PROPERTY, DEFAULT_MAX_BACKUPS);
-        RolloverStrategy rolloverStrategy = DefaultRolloverStrategy
-            .newBuilder()
-            .withMin("1")
-            .withMax(String.valueOf(maxBackupIndex))
-            .build();
-        PatternMatch patternMatch[] = new PatternMatch[2];
-        patternMatch[0] = PatternMatch.newBuilder().setKey(DUMP_PATTERN).setPattern(DUMP_PATTERN).build();
-        patternMatch[1] = PatternMatch.newBuilder().setKey(DERBY_PATTERN).setPattern(DERBY_PATTERN).build();
-        Script s = Script.createScript("selector", "JavaScript",
-            "var result\n" +
-            "switch (logEvent.getLoggerName())\n" +
-            "                        {\n" +
-            "                         case \"com.tc.dumper.dump\":result=\"[dump] %m%n\";break;\n" +
-            "                         case \"com.tc.derby.log\":result=\"[derby.log] %m%n\";break;\n" +
-            "                         default:result=null;\n" +
-            "                         }\n" +
-            "                         result;");
-
-        ScriptPatternSelector scriptPatternSelector = ScriptPatternSelector.newBuilder()
-            .setScript(s)
-            .setProperties(patternMatch)
-            .setDefaultPattern(FILE_AND_JMX_PATTERN)
-            .setConfiguration(LoggerContext.getContext(false).getConfiguration())
-            .build();
-        PatternLayout layout = PatternLayout.newBuilder()
-            .withPatternSelector(scriptPatternSelector)
-            .build();
-        newFileAppender = RollingFileAppender.newBuilder()
-            .withLayout(layout)
-            .withName("file appender")
-            .withAppend(true)
-            .withStrategy(rolloverStrategy)
-            .withPolicy(sizeBasedTriggeringPolicy)
-            .withFileName(logFilePath)
-            .withFilePattern(fileNamePrefix + ".%i" + fileNameSuffix)
-            .build();
         // This makes us start with a new file each time.
-        newFileAppender.getManager().rollover();
+        newFileAppender.rollOver();
+
         // Note: order of operations is very important here. We start the new appender before we close and remove the
         // old one so that you don't drop any log records.
         Appender oldFileAppender = delegateFileAppender.setDelegate(newFileAppender);
 
-        if(oldFileAppender!= null) {
-          oldFileAppender.stop();
+        if (oldFileAppender != null) {
+          oldFileAppender.close();
         }
 
         if (buffering) {
           BufferingAppender realBufferingAppender = (BufferingAppender) delegateBufferingAppender
-              .setDelegate(NullAppender.createAppender("null"));
+              .setDelegate(new NullAppender());
           realBufferingAppender.stopAndSendContentsTo(delegateFileAppender);
-          realBufferingAppender.stop();
+          realBufferingAppender.close();
           buffering = false;
         }
 
@@ -510,109 +451,61 @@ public class TCLogging {
     return new TCLoggerImpl(DERBY_LOGGER_NAME);
   }
 
-  private static void initializeLogging() {
-    ConfigurationBuilder<BuiltConfiguration> builder = ConfigurationBuilderFactory.newConfigurationBuilder();
-    builder.setConfigurationName("Terracotaa-Login");
-    builder.add(builder.newRootLogger(Level.INFO));
-    Configurator.initialize(builder.build());
-
-    // For disabling the log4j2 shutdown hook to log information from our application's shutdownhook.
-    final LoggerContextFactory factory = LogManager.getFactory();
-    if (factory instanceof Log4jContextFactory) {
-      Log4jContextFactory contextFactory = (Log4jContextFactory) factory;
-      ((DefaultShutdownCallbackRegistry) contextFactory.getShutdownCallbackRegistry()).stop();
-    }
-  }
   static {
     ClassLoader prevLoader = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader(TCLogging.class.getClassLoader());
 
+    Log4jSafeInit.init();
+
+    Logger customerLogger = Logger.getLogger(CUSTOMER_LOGGER_NAMESPACE);
+    Logger consoleLogger = Logger.getLogger(CONSOLE_LOGGER_NAME);
+
+    console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
+    consoleAppender = new TCConsoleAppender(new PatternLayout(CONSOLE_PATTERN), ConsoleAppender.SYSTEM_OUT);
+    operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
+
+    List<Logger> internalLoggers = new ArrayList<Logger>();
+    for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
+      internalLoggers.add(Logger.getLogger(nameSpace));
+    }
+
+    /**
+     * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any appenders.
+     * If you DO add consoleLogger here, you'll see duplicate messages in the log file.
+     */
+    allLoggers = createAllLoggerList(internalLoggers, customerLogger);
+
     try {
       boolean customLogging = customConfiguration();
       boolean isDev = customLogging ? false : developmentConfiguration();
-      if(!customLogging && !isDev) {
-        initializeLogging();
-      }
-
-      console = new TCLoggerImpl(CONSOLE_LOGGER_NAME);
-      Logger customerLogger = LogManager.getLogger(CUSTOMER_LOGGER_NAMESPACE);
-      Logger consoleLogger = LogManager.getLogger(CONSOLE_LOGGER_NAME);
-
-      operatorEventLogger = new TCLoggerImpl(OPERATOR_EVENT_LOGGER_NAME);
-
-      List<Logger> internalLoggers = new ArrayList<>();
-      for (String nameSpace : INTERNAL_LOGGER_NAMESPACES) {
-        internalLoggers.add(LogManager.getLogger(nameSpace));
-      }
-
-      /**
-       * Don't add consoleLogger to allLoggers because it's a child of customerLogger, so it shouldn't get any appenders.
-       * If you DO add consoleLogger here, you'll see duplicate messages in the log file.
-       */
-      allLoggers = createAllLoggerList(internalLoggers, customerLogger);
 
       if (!customLogging) {
-        Configurator.setLevel(LogManager.getLogger("org.mortbay").getName(), Level.OFF);
+        Logger jettyLogger = Logger.getLogger("org.mortbay");
+        jettyLogger.setLevel(Level.OFF);
 
         for (Logger internalLogger : internalLoggers) {
-          Configurator.setLevel(internalLogger.getName(), Level.INFO);
+          internalLogger.setLevel(Level.INFO);
         }
-        Configurator.setLevel(customerLogger.getName(), Level.INFO);
-        Configurator.setLevel(consoleLogger.getName(), Level.INFO);
+        customerLogger.setLevel(Level.INFO);
+        consoleLogger.setLevel(Level.INFO);
 
-        PatternMatch patternMatch[] = new PatternMatch[2];
-        patternMatch[0] = PatternMatch.newBuilder().setKey(DUMP_PATTERN).setPattern(DUMP_PATTERN).build();
-        patternMatch[1] = PatternMatch.newBuilder().setKey(DERBY_PATTERN).setPattern(DERBY_PATTERN).build();
-        Script s = Script.createScript("selector", "JavaScript",
-            "var result\n" +
-            "switch (logEvent.getLoggerName())\n" +
-            "                        {\n" +
-            "                         case \"com.tc.dumper.dump\":result=\"[dump] %m%n\";break;\n" +
-            "                         case \"com.tc.derby.log\":result=\"[derby.log] %m%n\";break;\n" +
-            "                         default:result=null;\n" +
-            "                         }\n" +
-            "                         result;");
-        LoggerContext context = LoggerContext.getContext(false);
         if (!isDev) {
-          ScriptPatternSelector scriptPatternSelector = ScriptPatternSelector.newBuilder()
-              .setScript(s)
-              .setProperties(patternMatch)
-              .setDefaultPattern(CONSOLE_PATTERN)
-              .setConfiguration(context.getConfiguration())
-              .build();
-          PatternLayout layout = PatternLayout.newBuilder()
-              .withPatternSelector(scriptPatternSelector)
-              .build();
-          consoleAppender = ConsoleAppender.createDefaultAppenderForLayout(layout);
-          consoleAppender.start();
           // Only the console logger goes to the console (by default)
-          context.getLogger(consoleLogger.getName()).addAppender(consoleAppender);
+          consoleLogger.addAppender(consoleAppender);
         } else {
-          ScriptPatternSelector scriptPatternSelector = ScriptPatternSelector.newBuilder()
-              .setScript(s)
-              .setProperties(patternMatch)
-              .setDefaultPattern(CONSOLE_PATTERN_DEVELOPMENT)
-              .setConfiguration(context.getConfiguration())
-              .build();
-          PatternLayout layout = PatternLayout.newBuilder()
-              .withPatternSelector(scriptPatternSelector)
-              .build();
-          consoleAppender = ConsoleAppender.createDefaultAppenderForLayout(layout);
-          consoleAppender.start();
+          consoleAppender.setLayout(new PatternLayout(CONSOLE_PATTERN_DEVELOPMENT));
           // For non-customer environments, send all logging to the console...
-          context.getRootLogger().addAppender(consoleAppender);
+          Logger.getRootLogger().addAppender(consoleAppender);
         }
       }
 
-      delegateFileAppender = new DelegatingAppender(NullAppender.createAppender("null"));
-      delegateFileAppender.start();
+      delegateFileAppender = new DelegatingAppender(new NullAppender());
       addToAllLoggers(delegateFileAppender);
 
       BufferingAppender realBufferingAppender;
-      realBufferingAppender = new BufferingAppender
-          (MAX_BUFFERED_LOG_MESSAGES, "buffering appender", null, null, true);
+      realBufferingAppender = new BufferingAppender(MAX_BUFFERED_LOG_MESSAGES);
+      realBufferingAppender.setName("buffering appender");
       delegateBufferingAppender = new DelegatingAppender(realBufferingAppender);
-      delegateBufferingAppender.start();
       addToAllLoggers(delegateBufferingAppender);
       buffering = true;
 
@@ -632,17 +525,13 @@ public class TCLogging {
 
   // for test use only!
   public static Log4JAppenderToTCAppender addAppender(String loggerName, TCAppender appender) {
-    Log4JAppenderToTCAppender wrappedAppender =
-        new Log4JAppenderToTCAppender(appender, "Log4J2TCAppender", null, null, true);
-    wrappedAppender.start();
-    LoggerContext context = LoggerContext.getContext(false);
-    context.getLogger(new TCLoggerImpl(loggerName).getLogger().getName()).addAppender(wrappedAppender);
+    Log4JAppenderToTCAppender wrappedAppender = new Log4JAppenderToTCAppender(appender);
+    new TCLoggerImpl(loggerName).getLogger().addAppender(wrappedAppender);
     return wrappedAppender;
   }
 
   public static void removeAppender(String loggerName, Log4JAppenderToTCAppender appender) {
-    LoggerContext context = LoggerContext.getContext(false);
-    context.getLogger(new TCLoggerImpl(loggerName).getLogger().getName()).removeAppender(appender);
+    new TCLoggerImpl(loggerName).getLogger().removeAppender(appender);
   }
 
   private static Logger[] createAllLoggerList(List<Logger> internalLoggers, Logger customerLogger) {
@@ -653,10 +542,8 @@ public class TCLogging {
   }
 
   public static void addToAllLoggers(Appender appender) {
-    LoggerContext context = LoggerContext.getContext(false);
-    for (Logger allLogger : allLoggers) {
-      context.getLogger(allLogger.getName()).addAppender(appender);
-    }
+    for (Logger allLogger : allLoggers)
+      allLogger.addAppender(appender);
   }
 
   private static void writeVersion() {
@@ -744,9 +631,10 @@ public class TCLogging {
 
   // This method for use in tests only
   public static void closeFileAppender() {
-    if (delegateFileAppender != null) delegateFileAppender.stop();
+    if (delegateFileAppender != null) delegateFileAppender.close();
   }
 
+  
   /**
    * This method will print the logging configurations being used by the logger.
    */

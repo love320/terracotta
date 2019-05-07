@@ -78,7 +78,7 @@ public abstract class AbstractTestBase extends TCTestCase implements TestFailure
   private volatile TestJMXServerManager    jmxServerManager;
   protected volatile Thread                duringRunningClusterThread;
   protected volatile Thread                testExecutionThread;
-  private static final String              log4jPrefix               = "logger.";
+  private static final String              log4jPrefix               = "log4j.logger.";
   private final Map<String, LogLevel>      tcLoggingConfigs          = new HashMap<String, LogLevel>();
   protected final AtomicReference<Throwable> testException             = new AtomicReference<Throwable>();
   protected volatile PauseManager                     pauseManager;
@@ -351,14 +351,8 @@ public abstract class AbstractTestBase extends TCTestCase implements TestFailure
     try {
       log4jPropFile = new File(getTempDirectory(), TCLogging.LOG4J_PROPERTIES_FILENAME);
       writer = new BufferedWriter(new FileWriter(log4jPropFile));
-      writer.write("shutdownHook = disable" + "\n");
-      writer.write("rootLogger.level = INFO" + "\n");
-      int i=1;
       for (Entry<String, LogLevel> entry : tcLoggingConfigs.entrySet()) {
-        String prefix = "logger"+i;
-        writer.write(log4jPrefix + prefix + ".name = " + entry.getKey() + "\n");
-        writer.write(log4jPrefix + prefix + ".level = " + entry.getValue() + "\n");
-        i++;
+        writer.write(log4jPrefix + entry.getKey() + "=" + entry.getValue().name() + "\n");
       }
     } catch (IOException e) {
       throw new IllegalStateException(e.getMessage());

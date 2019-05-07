@@ -1,7 +1,7 @@
-/*
+/* 
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
+ * License. You may obtain a copy of the License at 
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,43 +11,32 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is
+ * The Initial Developer of the Covered Software is 
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.logging;
 
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.config.plugins.Plugin;
-import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
-import org.apache.logging.log4j.core.config.plugins.PluginElement;
-import org.apache.logging.log4j.core.config.plugins.PluginFactory;
-import org.apache.logging.log4j.core.layout.PatternLayout;
+import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.spi.LoggingEvent;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.management.beans.logging.TCLoggingBroadcaster;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
 
-import java.io.Serializable;
-
 import javax.management.NotCompliantMBeanException;
 
 /**
  * Special Appender that notifies JMX listeners on LoggingEvents.
- *
- * @author gkeim
- * @see org.apache.logging.log4j.core.appender.RollingFileAppender
+ * 
+ * @see org.apache.log4j.RollingFileAppender
  * @see TCLoggingBroadcasterMBean
+ * @author gkeim
  */
-
-public class JMXAppender extends AbstractAppender {
+public class JMXAppender extends AppenderSkeleton {
 
   private final TCLoggingBroadcaster broadcastingBean;
 
-  public JMXAppender(String name, Filter filter, Layout<? extends Serializable> layout, boolean ignoreExceptions) {
-    super(name, filter, layout, ignoreExceptions);
+  public JMXAppender() {
     try {
       broadcastingBean = new TCLoggingBroadcaster();
     } catch (NotCompliantMBeanException ncmbe) {
@@ -60,13 +49,19 @@ public class JMXAppender extends AbstractAppender {
     return broadcastingBean;
   }
 
+  @Override
+  protected void append(final LoggingEvent event) {
+    broadcastingBean.broadcastLogEvent(getLayout().format(event), event.getThrowableStrRep());
+  }
 
   @Override
-  public void append(final LogEvent event) {
-    //broadcastingBean.broadcastLogEvent(getLayout().format(event), event.getThrowableStrRep());
-    broadcastingBean.broadcastLogEvent
-        (((PatternLayout)getLayout()).toSerializable(event),
-            event.getThrown() != null ? event.getThrown().getMessage() : null);
+  public boolean requiresLayout() {
+    return false;
+  }
+
+  @Override
+  public void close() {
+    // Do nothing
   }
 
 }
