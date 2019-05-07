@@ -20,9 +20,9 @@ import com.tc.exception.TCNotRunningException;
 import com.tc.search.SearchRequestID;
 import com.tc.server.ServerEvent;
 import com.tc.server.ServerEventType;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.log4j.AppenderSkeleton;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.spi.LoggingEvent;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -90,7 +90,7 @@ public class AggregateServerMapTest {
   private PlatformService platformService;
   private ServerMapLocalStoreFactory serverMapLocalStoreFactory;
   private Configuration configuration;
-  private List<LogEvent> list = new ArrayList<LogEvent>();
+  private final ArrayList list = new ArrayList();
 
   @Before
   public void setUp() throws Exception {
@@ -101,10 +101,25 @@ public class AggregateServerMapTest {
     platformService = mock(PlatformService.class);
     when(platformService.getTaskRunner()).thenReturn(taskRunner);
     when(platformService.getTCProperties()).thenReturn(TCPropertiesImpl.getProperties());
-    ListAppender appender = new ListAppender(list, "list-appender", null, null, true);
-    appender.start();
-    LoggerContext context = (LoggerContext) LogManager.getContext(false);
-    context.getLogger(LogManager.getLogger(AggregateServerMap.class).getName()).addAppender(appender);
+    AppenderSkeleton appender = new AppenderSkeleton() {
+
+      @Override
+      public boolean requiresLayout() {
+        return false;
+      }
+
+      @Override
+      public void close() {
+        // throw new ImplementMe();
+      }
+
+      @Override
+      protected void append(LoggingEvent event) {
+        list.add(event);
+      }
+    };
+
+    LogManager.getLogger(AggregateServerMap.class).addAppender(appender);
     ServerMapLocalStore serverMapLocalStore = mock(ServerMapLocalStore.class);
     serverMapLocalStoreFactory = mock(ServerMapLocalStoreFactory.class);
     when(serverMapLocalStoreFactory.getOrCreateServerMapLocalStore(any(ServerMapLocalStoreConfig.class))).thenReturn(serverMapLocalStore);
@@ -271,7 +286,7 @@ public class AggregateServerMapTest {
     ServerEvent event2 = mock(ServerEvent.class);
     when(event2.getType()).thenReturn(ServerEventType.EXPIRE);
     asm.handleServerEvent(event2);
-    Assert.assertSame("Cache listener threw an exception", ((LogEvent) list.get(0)).getMessage().getFormattedMessage());
+    Assert.assertSame("Cache listener threw an exception", ((LoggingEvent) list.get(0)).getMessage());
   }
 
   @Test
