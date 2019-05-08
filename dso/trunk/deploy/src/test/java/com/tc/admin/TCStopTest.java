@@ -51,8 +51,13 @@ public class TCStopTest {
     String errorMessage = "critical failure";
     when(target.request(MediaType.APPLICATION_JSON_TYPE)
         .post(any(Entity.class))
-        .readEntity(any(Class.class))).thenReturn(Collections
-        .singletonMap("error", errorMessage));
+        .readEntity(any(Class.class))).thenReturn(
+            new HashMap<String, String>(){{
+              put("error", errorMessage);
+              // important since TCStop will try to read it
+              put("stackTrace", "");
+            }}
+    );
     try {
       TCStop.restStop(target, false);
       fail();
