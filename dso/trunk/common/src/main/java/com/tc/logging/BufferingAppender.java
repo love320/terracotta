@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,14 +11,14 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.logging;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.spi.LoggingEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -28,43 +28,31 @@ import java.util.concurrent.BlockingQueue;
  * sure all logging information gets to the file; we buffer records created before logging gets sent to a file, then
  * send them there.
  */
-public class BufferingAppender extends AppenderSkeleton {
-
-  private final BlockingQueue<LoggingEvent> buffer;
-  private boolean             on;
+public class BufferingAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+  private final BlockingQueue<ILoggingEvent> buffer;
+  private boolean on;
 
   public BufferingAppender(int maxCapacity) {
-    this.buffer = new ArrayBlockingQueue<LoggingEvent>(maxCapacity);
+    this.buffer = new ArrayBlockingQueue<>(maxCapacity);
     this.on = true;
   }
 
-  @Override
-  protected synchronized void append(LoggingEvent event) {
+  public synchronized void append(ILoggingEvent event) {
     if (on) {
       this.buffer.offer(event);
     }
-  }
-
-  @Override
-  public boolean requiresLayout() {
-    return false;
-  }
-
-  @Override
-  public void close() {
-    // nothing needs to be here.
   }
 
   public void stopAndSendContentsTo(Appender otherAppender) {
     synchronized (this) {
       on = false;
     }
-
     while (true) {
-      LoggingEvent event = this.buffer.poll();
-      if (event == null) break;
+      ILoggingEvent event = this.buffer.poll();
+      if (event == null) {
+        break;
+      }
       otherAppender.doAppend(event);
     }
   }
-
 }

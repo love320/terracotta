@@ -16,8 +16,8 @@
  */
 package com.tc.management;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 
 import com.sun.jmx.remote.generic.DefaultConfig;
 import com.sun.jmx.remote.generic.ServerSynchroMessageConnection;
@@ -75,10 +75,11 @@ public class L2Management extends TerracottaManagement {
   protected final boolean                     listenerEnabled;
 
   static {
+    LoggerContext context = TCLogging.getLoggerContext();
     // LKC-2990 and LKC-3171: Remove the JMX generic optional logging
-    Logger.getLogger("javax.management.remote.generic").setLevel(Level.OFF);
+    context.getLogger("javax.management.remote.generic").setLevel(Level.OFF);
     // DEV-1304: ClientCommunicatorAdmin uses a different logger
-    Logger.getLogger("javax.management.remote.misc").setLevel(Level.OFF);
+    context.getLogger("javax.management.remote.misc").setLevel(Level.OFF);
   }
 
   public L2Management(TCServerInfoMBean tcServerInfo, L2ConfigurationSetupManager configurationSetupManager,

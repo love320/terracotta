@@ -176,16 +176,6 @@ class ClusteredStateLoaderImpl extends ClusteredStateLoader {
     if (USE_APP_JTA_CLASSES && name.startsWith("javax.transaction.")) { return returnAndLog(appLoader.loadClass(name),
                                                                                             "appLoader"); }
 
-    // special case slf4j too. If the app already has it don't use the one that might have been included for embedded
-    // ehcache (since the reward is a loader contstraint violation later down the road)
-    if (name.startsWith("org.slf4j")) {
-      try {
-        return returnAndLog(appLoader.loadClass(name), "appLoader");
-      } catch (ClassNotFoundException cnfe) {
-        //
-      }
-    }
-
     URL url = findClassWithPrefix(name);
     if (url != null) { return returnAndLog(loadClassFromUrl(name, url, appLoader.getClass().getProtectionDomain()
                                                .getCodeSource()), "embedded resource"); }
