@@ -16,6 +16,8 @@
  */
 package com.tc.object;
 
+import ch.qos.logback.classic.LoggerContext;
+
 import com.tc.abortable.AbortableOperationManager;
 import com.tc.async.api.PostInit;
 import com.tc.async.api.SEDA;
@@ -1280,6 +1282,8 @@ public class DistributedObjectClient extends SEDA implements TCClient {
     try {
       TCLogging.closeFileAppender();
       TCLogging.disableLocking();
+      LoggerContext context = TCLogging.getLoggerContext();
+      context.stop();
     } catch (final Throwable t) {
       Logger.getAnonymousLogger().log(Level.WARNING, "Error shutting down TC logging system", t);
     }

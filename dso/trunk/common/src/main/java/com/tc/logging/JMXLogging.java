@@ -1,7 +1,7 @@
-/* 
+/*
  * The contents of this file are subject to the Terracotta Public License Version
  * 2.0 (the "License"); You may not use this file except in compliance with the
- * License. You may obtain a copy of the License at 
+ * License. You may obtain a copy of the License at
  *
  *      http://terracotta.org/legal/terracotta-public-license.
  *
@@ -11,25 +11,33 @@
  *
  * The Covered Software is Terracotta Platform.
  *
- * The Initial Developer of the Covered Software is 
+ * The Initial Developer of the Covered Software is
  *      Terracotta, Inc., a Software AG company
  */
 package com.tc.logging;
 
-import org.apache.log4j.PatternLayout;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+
 
 public class JMXLogging {
 
   private static JMXAppender        jmxAppender;
 
-  static { 
+  static {
     // all logging goes to JMX based appender
     jmxAppender = new JMXAppender();
-    jmxAppender.setLayout(new PatternLayout(TCLogging.FILE_AND_JMX_PATTERN));
+    PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+    LoggerContext context = TCLogging.getLoggerContext();
+    encoder.setContext(context);
+    encoder.setPattern(TCLogging.FILE_AND_JMX_PATTERN);
+    encoder.start();
+    jmxAppender.setContext(context);
+    jmxAppender.start();
     jmxAppender.setName("JMX appender");
     TCLogging.addToAllLoggers(jmxAppender);
   }
-  
+
   public static JMXAppender getJMXAppender() {
     return jmxAppender;
   }

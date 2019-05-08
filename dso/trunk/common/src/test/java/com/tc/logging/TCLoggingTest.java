@@ -65,8 +65,8 @@ public class TCLoggingTest extends TCTestCase {
         logFileCount++;
       }
     }
-    // Always one extra file is created by log4j
-    Assert.assertEquals(LOG_ITERATIONS + 1, logFileCount);
+
+    Assert.assertEquals(LOG_ITERATIONS, logFileCount);
 
   }
 

@@ -214,9 +214,11 @@ public class TestClientManager {
     String linkedChild = TestBaseUtil.jarFor(LinkedJavaProcess.class);
     String abstractClientBase = TestBaseUtil.jarFor(AbstractClientBase.class);
     String jmxp = TestBaseUtil.jarFor(JMXMPConnector.class);
-    String log4j = TestBaseUtil.jarFor(org.apache.log4j.LogManager.class);
+    String logbackClassic = TestBaseUtil.jarFor(ch.qos.logback.classic.LoggerContext.class);
+    String logbackCore = TestBaseUtil.jarFor(ch.qos.logback.core.Layout.class);
+    String slf4jApi = TestBaseUtil.jarFor(org.slf4j.ILoggerFactory.class);
     String hamcrest = TestBaseUtil.jarFor(Matcher.class);
-    classPath = testBase.makeClasspath(classPath, test, junit, linkedChild, abstractClientBase, jmxp, log4j, hamcrest);
+    classPath = testBase.makeClasspath(classPath, test, junit, linkedChild, abstractClientBase, jmxp, logbackClassic, logbackCore, slf4jApi, hamcrest);
     return classPath;
   }
 

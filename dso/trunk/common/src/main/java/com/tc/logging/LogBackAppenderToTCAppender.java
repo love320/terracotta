@@ -20,33 +20,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
-import com.tc.exception.TCRuntimeException;
-import com.tc.management.beans.logging.TCLoggingBroadcaster;
-import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
+public class LogBackAppenderToTCAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
-import javax.management.NotCompliantMBeanException;
+  private final TCAppender appender;
 
-/**
- * Special Appender that notifies JMX listeners on LoggingEvents.
- *
- * @author gkeim
- * @see TCLoggingBroadcasterMBean
- */
-public class JMXAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
-
-  private final TCLoggingBroadcaster broadcastingBean;
-
-  public JMXAppender() {
-    try {
-      broadcastingBean = new TCLoggingBroadcaster();
-    } catch (NotCompliantMBeanException ncmbe) {
-      throw new TCRuntimeException("Unable to construct the broadcasting MBean: this is a programming error in "
-                                   + TCLoggingBroadcaster.class.getName(), ncmbe);
-    }
-  }
-
-  public final TCLoggingBroadcasterMBean getMBean() {
-    return broadcastingBean;
+  public LogBackAppenderToTCAppender(TCAppender appender) {
+    this.appender = appender;
   }
 
   @Override
@@ -55,8 +34,6 @@ public class JMXAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
     if (iLoggingEvent.getThrowableProxy() != null && iLoggingEvent.getThrowableProxy() instanceof ThrowableProxy) {
       throwable = ((ThrowableProxy) iLoggingEvent.getThrowableProxy()).getThrowable();
     }
-    broadcastingBean.broadcastLogEvent(iLoggingEvent.getFormattedMessage(),
-        throwable != null ? throwable.getMessage() : null);
+    appender.append(LogLevelImpl.fromLogBackLevel(iLoggingEvent.getLevel()), iLoggingEvent.getMessage(), throwable);
   }
-
 }
