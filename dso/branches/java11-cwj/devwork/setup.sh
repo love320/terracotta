@@ -77,6 +77,8 @@ svn co https://svn.terracotta.org/repo/forge/projects/bigmemory/go/branches/java
 svn co https://svn.terracotta.org/repo/internal/fast-restartable-store/branches/java11-cwj fast-restartable-store
 ## svn co https://svn.terracotta.org/repo/internal/fast-restartable-store/branches/java11-cwj-1.0.x fast-restartable-store-1.0.x ** Replaced by trunk **
 
+svn co https://svn.terracotta.org/repo/forge/projects/terracotta-toolkit-api-internal/branches/java11-cwj terracotta-toolkit-api-internal
+
 
 # offheap-store moved to GitHub at release 2.0.0
 # git clone https://github.com/Terracotta-OSS/offheap-store.git offheap-store

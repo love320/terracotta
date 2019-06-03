@@ -73,7 +73,7 @@ The Initial Developer of the Covered Software is
     <dependency>
       <groupId>org.terracotta.toolkit</groupId>
       <artifactId>terracotta-toolkit-api-internal</artifactId>
-      <version>1.17</version>
+      <version>1.18_JAVA11-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>org.terracotta</groupId>
