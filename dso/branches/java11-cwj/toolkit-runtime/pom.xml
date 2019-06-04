@@ -460,7 +460,7 @@ The Initial Developer of the Covered Software is
 					<plugin>
 						<groupId>org.apache.felix</groupId>
 						<artifactId>maven-bundle-plugin</artifactId>
-						<version>2.3.7</version>
+						<version>4.2.0</version>
 						<extensions>true</extensions>
 						<configuration>
 							<manifestLocation>${project.build.directory}</manifestLocation>
