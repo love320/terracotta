@@ -78,7 +78,6 @@ public abstract class AbstractTestBase extends TCTestCase implements TestFailure
   private volatile TestJMXServerManager    jmxServerManager;
   protected volatile Thread                duringRunningClusterThread;
   protected volatile Thread                testExecutionThread;
-  private static final String              log4jPrefix               = "logger.";
   private final Map<String, LogLevel>      tcLoggingConfigs          = new HashMap<String, LogLevel>();
   protected final AtomicReference<Throwable> testException             = new AtomicReference<Throwable>();
   protected volatile PauseManager                     pauseManager;
@@ -346,20 +345,18 @@ public abstract class AbstractTestBase extends TCTestCase implements TestFailure
   }
 
   private String getTCLoggingFilePath() {
-    File log4jPropFile = null;
+    File logbackFile = null;
     BufferedWriter writer = null;
     try {
-      log4jPropFile = new File(getTempDirectory(), TCLogging.LOG4J_PROPERTIES_FILENAME);
-      writer = new BufferedWriter(new FileWriter(log4jPropFile));
-      writer.write("shutdownHook = disable" + "\n");
-      writer.write("rootLogger.level = INFO" + "\n");
+      logbackFile = new File(getTempDirectory(), TCLogging.LOGBACK_DEV_FILENAME);
+      writer = new BufferedWriter(new FileWriter(logbackFile));
+      writer.write("<configuration>" + "\n");
+      writer.write("<root level=\"INFO\"/>" + "\n");
       int i=1;
       for (Entry<String, LogLevel> entry : tcLoggingConfigs.entrySet()) {
-        String prefix = "logger"+i;
-        writer.write(log4jPrefix + prefix + ".name = " + entry.getKey() + "\n");
-        writer.write(log4jPrefix + prefix + ".level = " + entry.getValue() + "\n");
-        i++;
+        writer.write("<logger name=" + entry.getKey() + " " + "level=" + "\"" + entry.getValue().name()+"\"/>" + "\n");
       }
+      writer.write("</configuration>" + "\n");
     } catch (IOException e) {
       throw new IllegalStateException(e.getMessage());
     } finally {
@@ -369,7 +366,7 @@ public abstract class AbstractTestBase extends TCTestCase implements TestFailure
         throw new IllegalStateException(e1.getMessage());
       }
     }
-    return log4jPropFile.getParent();
+    return logbackFile.getParent();
   }
 
   protected String addToClasspath(String cp, String path) {

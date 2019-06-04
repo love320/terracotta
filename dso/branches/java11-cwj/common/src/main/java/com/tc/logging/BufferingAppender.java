@@ -16,13 +16,10 @@
  */
 package com.tc.logging;
 
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
-import java.io.Serializable;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -31,21 +28,18 @@ import java.util.concurrent.BlockingQueue;
  * sure all logging information gets to the file; we buffer records created before logging gets sent to a file, then
  * send them there.
  */
-
-public class BufferingAppender extends AbstractAppender {
-
-  private final BlockingQueue<LogEvent> buffer;
+public class BufferingAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
+  private final BlockingQueue<ILoggingEvent> buffer;
   private boolean on;
 
-  public BufferingAppender(int capacity, String name, Filter filter, Layout<? extends Serializable> layout, boolean ignoreExceptions) {
-    super(name, filter, layout, ignoreExceptions);
-    this.buffer = new ArrayBlockingQueue<LogEvent>(capacity);
+  public BufferingAppender(int maxCapacity) {
+    this.buffer = new ArrayBlockingQueue<>(maxCapacity);
     this.on = true;
   }
 
-  public synchronized void append(LogEvent logEvent) {
+  public synchronized void append(ILoggingEvent event) {
     if (on) {
-      this.buffer.offer(logEvent.toImmutable());
+      this.buffer.offer(event);
     }
   }
 
@@ -53,11 +47,12 @@ public class BufferingAppender extends AbstractAppender {
     synchronized (this) {
       on = false;
     }
-
     while (true) {
-      LogEvent event = this.buffer.poll();
-      if (event == null) break;
-      otherAppender.append(event);
+      ILoggingEvent event = this.buffer.poll();
+      if (event == null) {
+        break;
+      }
+      otherAppender.doAppend(event);
     }
   }
 }

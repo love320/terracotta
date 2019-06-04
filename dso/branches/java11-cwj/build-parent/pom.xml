@@ -47,7 +47,7 @@ The Initial Developer of the Covered Software is
     <jetty.version>9.4.15.v20190215</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.7.25</slf4j.version>
-    <log4j.version>2.11.2</log4j.version>
+    <logback.version>1.2.3</logback.version>
     <search.version>1.6.0_JAVA11-SNAPSHOT</search.version>
     <shiro.version>1.4.0</shiro.version>
     <management-core-version>2.2.0_JAVA11-SNAPSHOT</management-core-version>
@@ -134,9 +134,9 @@ The Initial Developer of the Covered Software is
         <version>${linked-child-process.version}</version>
       </dependency>
       <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-core</artifactId>
-        <version>${log4j.version}</version>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
       </dependency>
       <dependency>
         <groupId>commons-logging</groupId>
@@ -271,11 +271,6 @@ The Initial Developer of the Covered Software is
         <groupId>org.slf4j</groupId>
         <artifactId>slf4j-api</artifactId>
         <version>${slf4j.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.logging.log4j</groupId>
-        <artifactId>log4j-slf4j-impl</artifactId>
-        <version>${log4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.slf4j</groupId>
