@@ -65,7 +65,8 @@ public class TCLoggingTest extends TCTestCase {
         logFileCount++;
       }
     }
-    Assert.assertEquals(LOG_ITERATIONS , logFileCount);
+
+    Assert.assertEquals(LOG_ITERATIONS, logFileCount);
 
   }
 

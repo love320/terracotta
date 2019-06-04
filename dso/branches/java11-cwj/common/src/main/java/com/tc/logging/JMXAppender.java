@@ -16,17 +16,13 @@
  */
 package com.tc.logging;
 
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.layout.PatternLayout;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
 import com.tc.exception.TCRuntimeException;
 import com.tc.management.beans.logging.TCLoggingBroadcaster;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
-
-import java.io.Serializable;
 
 import javax.management.NotCompliantMBeanException;
 
@@ -34,16 +30,13 @@ import javax.management.NotCompliantMBeanException;
  * Special Appender that notifies JMX listeners on LoggingEvents.
  *
  * @author gkeim
- * @see org.apache.logging.log4j.core.appender.RollingFileAppender
  * @see TCLoggingBroadcasterMBean
  */
-
-public class JMXAppender extends AbstractAppender {
+public class JMXAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
   private final TCLoggingBroadcaster broadcastingBean;
 
-  public JMXAppender(String name, Filter filter, Layout<? extends Serializable> layout, boolean ignoreExceptions) {
-    super(name, filter, layout, ignoreExceptions);
+  public JMXAppender() {
     try {
       broadcastingBean = new TCLoggingBroadcaster();
     } catch (NotCompliantMBeanException ncmbe) {
@@ -56,13 +49,14 @@ public class JMXAppender extends AbstractAppender {
     return broadcastingBean;
   }
 
-
   @Override
-  public void append(final LogEvent event) {
-    //broadcastingBean.broadcastLogEvent(getLayout().format(event), event.getThrowableStrRep());
-    broadcastingBean.broadcastLogEvent
-        (((PatternLayout)getLayout()).toSerializable(event),
-            event.getThrown() != null ? event.getThrown().getMessage() : null);
+  public void append(ILoggingEvent iLoggingEvent) {
+    Throwable throwable = null;
+    if (iLoggingEvent.getThrowableProxy() != null && iLoggingEvent.getThrowableProxy() instanceof ThrowableProxy) {
+      throwable = ((ThrowableProxy) iLoggingEvent.getThrowableProxy()).getThrowable();
+    }
+    broadcastingBean.broadcastLogEvent(iLoggingEvent.getFormattedMessage(),
+        throwable != null ? throwable.getMessage() : null);
   }
 
 }

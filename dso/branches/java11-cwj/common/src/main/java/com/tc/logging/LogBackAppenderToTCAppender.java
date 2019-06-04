@@ -16,25 +16,24 @@
  */
 package com.tc.logging;
 
-import org.apache.logging.log4j.core.Filter;
-import org.apache.logging.log4j.core.Layout;
-import org.apache.logging.log4j.core.LogEvent;
-import org.apache.logging.log4j.core.appender.AbstractAppender;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
-import java.io.Serializable;
-
-public class Log4JAppenderToTCAppender extends AbstractAppender {
+public class LogBackAppenderToTCAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
   private final TCAppender appender;
 
-  public Log4JAppenderToTCAppender(TCAppender tcAppender, String name, Filter filter, Layout<? extends Serializable> layout, boolean ignoreExceptions) {
-    super(name, filter, layout, ignoreExceptions);
-    this.appender = tcAppender;
+  public LogBackAppenderToTCAppender(TCAppender appender) {
+    this.appender = appender;
   }
 
   @Override
-  public void append(LogEvent logEvent) {
-    appender.append(LogLevelImpl.fromLog4JLevel(logEvent.getLevel()), logEvent.getMessage(), logEvent.getThrown());
+  public void append(ILoggingEvent iLoggingEvent) {
+    Throwable throwable = null;
+    if (iLoggingEvent.getThrowableProxy() != null && iLoggingEvent.getThrowableProxy() instanceof ThrowableProxy) {
+      throwable = ((ThrowableProxy) iLoggingEvent.getThrowableProxy()).getThrowable();
+    }
+    appender.append(LogLevelImpl.fromLogBackLevel(iLoggingEvent.getLevel()), iLoggingEvent.getMessage(), throwable);
   }
-
 }

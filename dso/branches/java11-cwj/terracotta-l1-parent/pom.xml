@@ -44,11 +44,7 @@ The Initial Developer of the Covered Software is
         <exclusion>
           <groupId>javax.servlet</groupId>
           <artifactId>javax.servlet-api</artifactId>
-        </exclusion>        
-        <exclusion>
-          <groupId>org.apache.logging.log4j</groupId>
-          <artifactId>log4j-slf4j-impl</artifactId>
-        </exclusion>        
+        </exclusion>
         <exclusion>
           <groupId>org.slf4j</groupId>
           <artifactId>slf4j-api</artifactId>
@@ -70,10 +66,10 @@ The Initial Developer of the Covered Software is
     <dependency>
       <groupId>org.terracotta</groupId>
       <artifactId>tcstats</artifactId>
-    </dependency>   
+    </dependency>
     <dependency>
-      <groupId>org.apache.logging.log4j</groupId>
-      <artifactId>log4j-core</artifactId>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-logging</groupId>
