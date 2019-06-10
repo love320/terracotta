@@ -26,7 +26,7 @@ public interface ElectionManager {
 
   public void declareWinner(NodeID myNodeId);
 
-  public boolean handleStartElectionRequest(L2StateMessage msg);
+  public void handleStartElectionRequest(L2StateMessage msg);
 
   public void handleElectionAbort(L2StateMessage msg);
 
