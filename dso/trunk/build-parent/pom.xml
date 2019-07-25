@@ -50,7 +50,7 @@ The Initial Developer of the Covered Software is
     <logback.version>1.2.3</logback.version>
     <search.version>1.5.7</search.version>
     <shiro.version>1.4.0</shiro.version>
-    <management-core-version>2.1.12</management-core-version>
+    <management-core-version>2.1.13</management-core-version>
     <session-management.version>${project.version}</session-management.version>
     <tc-messaging.version>1.1.2</tc-messaging.version>
     <terracotta-license.version>1.1.5</terracotta-license.version>
