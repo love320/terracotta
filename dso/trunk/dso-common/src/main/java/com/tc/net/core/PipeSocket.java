@@ -54,6 +54,10 @@ public abstract class PipeSocket extends Socket {
     this.outputStream = new PipeSocketOutputStream(Channels.newOutputStream(outputPipe.sink()));
   }
 
+  public Socket getDelegate() {
+    return socket;
+  }
+
   public SourceChannel getOutputPipeSourceChannel() {
     return outputPipe.source();
   }
