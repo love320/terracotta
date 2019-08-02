@@ -16,6 +16,7 @@
  */
 package com.tc.server;
 
+import com.tc.net.core.PipeSocket;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -118,14 +119,22 @@ import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.PhantomReference;
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import javax.security.auth.Subject;
@@ -186,6 +195,11 @@ public class TCServerImpl extends SEDA implements TCServer {
   protected SBPResolver                     sbpResolver;
   private final SafeMode                    safeMode;
 
+  // leaked http socket reclaimer
+  private final boolean enableReclaimer = TCPropertiesImpl.getProperties().getBoolean(TCPropertiesConsts.HTTP_ENABLE_SOCKET_RECLAIMER, false);
+  private final ReferenceQueue<Socket> referenceQueue = new ReferenceQueue<>();
+  private final Map<PhantomReference<Socket>, Socket> sockets = Collections.synchronizedMap(new IdentityHashMap<>());
+
   /**
    * This should only be used for tests.
    */
@@ -214,6 +228,37 @@ public class TCServerImpl extends SEDA implements TCServer {
     }
 
     this.safeMode = configurationSetupManager.isSafeModeConfigured() ? getSafeMode() : new NullSafeMode();
+
+    if (this.enableReclaimer) {
+      Timer timer = new Timer("terracotta-http-socket-reclaimer", true);
+      timer.schedule(new TimerTask() {
+        @Override
+        public void run() {
+          List<Socket> reclaimed = new ArrayList<>();
+
+          while (true) {
+            Reference<? extends Socket> socketRef = referenceQueue.poll();
+            if (socketRef == null) {
+              break;
+            }
+
+            Socket socket = sockets.remove(socketRef);
+            if (socket != null && !socket.isClosed()) {
+              try {
+                reclaimed.add(socket);
+                socket.close();
+              } catch (IOException ioe) {
+                logger.warn("Error closing reclaimed http socket : " + socket, ioe);
+              }
+            }
+          }
+
+          if (!reclaimed.isEmpty()) {
+            logger.info("Reclaimed " + reclaimed.size() + " http socket(s) : " + reclaimed);
+          }
+        }
+      }, 5000, 5000);
+    }
   }
 
   private void verifySecurityManagerFindsCredentialsForAllL2Servers() {
@@ -602,7 +647,8 @@ public class TCServerImpl extends SEDA implements TCServer {
       };
       HttpConfiguration httpConfig = new HttpConfiguration();
       httpConfig.setSendServerVersion(false);
-      TCServerImpl.this.terracottaConnector = new TerracottaConnector(httpServer, new HttpConnectionFactory(httpConfig));
+      Consumer<Socket> socketConsumer = enableReclaimer ? (socket) -> sockets.put(new PhantomReference<>(socket, referenceQueue), ((PipeSocket) socket).getDelegate()) : null;
+      TCServerImpl.this.terracottaConnector = new TerracottaConnector(httpServer, new HttpConnectionFactory(httpConfig), socketConsumer);
       // connectors are named so that webapps can respond only on a specific one
       // see: http://wiki.eclipse.org/Jetty/Howto/WebappPerConnector
       TCServerImpl.this.terracottaConnector.setName(CONNECTOR_NAME_TERRACOTTA);
