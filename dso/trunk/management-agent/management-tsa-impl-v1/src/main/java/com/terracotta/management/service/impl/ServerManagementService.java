@@ -348,7 +348,6 @@ public class ServerManagementService implements L1MBeansSource {
             logEntity.setVersion(localManagementSource.getVersion());
             logEntity.setMessage(logNotification.getMessage());
             logEntity.setTimestamp(logNotification.getTimeStamp());
-            logEntity.setThrowableStringRep((String[])logNotification.getUserData());
 
             localResult.add(logEntity);
           }

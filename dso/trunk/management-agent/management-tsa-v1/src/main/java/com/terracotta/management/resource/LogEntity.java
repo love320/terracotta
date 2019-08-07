@@ -27,7 +27,7 @@ public class LogEntity extends AbstractTsaEntity {
   private String sourceId;
   private long timestamp;
   private String message;
-  private String[] throwableStringRep;
+  private String[] throwableStringRep; // No longer to be used as exception is now part of message
 
   public String getSourceId() {
     return sourceId;
@@ -53,10 +53,12 @@ public class LogEntity extends AbstractTsaEntity {
     this.message = message;
   }
 
+  @Deprecated
   public void setThrowableStringRep(String[] throwableStringRep) {
     this.throwableStringRep = throwableStringRep;
   }
 
+  @Deprecated
   public String[] getThrowableStringRep() {
     return this.throwableStringRep;
   }
