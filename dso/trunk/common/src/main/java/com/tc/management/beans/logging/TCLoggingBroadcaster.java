@@ -53,15 +53,13 @@ public final class TCLoggingBroadcaster extends AbstractTerracottaMBean implemen
     return NOTIFICATION_INFO;
   }
 
-  public void broadcastLogEvent(final String event, final String throwableStringRep) {
+  public void broadcastLogEvent(final String event) {
     Notification notif = new Notification(LOGGING_EVENT_TYPE, this, sequenceNumber.incrementAndGet(),
                                                 System.currentTimeMillis(), event);
-    notif.setUserData(throwableStringRep);
     sendNotification(notif);
 
     notif = new Notification(notif.getType(), getClass().getName(), notif.getSequenceNumber(), notif.getTimeStamp(),
                              notif.getMessage());
-    notif.setUserData(throwableStringRep);
     tcLoggingHistoryProvider.push(notif);
   }
 

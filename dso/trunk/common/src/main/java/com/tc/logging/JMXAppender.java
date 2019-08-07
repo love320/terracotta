@@ -17,9 +17,12 @@
 package com.tc.logging;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.ThrowableProxy;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
+import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 
+import ch.qos.logback.core.util.CachingDateFormatter;
 import com.tc.exception.TCRuntimeException;
 import com.tc.management.beans.logging.TCLoggingBroadcaster;
 import com.tc.management.beans.logging.TCLoggingBroadcasterMBean;
@@ -35,6 +38,7 @@ import javax.management.NotCompliantMBeanException;
 public class JMXAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
   private final TCLoggingBroadcaster broadcastingBean;
+  private final CachingDateFormatter cachingDateFormatter = new CachingDateFormatter("HH:mm:ss.SSS");
 
   public JMXAppender() {
     try {
@@ -51,12 +55,28 @@ public class JMXAppender extends UnsynchronizedAppenderBase<ILoggingEvent> {
 
   @Override
   public void append(ILoggingEvent iLoggingEvent) {
-    Throwable throwable = null;
-    if (iLoggingEvent.getThrowableProxy() != null && iLoggingEvent.getThrowableProxy() instanceof ThrowableProxy) {
-      throwable = ((ThrowableProxy) iLoggingEvent.getThrowableProxy()).getThrowable();
-    }
-    broadcastingBean.broadcastLogEvent(iLoggingEvent.getFormattedMessage(),
-        throwable != null ? throwable.getMessage() : null);
+    broadcastingBean.broadcastLogEvent(format(iLoggingEvent));
   }
 
+  private String format(ILoggingEvent event) {
+    StringBuilder sb = new StringBuilder();
+    long timestamp = event.getTimeStamp();
+
+    sb.append(cachingDateFormatter.format(timestamp));
+    sb.append(" [");
+    sb.append(event.getThreadName());
+    sb.append("] ");
+    sb.append(event.getLevel().toString());
+    sb.append(" ");
+    sb.append(event.getLoggerName());
+    sb.append(" - ");
+    sb.append(event.getFormattedMessage());
+    IThrowableProxy tp = event.getThrowableProxy();
+    if (tp != null) {
+      sb.append(CoreConstants.LINE_SEPARATOR);
+      sb.append(ThrowableProxyUtil.asString(tp).trim());
+    }
+
+    return sb.toString();
+  }
 }

@@ -345,7 +345,6 @@ public class ServerManagementServiceV2 implements L1MBeansSource {
             logEntityV2.setSourceId(member.name());
             logEntityV2.setMessage(logNotification.getMessage());
             logEntityV2.setTimestamp(logNotification.getTimeStamp());
-            logEntityV2.setThrowableStringRep((String[])logNotification.getUserData());
 
             localResult.add(logEntityV2);
           }
