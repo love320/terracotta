@@ -736,6 +736,7 @@ public interface TCPropertiesConsts {
   public static final String HTTP_DEFAULT_SERVLET_ENABLED                                   = "http.defaultservlet.enabled";
   public static final String HTTP_DEFAULT_SERVLET_ATTRIBUTE_ALIASES                         = "http.defaultservlet.attribute.aliases";
   public static final String HTTP_DEFAULT_SERVLET_ATTRIBUTE_DIR_ALLOWED                     = "http.defaultservlet.attribute.dirallowed";
+  public static final String HTTP_ENABLE_SOCKET_RECLAIMER                                   = "http.enable.socket.reclaimer";
 
   /*********************************************************************************************************************
    * <code>

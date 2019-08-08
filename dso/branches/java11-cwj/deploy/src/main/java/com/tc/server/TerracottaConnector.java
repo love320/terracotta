@@ -16,26 +16,26 @@
  */
 package com.tc.server;
 
+import com.tc.util.MultiIOExceptionHandler;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.LocalConnector;
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * A Jetty connector that is handed sockets from the DSO listen port once they are identified as HTTP requests
@@ -43,20 +43,35 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class TerracottaConnector extends LocalConnector {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TerracottaConnector.class);
-  private static final int IDLE_TIMEOUT_IN_MS = 30000;
+  static final int DEFAULT_IDLE_TIMEOUT_IN_MS = 30000;
   private final ExecutorService executorService;
+  private final Consumer<Socket> reclaimer;
 
-  public TerracottaConnector(Server server, HttpConnectionFactory httpConnectionFactory) {
-    super(server, httpConnectionFactory);
-    setIdleTimeout(IDLE_TIMEOUT_IN_MS);
-    ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 64, 30, TimeUnit.SECONDS, new SynchronousQueue<>(), new ThreadFactory() {
+  public TerracottaConnector(Server server, HttpConnectionFactory httpConnectionFactory, Consumer<Socket> reclaimer) {
+    this(server, httpConnectionFactory, new ThreadPoolExecutor(2, 64, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadFactory() {
       final AtomicInteger counter = new AtomicInteger();
       @Override
       public Thread newThread(Runnable r) {
         return new Thread(r, "Jetty Connector - " + counter.incrementAndGet());
       }
-    });
-    executorService = executor;
+    }), DEFAULT_IDLE_TIMEOUT_IN_MS, reclaimer);
+  }
+
+  TerracottaConnector(Server server, HttpConnectionFactory httpConnectionFactory, int idleTimeoutInMs, Consumer<Socket> reclaimer) {
+    this(server, httpConnectionFactory, new ThreadPoolExecutor(2, 64, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new ThreadFactory() {
+      final AtomicInteger counter = new AtomicInteger();
+      @Override
+      public Thread newThread(Runnable r) {
+        return new Thread(r, "Jetty Connector - " + counter.incrementAndGet());
+      }
+    }), idleTimeoutInMs, reclaimer);
+  }
+
+  TerracottaConnector(Server server, HttpConnectionFactory httpConnectionFactory, ExecutorService executor, int idleTimeoutInMs, Consumer<Socket> reclaimer) {
+    super(server, httpConnectionFactory);
+    this.executorService = executor;
+    setIdleTimeout(idleTimeoutInMs);
+    this.reclaimer = reclaimer;
   }
 
   @Override
@@ -65,49 +80,74 @@ public class TerracottaConnector extends LocalConnector {
     return super.shutdown();
   }
 
-  public void handleSocketFromDSO(Socket socket, byte[] data) throws IOException {
-    LocalConnector.LocalEndPoint endPoint = this.connect();
-    Future<Object> reader = executorService.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        endPoint.addInput(ByteBuffer.wrap(data));
+  public Future<?> handleSocketFromDSO(Socket socket, byte[] data) {
+    Consumer<Socket> reclaimer = this.reclaimer;
+    if (reclaimer != null) {
+      reclaimer.accept(socket);
+    }
+    LocalEndPoint endPoint = this.connect();
+    Future<?> reader = spawnReader(socket, data, endPoint);
+    return spawnWriter(socket, endPoint, reader);
+  }
 
-        try (InputStream inputStream = socket.getInputStream()) {
-          while (true) {
-            byte[] buffer = new byte[128];
-            int read = inputStream.read(buffer);
-            if (read == -1) {
-              break;
-            }
-            endPoint.addInput(ByteBuffer.wrap(buffer, 0, read));
-          }
-        }
-
-        return null;
-      }
-    });
-
-    executorService.submit(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
+  Future<?> spawnReader(Socket socket, byte[] data, LocalEndPoint endPoint) {
+    try {
+      return executorService.submit(() -> {
         try {
-          ByteBuffer byteBuffer = endPoint.waitForOutput(IDLE_TIMEOUT_IN_MS, TimeUnit.MILLISECONDS);
-          reader.cancel(true);
+          endPoint.addInput(ByteBuffer.wrap(data));
+
+          try (InputStream inputStream = socket.getInputStream()) {
+            while (true) {
+              byte[] buffer = new byte[128];
+              int read = inputStream.read(buffer);
+              if (read == -1) {
+                break;
+              }
+              endPoint.addInput(ByteBuffer.wrap(buffer, 0, read));
+            }
+          }
+        } catch (Exception e) {
+          LOGGER.error("Error processing an HTTP request (reader side)", e);
+        }
+      });
+    } catch (RuntimeException re) {
+      // the thread pool is too busy, abandon this request
+      MultiIOExceptionHandler m = new MultiIOExceptionHandler();
+      m.doSafely(endPoint::close);
+      m.doSafely(socket::close);
+      m.addAsSuppressedTo(re);
+      throw re;
+    }
+  }
+
+  Future<?> spawnWriter(Socket socket, LocalEndPoint endPoint, Future<?> reader) {
+    try {
+      return executorService.submit(() -> {
+        try {
+          ByteBuffer byteBuffer = endPoint.waitForOutput(getIdleTimeout(), TimeUnit.MILLISECONDS);
           if (byteBuffer != null && byteBuffer.remaining() > 0) {
             try (WritableByteChannel channel = Channels.newChannel(socket.getOutputStream())) {
               channel.write(byteBuffer);
             }
           }
         } catch (Exception e) {
-          LOGGER.error("Error processing an HTTP request", e);
+          LOGGER.error("Error processing an HTTP request (writer side)", e);
         } finally {
-          endPoint.close();
-          socket.close();
+          MultiIOExceptionHandler m = new MultiIOExceptionHandler();
+          m.doSafely(() -> reader.cancel(true));
+          m.doSafely(endPoint::close);
+          m.doSafely(socket::close);
         }
-
-        return null;
-      }
-    });
+      });
+    } catch (RuntimeException re) {
+      // the thread pool is too busy, abandon this request
+      MultiIOExceptionHandler m = new MultiIOExceptionHandler();
+      m.doSafely(() -> reader.cancel(true));
+      m.doSafely(endPoint::close);
+      m.doSafely(socket::close);
+      m.addAsSuppressedTo(re);
+      throw re;
+    }
   }
 
 }

@@ -387,10 +387,8 @@ public class StateManagerImpl implements StateManager {
           .createTrumpEnrollment(getLocalNodeID(), weightsFactory));
       info("Forcing Abort Election for " + msg + " with " + abortMsg);
       groupManager.sendTo(msg.messageFrom(), abortMsg);
-    } else if (!electionMgr.handleStartElectionRequest(msg)) {
-      // TODO::FIXME:: Commenting so that stage thread is not held up doing election.
-      // startElectionIfNecessary(NodeID.NULL_ID);
-      logger.warn("Not starting election as it was commented out");
+    } else {
+      electionMgr.handleStartElectionRequest(msg);
     }
   }
 
