@@ -436,7 +436,7 @@ The Initial Developer of the Covered Software is
               <plugin>
               <groupId>org.terracotta</groupId>
               <artifactId>maven-forge-plugin</artifactId>
-              <version>1.2.22</version>
+              <version>${maven-forge-plugin.version}</version>
               <dependencies>
                 <dependency>
                   <groupId>com.softwareag.ibit.tools.util</groupId>

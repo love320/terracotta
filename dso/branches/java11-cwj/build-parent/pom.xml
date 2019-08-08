@@ -44,7 +44,7 @@ The Initial Developer of the Covered Software is
     <core-storage-api.version>1.4_JAVA11-SNAPSHOT</core-storage-api.version>
     <heap-core-storage.version>1.2.0_JAVA11-SNAPSHOT</heap-core-storage.version>
     <bigmemory-core-storage.version>2.1.0_JAVA11-SNAPSHOT</bigmemory-core-storage.version>
-    <jetty.version>9.4.15.v20190215</jetty.version>
+    <jetty.version>9.4.19.v20190610</jetty.version>
     <javax.servlet.version>3.0.0.v201112011016</javax.servlet.version>
     <slf4j.version>1.7.25</slf4j.version>
     <logback.version>1.2.3</logback.version>

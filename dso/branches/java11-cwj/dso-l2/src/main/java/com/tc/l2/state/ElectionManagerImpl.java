@@ -60,7 +60,7 @@ public class ElectionManagerImpl implements ElectionManager {
   }
 
   @Override
-  public synchronized boolean handleStartElectionRequest(L2StateMessage msg) {
+  public synchronized void handleStartElectionRequest(L2StateMessage msg) {
     Assert.assertEquals(L2StateMessage.START_ELECTION, msg.getType());
     if (state == ELECTION_IN_PROGRESS && (myVote.isANewCandidate() || !msg.getEnrollment().isANewCandidate())) {
       // Another node is also joining in the election process, Cast its vote and notify my vote
@@ -85,10 +85,8 @@ public class ElectionManagerImpl implements ElectionManager {
       } else {
         logger.info("Casted vote from " + msg);
       }
-      return true;
     } else {
       logger.info("Ignoring Start Election Request  : " + msg + " My state = " + state);
-      return false;
     }
   }
 

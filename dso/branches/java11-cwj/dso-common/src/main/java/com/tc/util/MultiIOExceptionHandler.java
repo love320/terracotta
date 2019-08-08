@@ -28,6 +28,11 @@ public class MultiIOExceptionHandler {
     }
   }
 
+  public void addAsSuppressedTo(Throwable t) {
+    exceptions.forEach(t::addSuppressed);
+    exceptions.clear();
+  }
+
   static class MultiIOException extends IOException {
     MultiIOException(String message) {
       super(message);
