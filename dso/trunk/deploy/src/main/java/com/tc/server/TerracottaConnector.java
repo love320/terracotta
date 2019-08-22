@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.io.IOException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
@@ -107,7 +108,9 @@ public class TerracottaConnector extends LocalConnector {
             }
           }
         } catch (Exception e) {
-          LOGGER.error("Error processing an HTTP request (reader side)", e);
+          if (!(IOException.class.isAssignableFrom(e.getClass()))) {
+            LOGGER.error("Error processing an HTTP request (reader side)", e);
+          }
         }
       });
     } catch (RuntimeException re) {
@@ -131,7 +134,9 @@ public class TerracottaConnector extends LocalConnector {
             }
           }
         } catch (Exception e) {
-          LOGGER.error("Error processing an HTTP request (writer side)", e);
+          if (!(IOException.class.isAssignableFrom(e.getClass()))) {
+            LOGGER.error("Error processing an HTTP request (writer side)", e);
+          }
         } finally {
           MultiIOExceptionHandler m = new MultiIOExceptionHandler();
           m.doSafely(() -> reader.cancel(true));
